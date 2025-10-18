@@ -20,6 +20,12 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Branches
+
+Create a new branch each time you start working on a NEW feature. 
+Do NOT push to the main branch. Only focus on your feature branch. 
+Once you have completed working on your feature branch, raise a PR for team leads to review
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
