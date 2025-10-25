@@ -6,45 +6,46 @@ import { Input } from "@/components/ui/input"
 export default function InstructorDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
-      {/*Sticky Top Gray Header */}
-      <div className="bg-gray-100 w-full sticky top-0 z-50 shadow-sm">
-        <header className="flex items-center justify-between max-w-6xl mx-auto py-4 px-8">
-          {/* Left: Page title */}
-          <h1 className="text-lg font-semibold text-gray-800">
-            Instructor Dashboard
-          </h1>
+        {/*Sticky Top Gray Header */}
+        <div className="bg-gray-100 w-full sticky top-0 z-50 shadow-sm">
+            <header className="relative max-w-6xl mx-auto py-4 px-8 flex items-center justify-between">
+                {/* Left: Page title */}
+                <h1 className="text-lg font-semibold text-gray-800 z-10">
+                Instructor Dashboard
+                </h1>
 
-          {/* Center: Search bar */}
-          <div className="flex-1 flex justify-center">
-            <Input
-              type="text"
-              placeholder="Search..."
-              className="max-w-md bg-white"
-            />
-          </div>
+                {/* Center: Search bar absolutely centered */}
+                <div className="absolute left-1/2 transform -translate-x-1/2 w-full max-w-md">
+                <Input
+                    type="text"
+                    placeholder="Search..."
+                    className="w-full bg-white"
+                />
+                </div>
 
-          {/* Right: Instructor info + avatar */}
-          <div className="flex items-start gap-4">
-            <div className="flex flex-col items-center">
-              <span className="text-sm text-gray-700">Instructor</span>
-              <Button variant="outline" size="sm" className="mt-1">
-                Edit Profile
-              </Button>
-            </div>
+                {/* Right: Instructor info + avatar */}
+                <div className="flex items-start gap-4 z-10 justify-end">
+                <div className="flex flex-col items-center justify-end">
+                    <span className="text-sm text-gray-700">Instructor</span>
+                    <Button variant="outline" size="sm" className="mt-1">
+                    Edit Profile
+                    </Button>
+                </div>
 
-            <Avatar className="h-14 w-14">
-              <AvatarImage src="" alt="Instructor" />
-              <AvatarFallback>IN</AvatarFallback>
-            </Avatar>
-          </div>
-        </header>
-      </div>
+                <Avatar className="h-14 w-14">
+                    <AvatarImage src="https://github.com/shadcn.png" alt="Instructor" />
+                    <AvatarFallback>IN</AvatarFallback>
+                </Avatar>
+                </div>
+            </header>
+        </div>
 
-      {/* 🧱 Main content area */}
+
+      {/* Main content area */}
       <main className="max-w-6xl mx-auto p-8">
         <div className="flex items-center gap-4 mb-8">
           <Avatar className="h-20 w-20">
-            <AvatarImage src="" alt="Instructor" />
+            <AvatarImage src="https://github.com/shadcn.png" alt="Instructor" />
             <AvatarFallback>IN</AvatarFallback>
           </Avatar>
           <h2 className="text-3xl font-bold">Hello Instructor!</h2>
