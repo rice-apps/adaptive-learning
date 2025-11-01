@@ -13,6 +13,8 @@ export default function SignupForm() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState("student");
+  const [loading, setLoading] = useState(false);
+  const [signupComplete, setSignupComplete] = useState(false);
 
   const verifyFields = () => {
     if (!email) {
@@ -21,6 +23,10 @@ export default function SignupForm() {
     }
     if (!password) {
       toast.error("Password is required");
+      return false;
+    }
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters");
       return false;
     }
     if (!confirmPassword) {
@@ -42,38 +48,86 @@ export default function SignupForm() {
     if (!verifyFields()) {
       return;
     }
-    const supabase = await createClient();
-    const {error} = await supabase.auth.signUp({
-      email: email,
-      password: password,
-      options: {
-        data: {
-          role: role,
+    
+    setLoading(true);
+    
+    try {
+      const supabase = await createClient();
+      const {data, error} = await supabase.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+          data: {
+            role: role,
+          },
+          emailRedirectTo: `${window.location.origin}/api/auth/confirm`
         },
-      },
-    });
+      });
 
-    if (error) {
+      if (error) {
+        console.error(error);
+        toast.error(error.message || "Something went wrong");
+        return;
+      }
+
+      if (data.user) {
+        setSignupComplete(true);
+        toast.success("Check your email to confirm your account!");
+        console.log("Signup worked");
+      }
+    } catch (error) {
       console.error(error);
-      toast.error("Something went wrong");
-      return;
+      toast.error("An unexpected error occurred");
+    } finally {
+      setLoading(false);
     }
-
-    toast.success("Signup successful");
-    console.log("Signup worked");
   };
+
+  if (signupComplete) {
+    return (
+      <div className="flex flex-col gap-5 w-1/3 min-h-[300px] bg-white rounded-lg border p-8">
+        <h1 className="text-2xl font-bold">Check your email</h1>
+        <div className="flex flex-col gap-3">
+          <p className="text-gray-600">
+            We've sent a confirmation email to:
+          </p>
+          <p className="font-semibold">{email}</p>
+          <p className="text-gray-600">
+            Click the link in the email to complete your signup and you'll be automatically redirected to the onboarding page.
+          </p>
+        </div>
+        <Button 
+          variant="outline" 
+          onClick={() => setSignupComplete(false)}
+          className="mt-4"
+        >
+          Back to Signup
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-5 w-1/3 h-1/2 bg-white rounded-lg border p-8">
-      <h1>Sign Up</h1>
+      <h1 className="text-2xl font-bold">Sign Up</h1>
       <FormItem placeholder="Email" input={email} setInput={setEmail} />
       <FormPassword placeholder="Password" input={password} setInput={setPassword} />
       <FormPassword placeholder="Confirm Password" input={confirmPassword} setInput={setConfirmPassword} />
       <RoleSelect role={role} setRole={setRole} />
       <div className="flex flex-wrap items-center gap-4 md:flex-row">
-        <Button variant="outline" onClick={handleSignup}>
-          Sign Up
+        <Button 
+          variant="outline" 
+          onClick={handleSignup}
+          disabled={loading}
+        >
+          {loading ? "Signing up..." : "Sign Up"}
         </Button>
+      </div>
+      <div className="text-center text-sm text-gray-600">
+        Already have an account?{' '}
+        <a href="/login" className="text-blue-600 hover:underline">
+          Log in
+        </a>
       </div>
     </div>
   );
