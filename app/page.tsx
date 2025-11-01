@@ -1,8 +1,5 @@
-import Image from "next/image";
-import StudentDashboard from "./student/dashboard/page";
+import { redirect } from "next/navigation";
 
 export default function Home() {
-  return (
-    <StudentDashboard/>
-  );
+  redirect("/signup");
 }
