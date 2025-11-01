@@ -8,6 +8,17 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
+type QuestionType = "text" | "select" | "multi-select" | "multi-select-other";
+
+interface Question {
+  id: string;
+  type: QuestionType;
+  label: string;
+  instructions?: string;
+  options?: string[];
+  maxSelections?: number;
+}
+
 export default function LearningStyleQuiz() {
   const router = useRouter();
   
@@ -22,6 +33,7 @@ export default function LearningStyleQuiz() {
   const [importance, setImportance] = useState("");
   const [oneThing, setOneThing] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
   // Hard factors options
   const hardFactorOptions = [
@@ -42,6 +54,73 @@ export default function LearningStyleQuiz() {
     "My teacher can see how I'm doing",
     "Encourages me when I make mistakes",
   ];
+
+  // Questions configuration
+  const questions: Question[] = [
+    {
+      id: "reasonForGED",
+      type: "text",
+      label: "What's your main reason for getting your GED?",
+    },
+    {
+      id: "worriedSubject",
+      type: "select",
+      label: "Which GED subject worries you most?",
+      options: ["Language Arts", "Social Studies", "Science", "Math"],
+    },
+    {
+      id: "learnBest",
+      type: "select",
+      label: "How do you learn best?",
+      options: [
+        "Seeing pictures and diagrams",
+        "Listening to explanations",
+        "Reading and taking notes",
+        "Doing hands-on practice",
+      ],
+    },
+    {
+      id: "hardFactors",
+      type: "multi-select-other",
+      label: "What makes learning hard for you?",
+      instructions: "Pick top 2",
+      options: hardFactorOptions,
+      maxSelections: 2,
+    },
+    {
+      id: "appFeatures",
+      type: "multi-select",
+      label: "What would make you want to use a learning app?",
+      instructions: "Pick top 3",
+      options: appFeatureOptions,
+      maxSelections: 3,
+    },
+    {
+      id: "wrongAnswerAction",
+      type: "select",
+      label: "When you get a question wrong, what do you want most out of the following:",
+      options: [
+        "Show me the right answer",
+        "Explain why I was wrong",
+        "Give me a hint to try again",
+        "Show me an example",
+      ],
+    },
+    {
+      id: "importance",
+      type: "select",
+      label: "How important is it that the app learns your way of learning?",
+      options: ["Very important", "Somewhat important", "Not important"],
+    },
+    {
+      id: "oneThing",
+      type: "text",
+      label: "If you could tell us one thing to make this platform work for you, what would it be?",
+    },
+  ];
+
+  const totalQuestions = questions.length;
+  const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
 
   // Handle hard factors checkbox
   const handleHardFactorChange = (factor: string, checked: boolean) => {
@@ -66,6 +145,102 @@ export default function LearningStyleQuiz() {
       }
     } else {
       setAppFeatures(appFeatures.filter((f) => f !== feature));
+    }
+  };
+
+  // Get current question value
+  const getCurrentQuestionValue = (questionId: string) => {
+    switch (questionId) {
+      case "reasonForGED":
+        return reasonForGED;
+      case "worriedSubject":
+        return worriedSubject;
+      case "learnBest":
+        return learnBest;
+      case "hardFactors":
+        return hardFactors;
+      case "appFeatures":
+        return appFeatures;
+      case "wrongAnswerAction":
+        return wrongAnswerAction;
+      case "importance":
+        return importance;
+      case "oneThing":
+        return oneThing;
+      default:
+        return "";
+    }
+  };
+
+  // Set current question value
+  const setCurrentQuestionValue = (questionId: string, value: any) => {
+    switch (questionId) {
+      case "reasonForGED":
+        setReasonForGED(value);
+        break;
+      case "worriedSubject":
+        setWorriedSubject(value);
+        break;
+      case "learnBest":
+        setLearnBest(value);
+        break;
+      case "wrongAnswerAction":
+        setWrongAnswerAction(value);
+        break;
+      case "importance":
+        setImportance(value);
+        break;
+      case "oneThing":
+        setOneThing(value);
+        break;
+    }
+  };
+
+  // Validate current question
+  const validateCurrentQuestion = (): boolean => {
+    const question = questions[currentQuestionIndex];
+    const value = getCurrentQuestionValue(question.id);
+
+    if (question.type === "text") {
+      if (!value || (typeof value === "string" && !value.trim())) {
+        toast.error("Please answer this question");
+        return false;
+      }
+    } else if (question.type === "select") {
+      if (!value) {
+        toast.error("Please select an option");
+        return false;
+      }
+    } else if (question.type === "multi-select" || question.type === "multi-select-other") {
+      if (!Array.isArray(value) || value.length !== question.maxSelections) {
+        toast.error(`Please select exactly ${question.maxSelections} option${question.maxSelections! > 1 ? "s" : ""}`);
+        return false;
+      }
+      if (question.type === "multi-select-other" && value.includes("Other") && !hardFactorOther.trim()) {
+        toast.error("Please specify what makes learning hard for you");
+        return false;
+      }
+    }
+    return true;
+  };
+
+  // Handle next button
+  const handleNext = () => {
+    if (!validateCurrentQuestion()) {
+      return;
+    }
+
+    if (currentQuestionIndex < totalQuestions - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    } else {
+      handleSubmit();
+    }
+  };
+
+  // Handle previous button
+  const handlePrevious = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
     }
   };
 
@@ -166,206 +341,180 @@ export default function LearningStyleQuiz() {
     }
   };
 
+  // Render current question
+  const renderQuestion = () => {
+    const question = questions[currentQuestionIndex];
+    const value = getCurrentQuestionValue(question.id);
+
+    return (
+      <div className="space-y-6">
+        {/* Question Box */}
+        <div className="bg-gray-100 rounded-lg p-6 min-h-[200px] flex items-center">
+          <div className="w-full">
+            <p className="text-gray-400 text-sm mb-2">Reading Question</p>
+            <p className="text-xl font-semibold">{question.label}</p>
+            {question.instructions && (
+              <p className="text-sm text-gray-600 mt-3">{question.instructions}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Answer Options */}
+        <div className="space-y-3">
+          {question.type === "text" && (
+            <Input
+              type="text"
+              placeholder="Enter your response"
+              value={value as string}
+              onChange={(e) => setCurrentQuestionValue(question.id, e.target.value)}
+              className="w-full"
+              autoFocus
+            />
+          )}
+
+          {question.type === "select" && question.options && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {question.options.map((option) => (
+                <label
+                  key={option}
+                  className="flex items-start gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                >
+                  <input
+                    type="radio"
+                    name={question.id}
+                    value={option}
+                    checked={value === option}
+                    onChange={(e) => setCurrentQuestionValue(question.id, e.target.value)}
+                    className="mt-1 w-4 h-4"
+                  />
+                  <div className="flex-1">
+                    <span className="font-semibold block text-gray-900">{option}</span>
+                  </div>
+                </label>
+              ))}
+            </div>
+          )}
+
+          {question.type === "multi-select" && question.options && (
+            <div className="space-y-3">
+              {question.options.map((option) => {
+                const isChecked = Array.isArray(value) && value.includes(option);
+                return (
+                  <label
+                    key={option}
+                    className="flex items-start gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={(e) => {
+                        if (question.id === "appFeatures") {
+                          handleAppFeatureChange(option, e.target.checked);
+                        }
+                      }}
+                      className="mt-1 w-4 h-4"
+                    />
+                    <div className="flex-1">
+                      <span className="font-semibold block text-gray-900">{option}</span>
+                      <span className="text-sm text-gray-500 block mt-1">specifics</span>
+                    </div>
+                  </label>
+                );
+              })}
+              <p className="text-sm text-gray-500 mt-3">
+                Selected: {Array.isArray(value) ? value.length : 0}/{question.maxSelections}
+              </p>
+            </div>
+          )}
+
+          {question.type === "multi-select-other" && question.options && (
+            <div className="space-y-3">
+              {question.options.map((option) => {
+                const isChecked = Array.isArray(value) && value.includes(option);
+                return (
+                  <label
+                    key={option}
+                    className="flex items-start gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={(e) => handleHardFactorChange(option, e.target.checked)}
+                      className="mt-1 w-4 h-4"
+                    />
+                    <div className="flex-1">
+                      <span className="font-semibold block text-gray-900">{option}</span>
+                      <span className="text-sm text-gray-500 block mt-1">specifics</span>
+                    </div>
+                  </label>
+                );
+              })}
+              <label className="flex items-start gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={Array.isArray(value) && value.includes("Other")}
+                  onChange={(e) => handleHardFactorChange("Other", e.target.checked)}
+                  className="mt-1 w-4 h-4"
+                />
+                <div className="flex-1">
+                  <span className="font-semibold block text-gray-900 mb-2">Other:</span>
+                  {Array.isArray(value) && value.includes("Other") && (
+                    <Input
+                      type="text"
+                      placeholder="Please specify"
+                      value={hardFactorOther}
+                      onChange={(e) => setHardFactorOther(e.target.value)}
+                      className="w-full"
+                      autoFocus
+                    />
+                  )}
+                </div>
+              </label>
+              <p className="text-sm text-gray-500 mt-3">
+                Selected: {Array.isArray(value) ? value.length : 0}/{question.maxSelections}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="container mx-auto max-w-3xl py-8 px-4">
-      <h1 className="text-3xl font-bold mb-8">Learning Style Quiz</h1>
-      
-      <div className="space-y-8">
-        {/* Question 1: Reason for GED */}
-        <div className="space-y-2">
-          <label className="text-lg font-semibold">
-            What&apos;s your main reason for getting your GED?
-            <span className="text-red-500 ml-1">*</span>
-          </label>
-          <Input
-            type="text"
-            placeholder="Enter your reason"
-            value={reasonForGED}
-            onChange={(e) => setReasonForGED(e.target.value)}
-            required
-          />
-        </div>
-
-        {/* Question 2: Worried Subject */}
-        <div className="space-y-2">
-          <label className="text-lg font-semibold">
-            Which GED subject worries you most?
-            <span className="text-red-500 ml-1">*</span>
-          </label>
-          <Select value={worriedSubject} onValueChange={setWorriedSubject}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a subject" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Language Arts">Language Arts</SelectItem>
-              <SelectItem value="Social Studies">Social Studies</SelectItem>
-              <SelectItem value="Science">Science</SelectItem>
-              <SelectItem value="Math">Math</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Question 3: Learn Best */}
-        <div className="space-y-2">
-          <label className="text-lg font-semibold">
-            How do you learn best?
-            <span className="text-red-500 ml-1">*</span>
-          </label>
-          <Select value={learnBest} onValueChange={setLearnBest}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select an option" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Seeing pictures and diagrams">
-                Seeing pictures and diagrams
-              </SelectItem>
-              <SelectItem value="Listening to explanations">
-                Listening to explanations
-              </SelectItem>
-              <SelectItem value="Reading and taking notes">
-                Reading and taking notes
-              </SelectItem>
-              <SelectItem value="Doing hands-on practice">
-                Doing hands-on practice
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Question 4: Hard Factors (pick top 2) */}
-        <div className="space-y-2">
-          <label className="text-lg font-semibold">
-            What makes learning hard for you? (pick top 2)
-            <span className="text-red-500 ml-1">*</span>
-          </label>
-          <div className="space-y-2">
-            {hardFactorOptions.map((option) => (
-              <label key={option} className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={hardFactors.includes(option)}
-                  onChange={(e) => handleHardFactorChange(option, e.target.checked)}
-                  className="w-4 h-4"
-                />
-                <span>{option}</span>
-              </label>
-            ))}
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={hardFactors.includes("Other")}
-                onChange={(e) => handleHardFactorChange("Other", e.target.checked)}
-                className="w-4 h-4"
-              />
-              <span>Other:</span>
-              {hardFactors.includes("Other") && (
-                <Input
-                  type="text"
-                  placeholder="Please specify"
-                  value={hardFactorOther}
-                  onChange={(e) => setHardFactorOther(e.target.value)}
-                  className="flex-1"
-                />
-              )}
-            </label>
+    <div className="min-h-screen bg-white">
+      <div className="container mx-auto max-w-4xl py-8 px-6">
+        {/* Progress Bar */}
+        <div className="mb-8">
+          <div className="w-full bg-gray-200 rounded-full h-2.5">
+            <div
+              className="bg-gray-600 h-2.5 rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
           </div>
-          <p className="text-sm text-muted-foreground">
-            Selected: {hardFactors.length}/2
-          </p>
         </div>
 
-        {/* Question 5: App Features (pick top 3) */}
-        <div className="space-y-2">
-          <label className="text-lg font-semibold">
-            What would make you want to use a learning app? (pick top 3)
-            <span className="text-red-500 ml-1">*</span>
-          </label>
-          <div className="space-y-2">
-            {appFeatureOptions.map((option) => (
-              <label key={option} className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={appFeatures.includes(option)}
-                  onChange={(e) => handleAppFeatureChange(option, e.target.checked)}
-                  className="w-4 h-4"
-                />
-                <span>{option}</span>
-              </label>
-            ))}
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Selected: {appFeatures.length}/3
-          </p>
-        </div>
+        {/* Current Question */}
+        {renderQuestion()}
 
-        {/* Question 6: Wrong Answer Action */}
-        <div className="space-y-2">
-          <label className="text-lg font-semibold">
-            When you get a question wrong, what do you want most out of the following:
-            <span className="text-red-500 ml-1">*</span>
-          </label>
-          <Select value={wrongAnswerAction} onValueChange={setWrongAnswerAction}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select an option" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Show me the right answer">
-                Show me the right answer
-              </SelectItem>
-              <SelectItem value="Explain why I was wrong">
-                Explain why I was wrong
-              </SelectItem>
-              <SelectItem value="Give me a hint to try again">
-                Give me a hint to try again
-              </SelectItem>
-              <SelectItem value="Show me an example">
-                Show me an example
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Question 7: Importance */}
-        <div className="space-y-2">
-          <label className="text-lg font-semibold">
-            How important is it that the app learns your way of learning?
-            <span className="text-red-500 ml-1">*</span>
-          </label>
-          <Select value={importance} onValueChange={setImportance}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select an option" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Very important">Very important</SelectItem>
-              <SelectItem value="Somewhat important">Somewhat important</SelectItem>
-              <SelectItem value="Not important">Not important</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Question 8: One Thing */}
-        <div className="space-y-2">
-          <label className="text-lg font-semibold">
-            If you could tell us one thing to make this platform work for you, what would it be?
-            <span className="text-red-500 ml-1">*</span>
-          </label>
-          <Input
-            type="text"
-            placeholder="Enter your response"
-            value={oneThing}
-            onChange={(e) => setOneThing(e.target.value)}
-            required
-          />
-        </div>
-
-        {/* Submit Button */}
-        <div className="flex justify-end pt-4">
-          <Button 
-            onClick={handleSubmit} 
-            disabled={isSubmitting}
-            className="min-w-32"
+        {/* Navigation Buttons */}
+        <div className="flex justify-end items-center mt-8 pt-6">
+          <Button
+            variant="outline"
+            onClick={handlePrevious}
+            disabled={currentQuestionIndex === 0}
+            className="mr-3"
           >
-            {isSubmitting ? "Submitting..." : "Submit Quiz"}
+            Previous
+          </Button>
+          <Button
+            onClick={handleNext}
+            disabled={isSubmitting}
+          >
+            {currentQuestionIndex === totalQuestions - 1
+              ? isSubmitting
+                ? "Submitting..."
+                : "Submit"
+              : "Next"}
           </Button>
         </div>
       </div>
