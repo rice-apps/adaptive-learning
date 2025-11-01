@@ -4,9 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Upload, X } from "lucide-react"
 
-export default function OnboardingProfile() {
+export default function StudentOnboarding() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -30,9 +29,6 @@ export default function OnboardingProfile() {
               <Label className="text-sm font-medium text-gray-700">Profile photo</Label>
               <Avatar className="h-32 w-32 bg-gray-200">
                 <AvatarImage src="" alt="Profile" />
-                <AvatarFallback className="bg-gray-200">
-                  <Upload className="h-8 w-8 text-gray-400" />
-                </AvatarFallback>
               </Avatar>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" className="text-sm">

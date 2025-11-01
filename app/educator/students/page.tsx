@@ -23,13 +23,13 @@ import {
 export default function StudentRoster() {
   // Sample student data - in production, this would come from props or API
   const students = [
-    { id: 1, name: "Alice Johnson", email: "alice@example.com", progress: 85, status: "Active", avatar: null },
-    { id: 2, name: "Bob Smith", email: "bob@example.com", progress: 72, status: "Active", avatar: null },
-    { id: 3, name: "Carol Williams", email: "carol@example.com", progress: 90, status: "Active", avatar: null },
-    { id: 4, name: "David Brown", email: "david@example.com", progress: 45, status: "Behind", avatar: null },
-    { id: 5, name: "Emma Davis", email: "emma@example.com", progress: 68, status: "Active", avatar: null },
-    { id: 6, name: "Frank Miller", email: "frank@example.com", progress: 55, status: "Active", avatar: null },
-    { id: 7, name: "Grace Wilson", email: "grace@example.com", progress: 78, status: "Active", avatar: null },
+    { id: 1, name: "Alice Johnson", email: "alice@example.com", progress: 85, status: "Active", avatar: "https://github.com/shadcn.png" },
+    { id: 2, name: "Bob Smith", email: "bob@example.com", progress: 72, status: "Active", avatar: "https://github.com/shadcn.png" },
+    { id: 3, name: "Carol Williams", email: "carol@example.com", progress: 90, status: "Active", avatar: "https://github.com/shadcn.png" },
+    { id: 4, name: "David Brown", email: "david@example.com", progress: 45, status: "Behind", avatar: "https://github.com/shadcn.png" },
+    { id: 5, name: "Emma Davis", email: "emma@example.com", progress: 68, status: "Active", avatar: "https://github.com/shadcn.png" },
+    { id: 6, name: "Frank Miller", email: "frank@example.com", progress: 55, status: "Active", avatar: "https://github.com/shadcn.png" },
+    { id: 7, name: "Grace Wilson", email: "grace@example.com", progress: 78, status: "Active", avatar: "https://github.com/shadcn.png" },
   ]
 
   return (
