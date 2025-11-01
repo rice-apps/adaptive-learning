@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -65,10 +65,10 @@ export default function StudentOnboarding() {
               />
             </div>
 
-            {/* Goals for BMS Section */}
+            {/* Goals for 8MS Section */}
             <div className="space-y-2">
               <Label htmlFor="goals" className="text-sm font-medium text-gray-700">
-                Goals for being in BMS
+                Goals for being in 8MS
               </Label>
               <Textarea
                 id="goals"
