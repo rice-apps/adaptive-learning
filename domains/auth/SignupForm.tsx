@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signupSchema, SignupFormData } from "./schemas";
@@ -37,18 +36,14 @@ export default function SignupForm() {
     },
   });
 
-  const { setValue } = form;
-
-  useEffect(() => {
-    setValue("role", "student");
-  }, [setValue]);
-
   const onSubmit = async (data: SignupFormData) => {
     const supabase = await createClient();
     const { error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
-      options: { data: { role: data.role } },
+      options: {
+        data: { role: data.role },
+      },
     });
 
     if (error) {
@@ -118,15 +113,10 @@ export default function SignupForm() {
         <FormField
           control={form.control}
           name="role"
-          render={() => (
+          render={({ field }) => (
             <FormItem>
               <FormControl>
-                <Select
-                  defaultValue="student"
-                  onValueChange={(value) =>
-                    setValue("role", value, { shouldValidate: true })
-                  }
-                >
+                <Select defaultValue="student" onValueChange={field.onChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
