@@ -39,6 +39,8 @@ import {
 } from "@/components/ui/item"
 import { Badge } from "@/components/ui/badge"
 import { Search } from "lucide-react"
+import Image from 'next/image'
+import logo from "../../../assets/logo.webp"
 
 
 
@@ -49,11 +51,11 @@ export default function StudentDashboard() {
 
       {/*Sticky Top Gray Header */}
       <div className="bg-black w-full sticky top-0 z-50 shadow-sm">
-          <header className="relative max-w-6xl mx-auto py-4 px-8 flex items-center justify-between">
+          <header className="relative w-full py-4 px-8 flex items-center justify-between">
               {/* Left: Page title */}
               {/* TODO: Replace page title with Million Stories Logo */}
               <h1 className="text-lg font-semibold z-10">
-                <img></img>
+                <Image src={logo} alt="My Image" width={120} height={72} />
               </h1>
 
               {/* Center: Search bar absolutely centered */}
