@@ -80,8 +80,8 @@ export async function POST(request: Request) {
     // Check if student already exists in Students table
     const { data: existingStudent } = await supabaseAdmin
       .from('Students')
-      .select('uuid')
-      .eq('uuid', user.id)
+      .select('id')
+      .eq('id', user.id)
       .single();
     
     if (existingStudent) {
@@ -116,7 +116,7 @@ export async function POST(request: Request) {
     console.log("Inserting into Students table...");
     
     const studentInsertData: any = {
-      uiud: user.id,
+      id: user.id,
       email: user.email,
       role: 'student',
     };
@@ -157,7 +157,7 @@ export async function POST(request: Request) {
       { 
         message: "Profile created successfully", 
         data: studentData,
-        redirectTo: "/student/dashboard"
+        redirectTo: "/student/learning-style-quiz" 
       },
       { status: 200 }
     );
