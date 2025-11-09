@@ -303,6 +303,7 @@ export default function LearningStyleQuiz() {
         setIsSubmitting(false);
         return;
       }
+      console.log("Submitting quiz for Auth User ID:", user.id);
 
       // Prepare learning style data
       const learningStyleData = {
@@ -322,15 +323,27 @@ export default function LearningStyleQuiz() {
       // Update Students table
       const { error } = await supabase
         .from("Students")
-        .update({ learning_style: learningStyleData })
-        .eq("userid", user.id);
+        .update({ "learning_style": learningStyleData })
+        .eq("id", user.id);
 
-      if (error) {
-        console.error("Error updating learning style:", error);
-        toast.error("Failed to save your responses. Please try again.");
-        setIsSubmitting(false);
-        return;
-      }
+        if (error) {
+          // --- START DEBUGGING ---
+          // Log the full error to the console to see its properties
+          console.log("Full error object:", JSON.stringify(error, null, 2));
+  
+          // Log specific PostgrestError properties if they exist
+          console.error("Error Code:", error?.code);
+          console.error("Error Message:", error?.message);
+          console.error("Error Details:", error?.details);
+          // --- END DEBUGGING ---
+  
+          // Original line (you can keep or remove)
+          console.error("Error updating learning style:", error); 
+          
+          toast.error("Failed to save your responses. Please try again.");
+          setIsSubmitting(false);
+          return;
+        }
 
       toast.success("Learning style quiz completed successfully!");
       router.push("/student/dashboard");
@@ -521,4 +534,3 @@ export default function LearningStyleQuiz() {
     </div>
   );
 }
-
