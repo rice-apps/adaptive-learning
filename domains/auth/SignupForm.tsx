@@ -1,12 +1,13 @@
 "use client";
 
-import {Button} from "@/components/ui/button";
-import {Input} from "@/components/ui/input";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
-import {useState} from "react";
-import {UserRole} from "./types";
-import {createClient} from "@/lib/supabase/client";
-import {toast} from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react";
+import { UserRole } from "./types";
+import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
+import Link from "next/link";
 
 export default function SignupForm() {
   const [email, setEmail] = useState("");
@@ -48,19 +49,19 @@ export default function SignupForm() {
     if (!verifyFields()) {
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
       const supabase = await createClient();
-      const {data, error} = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: email,
         password: password,
         options: {
           data: {
             role: role,
           },
-          emailRedirectTo: `${window.location.origin}/api/auth/confirm`
+          emailRedirectTo: `${window.location.origin}/api/auth/confirm`,
         },
       });
 
@@ -96,8 +97,8 @@ export default function SignupForm() {
             Click the link in the email to complete your signup and you'll be automatically redirected to the onboarding page.
           </p>
         </div>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => setSignupComplete(false)}
           className="mt-4"
         >
@@ -115,8 +116,8 @@ export default function SignupForm() {
       <FormPassword placeholder="Confirm Password" input={confirmPassword} setInput={setConfirmPassword} />
       <RoleSelect role={role} setRole={setRole} />
       <div className="flex flex-wrap items-center gap-4 md:flex-row">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={handleSignup}
           disabled={loading}
         >
@@ -124,10 +125,10 @@ export default function SignupForm() {
         </Button>
       </div>
       <div className="text-center text-sm text-gray-600">
-        Already have an account?{' '}
-        <a href="/login" className="text-blue-600 hover:underline">
+        Already have an account?{" "}
+        <Link href="/login" className="text-blue-600 hover:underline">
           Log in
-        </a>
+        </Link>
       </div>
     </div>
   );
@@ -148,7 +149,7 @@ const FormItem = ({
       id="textBox"
       placeholder={placeholder}
       value={input}
-      onChange={e => setInput(e.target.value)}
+      onChange={(e) => setInput(e.target.value)}
       required
     />
   );
@@ -169,13 +170,13 @@ const FormPassword = ({
       id="textBox"
       placeholder={placeholder}
       value={input}
-      onChange={e => setInput(e.target.value)}
+      onChange={(e) => setInput(e.target.value)}
       required
     />
   );
 };
 
-const RoleSelect = ({role, setRole}: {role: string; setRole: (role: string) => void}) => {
+const RoleSelect = ({ role, setRole }: { role: string; setRole: (role: string) => void }) => {
   const roles = Object.values(UserRole);
   return (
     <Select value={role} onValueChange={setRole}>
@@ -183,7 +184,7 @@ const RoleSelect = ({role, setRole}: {role: string; setRole: (role: string) => v
         <SelectValue placeholder="Select a role" />
       </SelectTrigger>
       <SelectContent>
-        {roles.map(role => (
+        {roles.map((role) => (
           <SelectItem key={role} value={role}>
             {role}
           </SelectItem>
