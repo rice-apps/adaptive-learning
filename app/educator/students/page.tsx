@@ -1,3 +1,5 @@
+'use client'
+import { useState, useEffect } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,9 +22,20 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
+export const dynamic = 'force-dynamic'
+
+interface Student {
+  id: String;
+  email: String;
+  progress: number;
+  status: String;
+  name: String;
+  avatar: String | null;
+}
+
 export default function StudentRoster() {
-  // Sample student data - in production, this would come from props or API
-  const students = [
+  //Sample student data - in production, this would come from props or API
+  const students2 = [
     { id: 1, name: "Alice Johnson", email: "alice@example.com", progress: 85, status: "Active", avatar: null },
     { id: 2, name: "Bob Smith", email: "bob@example.com", progress: 72, status: "Active", avatar: null },
     { id: 3, name: "Carol Williams", email: "carol@example.com", progress: 90, status: "Active", avatar: null },
@@ -31,6 +44,54 @@ export default function StudentRoster() {
     { id: 6, name: "Frank Miller", email: "frank@example.com", progress: 55, status: "Active", avatar: null },
     { id: 7, name: "Grace Wilson", email: "grace@example.com", progress: 78, status: "Active", avatar: null },
   ]
+
+  const [students, setStudents] = useState<Student[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
+  
+  
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const response = await fetch("/api/educator/students")  
+        const data = await response.json()
+
+        if (data.error) {
+          // If there's an error, set the error state
+          setError(data.error)  
+        } 
+        else {
+          const formattedStudents: Student[] = data.students.map((student: any) => ({
+          id: student.id,
+          email: student.email,
+          progress: student.progress,
+          status: student.status,
+          name: student.name,
+          avatar: student.avatar
+          }))
+          // Set the formatted students state
+          setStudents(formattedStudents)  
+        }
+        } catch (err) {
+          setError('Failed to load students data')  
+        } finally {
+          //Finished data loading
+          setLoading(false)  
+        }
+    }
+
+    fetchStudents()
+  }, [])  
+
+  if (loading) {
+     // Diisplays Loading... state while waiting for data
+    return <div>Loading...</div> 
+  }
+
+  if (error) {
+     // Error message if something went wrong
+    return <div>{error}</div> 
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -117,8 +178,8 @@ export default function StudentRoster() {
                         <Avatar className="h-10 w-10">
                           <AvatarImage src={student.avatar} alt={student.name} />
                           <AvatarFallback className="bg-gray-300">
-                            {student.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
+                  {student.name ? student.name.split(" ").map(n => n[0]).join("") : "?"}
+                </AvatarFallback>
                         </Avatar>
                       </TableCell>
                       <TableCell className="font-medium">
