@@ -1,13 +1,13 @@
-import {UserRole} from "@/domains/auth/types";
 import {createClient} from "@/lib/supabase/server";
 import authDAL from "./authDal";
 
-async function insertUserRole(role: UserRole) {
+async function insertEducator(email: string) {
   const supabase = await createClient();
   const userId = await authDAL.getUserId();
+
   const {data, error} = await supabase
-    .from("user_role")
-    .insert([{user_id: userId, role: role}])
+    .from("Educators")
+    .insert([{id: userId, email: email}])
     .select();
 
   if (error) {
@@ -18,5 +18,5 @@ async function insertUserRole(role: UserRole) {
 }
 
 export default {
-  insertUserRole,
+  insertEducator,
 };
