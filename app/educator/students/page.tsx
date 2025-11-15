@@ -42,6 +42,8 @@ export default function StudentRoster() {
 
   // Filter state: 'All' | 'At Risk' | 'Inactive' | 'On Track'
   const [filter, setFilter] = useState<'All' | 'At Risk' | 'Inactive' | 'On Track'>('All')
+  // Time range filter: 'all' | 'week' | 'month'
+  const [timeRange, setTimeRange] = useState<'all' | 'week' | 'month'>('all')
 
   // Compute filtered students list
   const filteredStudents = useMemo(() => {
@@ -110,16 +112,29 @@ export default function StudentRoster() {
           </div>
       
         {/* Students table */}
-        <Card className="shadow-sm mt-8">
-          <CardHeader>
+        <Card className="shadow-sm mt-8 rounded-lg border border-gray-200 py-2 gap-1">
+          <CardHeader className="flex items-center justify-between px-6 py-2">
             <CardTitle className="text-2xl font-bold">My Students</CardTitle>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground hidden md:inline">Filter:</span>
+              <Select defaultValue={timeRange} onValueChange={(v) => setTimeRange(v as 'all' | 'week' | 'month')}>
+                <SelectTrigger className="h-8 w-25 rounded-full border border-gray-300 bg-gray-100 text-sm pl-3 pr-2">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Time</SelectItem>
+                  <SelectItem value="week">Last Week</SelectItem>
+                  <SelectItem value="month">Last Month</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           {/* Filter buttons */}
-            <div className="flex items-center mb-4 pl-[25px]">
+            <div className="flex items-center mb-0 px-6">
               <Button
                 variant="outline"
                 size="sm"
-                className={`mr-[5px] px-7 py-5 text-sm ${filter === 'All' ? 'bg-[#A3E635] border-0' : ''}`}
+                className={`mr-3 px-5 py-2 text-sm ${filter === 'All' ? 'bg-[#A3E635] border-0' : ''}`}
                 onClick={() => setFilter('All')}
               >
                 All
@@ -127,7 +142,7 @@ export default function StudentRoster() {
               <Button
                 variant="outline"
                 size="sm"
-                className={`ml-[24px] px-7 py-5 text-sm ${filter === 'At Risk' ? 'bg-[#FFE2E2] border-0' : ''}`}
+                className={`ml-4 px-5 py-2 text-sm ${filter === 'At Risk' ? 'bg-[#FFE2E2] border-0' : ''}`}
                 onClick={() => setFilter('At Risk')}
               >
                 At Risk
@@ -135,7 +150,7 @@ export default function StudentRoster() {
               <Button
                 variant="outline"
                 size="sm"
-                className={`ml-[24px] px-7 py-5 text-sm ${filter === 'Inactive' ? 'bg-[#A3E635] border-0' : ''}`}
+                className={`ml-4 px-5 py-2 text-sm ${filter === 'Inactive' ? 'bg-[#A3E635] border-0' : ''}`}
                 onClick={() => setFilter('Inactive')}
               >
                 Inactive
@@ -143,7 +158,7 @@ export default function StudentRoster() {
               <Button
                 variant="outline"
                 size="sm"
-                className={`ml-[24px] px-7 py-5 text-sm ${filter === 'On Track' ? 'bg-[#A3E635] border-0' : ''}`}
+                className={`ml-4 px-5 py-2 text-sm ${filter === 'On Track' ? 'bg-[#A3E635] border-0' : ''}`}
                 onClick={() => setFilter('On Track')}
               >
                 On Track
@@ -156,10 +171,10 @@ export default function StudentRoster() {
                 <TableHeader>
                   <TableRow className="border-solid">
                  
-                      <TableHead className="w-[250px] pl-6 text-[#6B7280]">Student</TableHead>
-                      <TableHead className="w-[300px] text-center text-[#6B7280]">Progress</TableHead>
-                      <TableHead className="w-[100px] pl-12 text-[#6B7280]">Engagement</TableHead>
-                      <TableHead className="w-[100px] pl-6 text-[#6B7280]">Status</TableHead>
+                      <TableHead className="w-[250px] pl-6 text-sm text-gray-500">Student</TableHead>
+                      <TableHead className="w-[300px] text-center text-sm text-gray-500">Progress</TableHead>
+                      <TableHead className="w-[220px] pl-4 text-sm text-gray-500 text-left">Engagement</TableHead>
+                      <TableHead className="w-[120px] pl-4 text-sm text-gray-500 text-left">Status</TableHead>
           
                   </TableRow>
                 </TableHeader>
@@ -189,7 +204,7 @@ export default function StudentRoster() {
                         </div>
                       </TableCell>
 
-                      <TableCell>
+                      <TableCell className="pl-4">
                         <Badge 
                           variant={student.status === "On Track" ? "outline" : "secondary"}
                           className={
