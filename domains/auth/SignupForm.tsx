@@ -1,143 +1,195 @@
 "use client";
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { signupSchema, SignupFormData } from "./schemas";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react";
+import { UserRole } from "./types";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
-
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { UserRole } from "./types";
+import Link from "next/link";
 
 export default function SignupForm() {
-  const form = useForm<SignupFormData>({
-    resolver: zodResolver(signupSchema),
-    mode: "onSubmit",
-    defaultValues: {
-      email: "",
-      password: "",
-      confirmPassword: "",
-      role: "student",
-    },
-  });
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState("student");
+  const [loading, setLoading] = useState(false);
+  const [signupComplete, setSignupComplete] = useState(false);
 
-  const onSubmit = async (data: SignupFormData) => {
-    const supabase = await createClient();
-    const { error } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-      options: {
-        data: { role: data.role },
-      },
-    });
+  const verifyFields = () => {
+    if (!email) {
+      toast.error("Email is required");
+      return false;
+    }
+    if (!password) {
+      toast.error("Password is required");
+      return false;
+    }
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return false;
+    }
+    if (!confirmPassword) {
+      toast.error("Confirm Password is required");
+      return false;
+    }
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return false;
+    }
+    if (!role) {
+      toast.error("Role is required");
+      return false;
+    }
+    return true;
+  };
 
-    if (error) {
-      toast.error(error.message || "Signup failed");
+  const handleSignup = async () => {
+    if (!verifyFields()) {
       return;
     }
 
-    toast.success("Signup successful!");
+    setLoading(true);
+
+    try {
+      const supabase = await createClient();
+      const { data, error } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+          data: {
+            role: role,
+          },
+          emailRedirectTo: `${window.location.origin}/api/auth/confirm`,
+        },
+      });
+
+      if (error) {
+        console.error(error);
+        toast.error(error.message || "Something went wrong");
+        return;
+      }
+
+      if (data.user) {
+        setSignupComplete(true);
+        toast.success("Check your email to confirm your account!");
+        console.log("Signup worked");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("An unexpected error occurred");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  return (
-    <Form {...form}>
-      <form
-        noValidate
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-4 w-1/3 bg-white rounded-lg border p-8"
-      >
-        <h1 className="text-xl font-semibold">Sign Up</h1>
-
-        {/* Email */}
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <Input placeholder="Email" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Password */}
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <Input type="password" placeholder="Password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Confirm Password */}
-        <FormField
-          control={form.control}
-          name="confirmPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <Input
-                  type="password"
-                  placeholder="Confirm Password"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Role */}
-        <FormField
-          control={form.control}
-          name="role"
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <Select defaultValue="student" onValueChange={field.onChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.values(UserRole).map((role) => (
-                      <SelectItem key={role} value={role}>
-                        {role}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <Button type="submit" className="w-full">
-          Sign Up
+  if (signupComplete) {
+    return (
+      <div className="flex flex-col gap-5 w-1/3 min-h-[300px] bg-white rounded-lg border p-8">
+        <h1 className="text-2xl font-bold">Check your email</h1>
+        <div className="flex flex-col gap-3">
+          <p className="text-gray-600">
+            We've sent a confirmation email to:
+          </p>
+          <p className="font-semibold">{email}</p>
+          <p className="text-gray-600">
+            Click the link in the email to complete your signup and you'll be automatically redirected to the onboarding page.
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => setSignupComplete(false)}
+          className="mt-4"
+        >
+          Back to Signup
         </Button>
-      </form>
-    </Form>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-5 w-1/3 h-1/2 bg-white rounded-lg border p-8">
+      <h1 className="text-2xl font-bold">Sign Up</h1>
+      <FormItem placeholder="Email" input={email} setInput={setEmail} />
+      <FormPassword placeholder="Password" input={password} setInput={setPassword} />
+      <FormPassword placeholder="Confirm Password" input={confirmPassword} setInput={setConfirmPassword} />
+      <RoleSelect role={role} setRole={setRole} />
+      <div className="flex flex-wrap items-center gap-4 md:flex-row">
+        <Button
+          variant="outline"
+          onClick={handleSignup}
+          disabled={loading}
+        >
+          {loading ? "Signing up..." : "Sign Up"}
+        </Button>
+      </div>
+      <div className="text-center text-sm text-gray-600">
+        Already have an account?{" "}
+        <Link href="/login" className="text-blue-600 hover:underline">
+          Log in
+        </Link>
+      </div>
+    </div>
   );
 }
+
+const FormItem = ({
+  placeholder,
+  input,
+  setInput,
+}: {
+  placeholder: string;
+  input: string;
+  setInput: (input: string) => void;
+}) => {
+  return (
+    <Input
+      type="text"
+      id="textBox"
+      placeholder={placeholder}
+      value={input}
+      onChange={(e) => setInput(e.target.value)}
+      required
+    />
+  );
+};
+
+const FormPassword = ({
+  placeholder,
+  input,
+  setInput,
+}: {
+  placeholder: string;
+  input: string;
+  setInput: (input: string) => void;
+}) => {
+  return (
+    <Input
+      type="password"
+      id="textBox"
+      placeholder={placeholder}
+      value={input}
+      onChange={(e) => setInput(e.target.value)}
+      required
+    />
+  );
+};
+
+const RoleSelect = ({ role, setRole }: { role: string; setRole: (role: string) => void }) => {
+  const roles = Object.values(UserRole);
+  return (
+    <Select value={role} onValueChange={setRole}>
+      <SelectTrigger>
+        <SelectValue placeholder="Select a role" />
+      </SelectTrigger>
+      <SelectContent>
+        {roles.map((role) => (
+          <SelectItem key={role} value={role}>
+            {role}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+};
