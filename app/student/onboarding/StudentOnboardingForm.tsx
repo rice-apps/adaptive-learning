@@ -100,7 +100,7 @@ export default function StudentOnboardingForm() {
 
               {/* Name */}
               <div className="space-y-2">
-                <Label htmlFor="name">Name *</Label>
+                <Label htmlFor="name">Profile Name. Store it as your first name + last name initial. Ex: MacA *</Label>
                 <Input
                   id="name"
                   type="text"
