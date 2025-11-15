@@ -112,7 +112,6 @@ export async function POST(request: Request) {
     console.log("Role inserted successfully");
     
     // Step 2: Insert into Students table (public schema)
-    // Only insert columns that exist in your Students table
     console.log("Inserting into Students table...");
     
     const studentInsertData: any = {
@@ -121,12 +120,14 @@ export async function POST(request: Request) {
       role: 'student',
     };
 
+    // Add profileName from the 'name' field in the form
+    if (name) studentInsertData.profileName = name;
+    
     // Add optional fields only if they have values AND the column exists
     if (plan) studentInsertData.plan = plan;
     if (grade_reading) studentInsertData.grade_reading = grade_reading;
     if (grade_math) studentInsertData.grade_math = grade_math;
     if (current_level) studentInsertData.current_level = current_level;
-    
     
     console.log("Data to insert:", studentInsertData);
     
