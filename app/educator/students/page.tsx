@@ -25,30 +25,20 @@ import {
 export const dynamic = 'force-dynamic'
 
 interface Student {
-  id: String;
-  email: String;
+  id: string;
+  email: string;
   progress: number;
-  status: String;
-  name: String;
-  avatar: String | null;
+  status: string;
+  name: string;
+  avatar: string | null;
 }
 
 export default function StudentRoster() {
-  //Sample student data - in production, this would come from props or API
-  const students2 = [
-    { id: 1, name: "Alice Johnson", email: "alice@example.com", progress: 85, status: "Active", avatar: null },
-    { id: 2, name: "Bob Smith", email: "bob@example.com", progress: 72, status: "Active", avatar: null },
-    { id: 3, name: "Carol Williams", email: "carol@example.com", progress: 90, status: "Active", avatar: null },
-    { id: 4, name: "David Brown", email: "david@example.com", progress: 45, status: "Behind", avatar: null },
-    { id: 5, name: "Emma Davis", email: "emma@example.com", progress: 68, status: "Active", avatar: null },
-    { id: 6, name: "Frank Miller", email: "frank@example.com", progress: 55, status: "Active", avatar: null },
-    { id: 7, name: "Grace Wilson", email: "grace@example.com", progress: 78, status: "Active", avatar: null },
-  ]
 
   const [students, setStudents] = useState<Student[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
-  
+  const [filterStatus, setFilterStatus] = useState<string>("all")
   
   useEffect(() => {
     const fetchStudents = async () => {
@@ -72,16 +62,22 @@ export default function StudentRoster() {
           // Set the formatted students state
           setStudents(formattedStudents)  
         }
-        } catch (err) {
-          setError('Failed to load students data')  
-        } finally {
-          //Finished data loading
-          setLoading(false)  
         }
+      catch (err) {
+        setError('Failed to load students data')  
+      } finally {
+        //Finished data loading
+        setLoading(false)  
+      }
     }
 
     fetchStudents()
   }, [])  
+
+   const filteredStudents = students.filter(student => {
+    if (filterStatus === 'all') return true;
+    return student.status.toLowerCase() === filterStatus.toLowerCase(); 
+    });
 
   if (loading) {
      // Diisplays Loading... state while waiting for data
@@ -140,19 +136,14 @@ export default function StudentRoster() {
           
           {/* Filter buttons */}
           <div className="flex items-center gap-3 mb-4">
-            <Button variant="outline" size="sm">All</Button>
-            <Button variant="outline" size="sm">Active</Button>
-            <Button variant="outline" size="sm">Behind</Button>
-            <Button variant="outline" size="sm">Completed</Button>
-            
-            {/* Avatar with initial */}
-            <div className="ml-auto">
-              <Avatar className="h-12 w-12 bg-blue-500">
-                <AvatarFallback className="bg-blue-500 text-white text-lg">
-                  D
-                </AvatarFallback>
-              </Avatar>
-            </div>
+            <Button variant={filterStatus === "all" ? "default" : "outline"} size="sm" onClick={() =>setFilterStatus("all")}
+            >All</Button>
+             <Button variant={filterStatus === "On Track" ? "default" : "outline"} size="sm" onClick={() =>setFilterStatus("On Track")}
+            >On Track</Button>
+             <Button variant={filterStatus === "At Risk" ? "default" : "outline"} size="sm" onClick={() =>setFilterStatus("At Risk")}
+            >At Risk</Button>
+             <Button variant={filterStatus === "Inactive" ? "default" : "outline"} size="sm" onClick={() =>setFilterStatus("Inactive")}
+            >Inactive</Button>
           </div>
         </div>
 
@@ -172,7 +163,7 @@ export default function StudentRoster() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {students.map((student) => (
+                  {filteredStudents.map((student) => (
                     <TableRow key={student.id} className="hover:bg-gray-50">
                       <TableCell>
                         <Avatar className="h-10 w-10">
@@ -226,7 +217,7 @@ export default function StudentRoster() {
         {/* Pagination or additional controls can go here */}
         <div className="mt-4 flex items-center justify-between">
           <p className="text-sm text-gray-600">
-            Showing {students.length} of {students.length} students
+            Showing {filteredStudents.length} of {filteredStudents.length} students
           </p>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" disabled>Previous</Button>
