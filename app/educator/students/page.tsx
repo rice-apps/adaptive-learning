@@ -156,10 +156,10 @@ export default function StudentRoster() {
                 <TableHeader>
                   <TableRow className="border-solid">
                  
-                      <TableHead className="w-[250px] pl-4">Student</TableHead>
-                      <TableHead className="w-[200px] pl-6">Progress</TableHead>
-                      <TableHead className="w-[100px] pl-12">Engagement</TableHead>
-                      <TableHead className="w-[100px] pl-6">Status</TableHead>
+                      <TableHead className="w-[250px] pl-6 text-[#6B7280]">Student</TableHead>
+                      <TableHead className="w-[300px] text-center text-[#6B7280]">Progress</TableHead>
+                      <TableHead className="w-[100px] pl-12 text-[#6B7280]">Engagement</TableHead>
+                      <TableHead className="w-[100px] pl-6 text-[#6B7280]">Status</TableHead>
           
                   </TableRow>
                 </TableHeader>
@@ -168,23 +168,23 @@ export default function StudentRoster() {
                     <TableRow key={student.id} className="hover:bg-gray-50">
                       
                       <TableCell className="font-medium">
-                        <div className="text-black-700 px-4 py-2 rounded-md inline-block">
+                        <div className="text-black px-4 py-2 rounded-md inline-block">
                           {student.name}
                         </div>
                       </TableCell>
                       
-                      <TableCell>
-                        <div className="flex items-center gap-2">
+                      <TableCell className="text-center">
+                        <div className="flex items-center gap-2 justify-center">
                           <Progress 
                             value={student.progress} 
-                            className="w-[242] h-3.5 [&>div]:bg-[#A3E635]"
+                            className="w-[242px] h-3.5 [&>div]:bg-[#A3E635]"
                           />
                           <span className="text-sm text-black-600">{student.progress}%</span>
                         </div>
                       </TableCell>
                       <TableCell className="font-medium">
 
-                        <div className="text-black-700 px-4 py-2 rounded-md inline-block text-sm">
+                        <div className="text-black px-4 py-2 rounded-md inline-block text-sm">
                             {student.engagement} 
                         </div>
                       </TableCell>
