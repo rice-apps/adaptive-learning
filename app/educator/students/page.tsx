@@ -39,6 +39,7 @@ export default function StudentRoster() {
     { id: 9, name: "Heidi King", progress: 10, engagement: "less than 1 hour", status: "At Risk" },
   ]
 
+
   // Filter state: 'All' | 'At Risk' | 'Inactive' | 'On Track'
   const [filter, setFilter] = useState<'All' | 'At Risk' | 'Inactive' | 'On Track'>('All')
 
@@ -95,11 +96,11 @@ export default function StudentRoster() {
 
         {/* Header/two Big filter buttons */}
             <div className="flex items-center mb-4 pl-[25px]">
-              <Button variant="outline" size="lg" className="px-7 py-7 text-lg font-bold text-white bg-black">Cohort Overview</Button>
+              <Button variant="outline" size="lg" className="ml-[-25px] px-7 py-7 text-lg font-bold text-black bg-white">Cohort Overview</Button>
               <Button
                 variant="outline"
                 size="lg"
-                className="ml-[40px] px-8 py-7 text-lg font-bold text-black border-1"
+                className="ml-[30px] px-8 py-7 text-lg font-bold text-white bg-black border-0"
               >
                 Students
               </Button>
@@ -109,7 +110,7 @@ export default function StudentRoster() {
           </div>
       
         {/* Students table */}
-        <Card className="shadow-sm">
+        <Card className="shadow-sm mt-8">
           <CardHeader>
             <CardTitle className="text-2xl font-bold">My Students</CardTitle>
           </CardHeader>
@@ -155,10 +156,10 @@ export default function StudentRoster() {
                 <TableHeader>
                   <TableRow className="border-solid">
                  
-                    <TableHead className="w-[250px]">Student</TableHead>
-                    <TableHead className="w-[200px]">Progress</TableHead>
-                    <TableHead className="w-[100px]">Engagement</TableHead>
-                    <TableHead className="w-[100px]">Status</TableHead>
+                      <TableHead className="w-[250px] pl-4">Student</TableHead>
+                      <TableHead className="w-[200px] pl-6">Progress</TableHead>
+                      <TableHead className="w-[100px] pl-12">Engagement</TableHead>
+                      <TableHead className="w-[100px] pl-6">Status</TableHead>
           
                   </TableRow>
                 </TableHeader>
