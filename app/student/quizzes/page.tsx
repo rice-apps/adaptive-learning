@@ -122,9 +122,9 @@ export default function QuizzesPage() {
         toast.error("Please answer all questions");
         return false;
       }
-      // Check if all dropdowns have selections
+      // Check if all inputs have letters
       if (answer.some((a: string) => !a || a.trim() === "")) {
-        toast.error("Please select an option for all questions");
+        toast.error("Please enter a letter for all questions");
         return false;
       }
     }
@@ -232,7 +232,7 @@ export default function QuizzesPage() {
             )}
             {currentQuestion.question_type === "drag_drop" && (
               <p className="text-xl font-semibold">
-                Match each question with the correct answer from the dropdowns below.
+                Match each item in Column A with the correct answer from Column B.
               </p>
             )}
           </div>
@@ -274,33 +274,66 @@ export default function QuizzesPage() {
           )}
 
           {currentQuestion.question_type === "drag_drop" && (
-            <div className="space-y-4">
-              {(details as DragDropDetails).qa_pairs.map((pair, index) => (
-                <div key={index} className="flex items-center gap-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                  <div className="flex-1">
-                    <p className="text-base font-medium text-gray-900">{pair.question}</p>
-                  </div>
-                  <Select
-                    value={Array.isArray(answer) ? answer[index] || "" : ""}
-                    onValueChange={(value) => {
-                      const currentAnswers = Array.isArray(answer) ? [...answer] : [];
-                      currentAnswers[index] = value;
-                      setCurrentAnswer(currentAnswers);
-                    }}
-                  >
-                    <SelectTrigger className="w-64">
-                      <SelectValue placeholder="Select an answer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(details as DragDropDetails).options.map((option, optIndex) => (
-                        <SelectItem key={optIndex} value={option}>
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+            <div className="border border-gray-300 rounded-lg overflow-hidden">
+              {/* Table Header */}
+              <div className="grid grid-cols-2 border-b border-gray-300 bg-gray-50">
+                <div className="p-4 border-r border-gray-300">
+                  <h3 className="text-sm font-semibold text-gray-700">Column A</h3>
                 </div>
-              ))}
+                <div className="p-4">
+                  <h3 className="text-sm font-semibold text-gray-700">Options</h3>
+                </div>
+              </div>
+              
+              {/* Table Body */}
+              <div className="grid grid-cols-2">
+                {/* Left Column - Premises with Input Fields */}
+                <div className="border-r border-gray-300">
+                  {(details as DragDropDetails).qa_pairs.map((pair, index) => {
+                    const currentAnswerValue = Array.isArray(answer) ? answer[index] || "" : "";
+                    return (
+                      <div 
+                        key={index} 
+                        className="p-4 border-b border-gray-300 last:border-b-0 min-h-[80px] flex items-center"
+                      >
+                        <div className="flex items-start gap-3 w-full">
+                          <Input
+                            type="text"
+                            value={currentAnswerValue}
+                            onChange={(e) => {
+                              const value = e.target.value.toUpperCase().trim();
+                              // Only allow single letter A-Z
+                              if (value === "" || /^[A-Z]$/.test(value)) {
+                                const currentAnswers = Array.isArray(answer) ? [...answer] : [];
+                                currentAnswers[index] = value;
+                                setCurrentAnswer(currentAnswers);
+                              }
+                            }}
+                            placeholder="__"
+                            className="w-12 h-12 text-center text-lg font-semibold"
+                            maxLength={1}
+                          />
+                          <span className="text-base font-semibold text-gray-700 mt-2">{index + 1}.</span>
+                          <p className="text-base text-gray-900 flex-1 mt-2">{pair.question}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                {/* Right Column - Static List of Options */}
+                <div>
+                  {(details as DragDropDetails).options.map((option, optIndex) => (
+                    <div 
+                      key={optIndex} 
+                      className="px-4 py-2 flex items-center"
+                    >
+                      <span className="text-base font-semibold text-gray-700">{String.fromCharCode(65 + optIndex)}.</span>
+                      <p className="text-base text-gray-900 ml-2">{option}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </div>
