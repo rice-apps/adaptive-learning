@@ -37,7 +37,12 @@ async function getFullQuiz(quizId: string) {
   return await quizDAL.getFullQuiz(quizId);
 }
 
+async function getQuizzes(filters: {educatorId?: string; studentId?: string}) {
+  return await quizDAL.getQuizzes(filters);
+}
+
 export default {
   generateQuiz,
   getFullQuiz,
+  getQuizzes,
 };
