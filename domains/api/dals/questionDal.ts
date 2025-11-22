@@ -43,6 +43,19 @@ async function getRandomQuestionsByTopic(topic: QuestionTopic, amount: number) {
   return data;
 }
 
+async function getQuestionsByIds(questionIds: string[]) {
+  const supabase = await createClient();
+
+  const {data, error} = await supabase.from("Questions").select("*").in("id", questionIds);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data || [];
+}
+
 export default {
   getRandomQuestionsByTopic,
+  getQuestionsByIds,
 };

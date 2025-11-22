@@ -1,5 +1,5 @@
 import quizDAL from "../dals/quizDal";
-import {getRandomQuestionsByTopic} from "./questionManager";
+import questionManager from "./questionManager";
 import {QuestionTopic} from "../dals/questionDal";
 
 type TopicQuestionDistribution = Record<QuestionTopic, number>;
@@ -15,7 +15,7 @@ async function generateQuiz(
   // Get random questions for each topic
   for (const [topic, amount] of Object.entries(topic_question_distribution)) {
     if (amount === undefined) continue;
-    const questions = await getRandomQuestionsByTopic(topic as QuestionTopic, amount);
+    const questions = await questionManager.getRandomQuestionsByTopic(topic as QuestionTopic, amount);
 
     // Extract question IDs (assuming questions have an 'id' field)
     const questionIds = questions.map((question: any) => question.id);

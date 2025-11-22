@@ -1,4 +1,5 @@
 import {createClient} from "@/lib/supabase/server";
+import questionManager from "../managers/questionManager";
 
 async function insertQuiz(questions: string[], educatorId: string, studentId: string) {
   const supabase = await createClient();
@@ -27,18 +28,11 @@ async function getFullQuiz(quizId: string) {
 
   // Get all questions for this quiz
   if (quiz.questions && quiz.questions.length > 0) {
-    const {data: questions, error: questionsError} = await supabase
-      .from("Questions")
-      .select("*")
-      .in("id", quiz.questions);
-
-    if (questionsError) {
-      throw new Error(questionsError.message);
-    }
+    const questions = await questionManager.getQuestionsByIds(quiz.questions);
 
     return {
       ...quiz,
-      questionDetails: questions || [],
+      questionDetails: questions,
     };
   }
 
