@@ -24,3 +24,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({error: error instanceof Error ? error.message : "Unknown error"}, {status: 500});
   }
 }
+
+export async function GET(req: NextRequest) {
+  try {
+    const {searchParams} = req.nextUrl;
+    const educatorId = searchParams.get("educatorId");
+    const studentId = searchParams.get("studentId");
+
+    if (!educatorId && !studentId) {
+      return NextResponse.json({error: "At least one of educatorId or studentId is required"}, {status: 400});
+    }
+
+    const filters: {educatorId?: string; studentId?: string} = {};
+    if (educatorId) filters.educatorId = educatorId;
+    if (studentId) filters.studentId = studentId;
+
+    const quizzes = await quizManager.getQuizzes(filters);
+
+    return NextResponse.json(quizzes);
+  } catch (error) {
+    return NextResponse.json({error: error instanceof Error ? error.message : "Unknown error"}, {status: 500});
+  }
+}

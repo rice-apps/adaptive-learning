@@ -48,7 +48,30 @@ async function getFullQuiz(quizId: string) {
   };
 }
 
+async function getQuizzes(filters: {educatorId?: string; studentId?: string}) {
+  const supabase = await createClient();
+
+  let query = supabase.from("Quizzes").select("*");
+
+  if (filters.educatorId) {
+    query = query.eq("educator_id", filters.educatorId);
+  }
+
+  if (filters.studentId) {
+    query = query.eq("student_id", filters.studentId);
+  }
+
+  const {data, error} = await query;
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+}
+
 export default {
   insertQuiz,
   getFullQuiz,
+  getQuizzes,
 };
