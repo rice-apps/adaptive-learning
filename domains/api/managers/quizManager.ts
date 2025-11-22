@@ -26,13 +26,11 @@ async function generateQuiz(
   if (provided_question_ids && provided_question_ids.length > 0) {
     allQuestionIds.push(...provided_question_ids);
   }
-  console.log(allQuestionIds);
-  return allQuestionIds
 
   // Insert quiz into database
-  // const quiz = await quizDAL.insertQuiz(allQuestionIds, educatorId, studentId);
+  const quiz = await quizDAL.insertQuiz(allQuestionIds, educatorId, studentId);
 
-  // return quiz;
+  return quiz;
 }
 
 export default {
