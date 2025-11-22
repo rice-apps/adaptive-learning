@@ -109,26 +109,40 @@ export default function SignupForm() {
   }
 
   return (
-    <div className="flex flex-col gap-5 w-1/3 h-1/2 bg-white rounded-lg border p-8">
-      <h1 className="text-2xl font-bold">Sign Up</h1>
-      <FormItem placeholder="Email" input={email} setInput={setEmail} />
-      <FormPassword placeholder="Password" input={password} setInput={setPassword} />
-      <FormPassword placeholder="Confirm Password" input={confirmPassword} setInput={setConfirmPassword} />
-      <RoleSelect role={role} setRole={setRole} />
-      <div className="flex flex-wrap items-center gap-4 md:flex-row">
-        <Button
-          variant="outline"
-          onClick={handleSignup}
-          disabled={loading}
-        >
-          {loading ? "Signing up..." : "Sign Up"}
-        </Button>
+    <div className="flex gap-10 w-full">
+      {/* Left Column */}
+      <div className="flex w-1/2 justify-center items-center">
+        <div className="flex flex-col w-2/3 h-1/2 bg-white rounded-lg border">
+          <h1 className="text-2xl font-bold bg-lime-300">Sign Up</h1>
+
+          <div className="flex flex-col gap-4 p-8">
+            <FormItem placeholder="Email" input={email} setInput={setEmail} />
+            <FormPassword placeholder="Password" input={password} setInput={setPassword} />
+            <FormPassword placeholder="Confirm Password" input={confirmPassword} setInput={setConfirmPassword} />
+            <RoleSelect role={role} setRole={setRole} />
+            <div className="flex flex-wrap items-center gap-4 md:flex-row">
+              <Button
+                variant="outline"
+                onClick={handleSignup}
+                disabled={loading}
+              >
+                {loading ? "Signing up..." : "Sign Up"}
+              </Button>
+            </div>
+            <div className="text-center text-sm text-gray-600">
+              Already have an account?{" "}
+              <Link href="/login" className="text-blue-600 hover:underline">
+                Log in
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
-      <div className="text-center text-sm text-gray-600">
-        Already have an account?{" "}
-        <Link href="/login" className="text-blue-600 hover:underline">
-          Log in
-        </Link>
+
+      {/* Right Column */}
+      <div className="w-1/2 bg-black">
+        <h2 className="text-xl font-semibold">Right Column Content</h2>
+        <p>Anything you want here.</p>
       </div>
     </div>
   );
