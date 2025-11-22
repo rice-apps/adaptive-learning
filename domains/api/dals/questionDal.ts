@@ -1,5 +1,14 @@
 import {createClient} from "@/lib/supabase/server";
 
+export interface Question {
+  id: string;
+  created_at: string | null;
+  subject: string | null;
+  topic: string | null;
+  question_type: string | null;
+  question_details: Record<string, any> | null;
+}
+
 export type QuestionTopic =
   // Mathematical Reasoning
   | "Number operations & number sense"
@@ -28,7 +37,7 @@ export type QuestionTopic =
   | "Supply and demand, markets, and government influence"
   | "Global interdependence, historical movements, and geography skills";
 
-async function getRandomQuestionsByTopic(topic: QuestionTopic, amount: number) {
+async function getRandomQuestionsByTopic(topic: QuestionTopic, amount: number): Promise<Question[]> {
   const supabase = await createClient();
 
   const {data, error} = await supabase.rpc("get_random_questions_by_topic", {
@@ -40,10 +49,10 @@ async function getRandomQuestionsByTopic(topic: QuestionTopic, amount: number) {
     throw new Error(error.message);
   }
 
-  return data;
+  return (data as Question[]) || [];
 }
 
-async function getQuestionsByIds(questionIds: string[]) {
+async function getQuestionsByIds(questionIds: string[]): Promise<Question[]> {
   const supabase = await createClient();
 
   const {data, error} = await supabase.from("Questions").select("*").in("id", questionIds);
@@ -52,7 +61,7 @@ async function getQuestionsByIds(questionIds: string[]) {
     throw new Error(error.message);
   }
 
-  return data || [];
+  return (data as Question[]) || [];
 }
 
 export default {
