@@ -33,6 +33,11 @@ async function generateQuiz(
   return quiz;
 }
 
+async function getFullQuiz(quizId: string) {
+  return await quizDAL.getFullQuiz(quizId);
+}
+
 export default {
   generateQuiz,
+  getFullQuiz,
 };
