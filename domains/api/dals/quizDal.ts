@@ -1,7 +1,24 @@
 import {createClient} from "@/lib/supabase/server";
 import questionManager from "../managers/questionManager";
+import {Question} from "./questionDal";
 
-async function insertQuiz(questions: string[], educatorId: string, studentId: string) {
+export interface Quiz {
+  id: string;
+  questions: string[] | null;
+  educator_id: string;
+  student_id: string;
+  created_at: string;
+  start_time: string | null;
+  end_time: string | null;
+  time_spent: string | null;
+  submitted: string | null;
+}
+
+export interface FullQuiz extends Quiz {
+  full_questions: Question[];
+}
+
+async function insertQuiz(questions: string[], educatorId: string, studentId: string): Promise<Quiz[]> {
   const supabase = await createClient();
 
   const {data, error} = await supabase
@@ -13,10 +30,10 @@ async function insertQuiz(questions: string[], educatorId: string, studentId: st
     throw new Error(error.message);
   }
 
-  return data;
+  return (data as Quiz[]) || [];
 }
 
-async function getFullQuiz(quizId: string) {
+async function getFullQuiz(quizId: string): Promise<FullQuiz> {
   const supabase = await createClient();
 
   // Get the quiz
@@ -26,23 +43,25 @@ async function getFullQuiz(quizId: string) {
     throw new Error(quizError?.message || "Quiz not found");
   }
 
+  const quizData = quiz as Quiz;
+
   // Get all questions for this quiz
-  if (quiz.questions && quiz.questions.length > 0) {
-    const questions = await questionManager.getQuestionsByIds(quiz.questions);
+  if (quizData.questions && quizData.questions.length > 0) {
+    const questions = await questionManager.getQuestionsByIds(quizData.questions);
 
     return {
-      ...quiz,
-      questionDetails: questions,
+      ...quizData,
+      full_questions: questions,
     };
   }
 
   return {
-    ...quiz,
-    questionDetails: [],
+    ...quizData,
+    full_questions: [],
   };
 }
 
-async function getQuizzes(filters: {educatorId?: string; studentId?: string}) {
+async function getQuizzes(filters: {educatorId?: string; studentId?: string}): Promise<Quiz[]> {
   const supabase = await createClient();
 
   let query = supabase.from("Quizzes").select("*");
@@ -61,7 +80,7 @@ async function getQuizzes(filters: {educatorId?: string; studentId?: string}) {
     throw new Error(error.message);
   }
 
-  return data;
+  return (data as Quiz[]) || [];
 }
 
 export default {
