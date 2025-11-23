@@ -56,40 +56,37 @@ export async function updateSession(request: NextRequest) {
   }
 
   // If user is authenticated, check for onboarding status
-  if (user && !unprotectedRoutes.includes(request.nextUrl.pathname) && 
-      !onboardingRoutes.includes(request.nextUrl.pathname) &&
-      !request.nextUrl.pathname.startsWith("/api")) {
+  const isNotProtectedOrOnboardedRoute = 
+    !unprotectedRoutes.includes(request.nextUrl.pathname) && 
+    !onboardingRoutes.includes(request.nextUrl.pathname) &&
+    !request.nextUrl.pathname.startsWith("/api");
+
+  if (user && isNotProtectedOrOnboardedRoute) {
+    // Get user role from user_role table using user ID from claims
+    const { data: userRole, error } = await supabase
+      .from("user_role")
+      .select("role")
+      .eq("user_id", user.sub)
+      .maybeSingle();
     
-    // Get the full user object to access user.id
-    const { data: { user: fullUser } } = await supabase.auth.getUser();
-    
-    if (fullUser) {
-      // Get user role from user_role table
-      const { data: userRole, error } = await supabase
-        .from("user_role")
-        .select("role")
-        .eq("user_id", fullUser.id)
-        .maybeSingle();
+    // If no role found (userRole is null), user hasn't completed onboarding
+    // maybeSingle() returns null for no rows instead of throwing an error
+    if (!userRole && !error) {
+      // Get role from user metadata to determine which onboarding page
+      const roleFromMetadata = user.user_metadata?.role;
       
-      // If no role found (userRole is null), user hasn't completed onboarding
-      // maybeSingle() returns null for no rows instead of throwing an error
-      if (!userRole && !error) {
-        // Get role from user metadata to determine which onboarding page
-        const roleFromMetadata = fullUser.user_metadata?.role;
-        
-        if (roleFromMetadata === "student") {
-          const url = request.nextUrl.clone();
-          url.pathname = "/student/onboarding";
-          return NextResponse.redirect(url);
-        } else if (roleFromMetadata === "instructor") {
-          const url = request.nextUrl.clone();
-          url.pathname = "/educator/onboarding";
-          return NextResponse.redirect(url);
-        }
+      if (roleFromMetadata === "student") {
+        const url = request.nextUrl.clone();
+        url.pathname = "/student/onboarding";
+        return NextResponse.redirect(url);
+      } else if (roleFromMetadata === "instructor") {
+        const url = request.nextUrl.clone();
+        url.pathname = "/educator/onboarding";
+        return NextResponse.redirect(url);
       }
-      // If there's an error, continue without redirecting to avoid blocking
-      // legitimate requests due to temporary database issues
     }
+    // If there's an error, continue without redirecting to avoid blocking
+    // legitimate requests due to temporary database issues
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.

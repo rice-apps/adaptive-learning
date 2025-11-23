@@ -5,7 +5,7 @@ export default async function Home() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   
-  // If not authenticated, redirect to login
+  // Middleware handles authentication, so user should exist
   if (!user) {
     redirect("/login");
   }
@@ -24,15 +24,6 @@ export default async function Home() {
     redirect("/educator/dashboard");
   }
   
-  // If no role found, user needs to complete onboarding
-  // Check user_metadata to determine which onboarding page
-  const roleFromMetadata = user.user_metadata?.role;
-  if (roleFromMetadata === "student") {
-    redirect("/student/onboarding");
-  } else if (roleFromMetadata === "instructor") {
-    redirect("/educator/onboarding");
-  }
-  
-  // Fallback to login if no role information found
+  // Fallback - should not reach here as middleware handles onboarding
   redirect("/login");
 }
