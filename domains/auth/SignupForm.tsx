@@ -113,8 +113,8 @@ export default function SignupForm() {
   return (
     <div className="flex w-full">
       {/* Left Column */}
-      <div className="flex w-1/2 justify-center items-center">
-        <div className="flex flex-col w-3/4 h-1/2 bg-white border rounded-3xl overflow-hidden outline outline-1 outline-black">
+      <div className="flex w-1/2 justify-center items-center p-5">
+        <div className="flex flex-col w-full max-w-lg h-1/2 bg-white border rounded-3xl overflow-hidden outline outline-1 outline-black">
           <h1 className="text-2xl font-bold bg-lime-300 p-8 outline outline-1 outline-black flex justify-center">Sign Up</h1>
 
           <div className="flex flex-col gap-4 p-9 h-full">
@@ -145,7 +145,7 @@ export default function SignupForm() {
       {/* Right Column */}
       <div className="flex justify-center items-center w-1/2 bg-black">
         <h1>
-          <Image className="p-10 h-full w-full" src={logo} alt="My Image" width={480} height={288} />
+          <Image className="p-10 h-full w-full" src={logo} alt="My Image" width={1200} height={720} />
         </h1>
       </div>
     </div>
