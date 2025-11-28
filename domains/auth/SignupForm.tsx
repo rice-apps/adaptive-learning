@@ -8,6 +8,8 @@ import { UserRole } from "./types";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import Link from "next/link";
+import Image from 'next/image'
+import logo from "../../assets/logo.webp"
 
 export default function SignupForm() {
   const [email, setEmail] = useState("");
@@ -109,40 +111,42 @@ export default function SignupForm() {
   }
 
   return (
-    <div className="flex gap-10 w-full">
+    <div className="flex w-full">
       {/* Left Column */}
       <div className="flex w-1/2 justify-center items-center">
-        <div className="flex flex-col w-2/3 h-1/2 bg-white rounded-lg border">
-          <h1 className="text-2xl font-bold bg-lime-300">Sign Up</h1>
+        <div className="flex flex-col w-3/4 h-1/2 bg-white border rounded-3xl overflow-hidden outline outline-1 outline-black">
+          <h1 className="text-2xl font-bold bg-lime-300 p-8 outline outline-1 outline-black flex justify-center">Sign Up</h1>
 
-          <div className="flex flex-col gap-4 p-8">
+          <div className="flex flex-col gap-4 p-9 h-full">
             <FormItem placeholder="Email" input={email} setInput={setEmail} />
             <FormPassword placeholder="Password" input={password} setInput={setPassword} />
             <FormPassword placeholder="Confirm Password" input={confirmPassword} setInput={setConfirmPassword} />
             <RoleSelect role={role} setRole={setRole} />
-            <div className="flex flex-wrap items-center gap-4 md:flex-row">
+            <div className="flex flex-col gap-4 justify-center h-full">
               <Button
                 variant="outline"
                 onClick={handleSignup}
                 disabled={loading}
+                className="w-full bg-lime-300 border rounded-3xl"
               >
                 {loading ? "Signing up..." : "Sign Up"}
               </Button>
-            </div>
-            <div className="text-center text-sm text-gray-600">
-              Already have an account?{" "}
-              <Link href="/login" className="text-blue-600 hover:underline">
-                Log in
-              </Link>
+              <p className="text-center text-sm text-gray-600">
+                Already have an account?{" "}
+                <Link href="/login" className="text-blue-600 hover:underline">
+                  Log in
+                </Link>
+              </p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Right Column */}
-      <div className="w-1/2 bg-black">
-        <h2 className="text-xl font-semibold">Right Column Content</h2>
-        <p>Anything you want here.</p>
+      <div className="flex justify-center items-center w-1/2 bg-black">
+        <h1>
+          <Image className="p-10 h-full w-full" src={logo} alt="My Image" width={480} height={288} />
+        </h1>
       </div>
     </div>
   );
@@ -165,6 +169,7 @@ const FormItem = ({
       value={input}
       onChange={(e) => setInput(e.target.value)}
       required
+      className="border border-black h-14 bg-gray-100 text-black placeholder:text-black"
     />
   );
 };
@@ -186,6 +191,7 @@ const FormPassword = ({
       value={input}
       onChange={(e) => setInput(e.target.value)}
       required
+      className="border border-black h-14 bg-gray-100 text-black placeholder:text-black"
     />
   );
 };
@@ -194,7 +200,7 @@ const RoleSelect = ({ role, setRole }: { role: string; setRole: (role: string) =
   const roles = Object.values(UserRole);
   return (
     <Select value={role} onValueChange={setRole}>
-      <SelectTrigger>
+      <SelectTrigger className="border border-black h-14">
         <SelectValue placeholder="Select a role" />
       </SelectTrigger>
       <SelectContent>
