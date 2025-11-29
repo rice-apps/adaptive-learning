@@ -200,7 +200,7 @@ export default async function StudentDashboard() {
                     <TableHead className="w-[100px]">Date</TableHead>
                     <TableHead>Assignment</TableHead>
                     <TableHead>Feedback</TableHead>
-                    <TableHead>
+                    <TableHead></TableHead>
                       Filter:
                       <Button className="ml-3" size="sm" variant="outline">
                         <DropdownMenu>
