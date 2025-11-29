@@ -1,6 +1,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { cn } from "@/lib/utils"
+
 import {
   Card,
   CardContent,
@@ -213,6 +215,20 @@ export default async function StudentDashboard() {
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </Button>
+                    <TableHead>Filter: 
+                      <DropdownMenu>
+                        <DropdownMenuTrigger className={cn(buttonVariants({ variant: "outline", size: "sm" }), "ml-3")}>
+                          All Time
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuLabel>Date</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem>Date</DropdownMenuItem>
+                          <DropdownMenuItem>Date</DropdownMenuItem>
+                          <DropdownMenuItem>Date</DropdownMenuItem>
+                          <DropdownMenuItem>Date</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableHead>
                   </TableRow>
                 </TableHeader>
