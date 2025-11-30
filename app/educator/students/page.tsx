@@ -1,8 +1,13 @@
+"use client"
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
+import Image from 'next/image'
+import logo from "../../assets/logo.png"
+import { useState, useMemo } from 'react'
 import { 
   Table, 
   TableBody, 
@@ -23,50 +28,62 @@ import {
 export default function StudentRoster() {
   // Sample student data - in production, this would come from props or API
   const students = [
-    { id: 1, name: "Alice Johnson", email: "alice@example.com", progress: 85, status: "Active", avatar: null },
-    { id: 2, name: "Bob Smith", email: "bob@example.com", progress: 72, status: "Active", avatar: null },
-    { id: 3, name: "Carol Williams", email: "carol@example.com", progress: 90, status: "Active", avatar: null },
-    { id: 4, name: "David Brown", email: "david@example.com", progress: 45, status: "Behind", avatar: null },
-    { id: 5, name: "Emma Davis", email: "emma@example.com", progress: 68, status: "Active", avatar: null },
-    { id: 6, name: "Frank Miller", email: "frank@example.com", progress: 55, status: "Active", avatar: null },
-    { id: 7, name: "Grace Wilson", email: "grace@example.com", progress: 78, status: "Active", avatar: null },
+    { id: 1, name: "Sarah Johnson", progress: 90, engagement: "more than 10 hours", status: "On Track" },
+    { id: 2, name: "Angelina Jo", progress: 50, engagement: "more than 5 hours", status: "On Track" },
+    { id: 3, name: "Bo Bobbinson", progress: 75, engagement: "more than 7 hours", status: "On Track" },
+    { id: 4, name: "Jerry Jones", progress: 40, engagement: "less than 3 hours", status: "At Risk" },
+    { id: 5, name: "Michelle Sully ", progress: 55, engagement: "more than 5 hours", status: "On Track" },
+    { id: 6, name: "Kerri Watts", progress: 45, engagement: "less than 5 hours", status: "At Risk" },
+    { id: 7, name: "Layne Cane", progress: 45, engagement: "less than 5 hours", status: "At Risk" },
+    { id: 8, name: "Happy Atpom", progress: 85, engagement: "more than 8 hours", status: "On Track" },
+    { id: 9, name: "Heidi King", progress: 10, engagement: "less than 1 hour", status: "At Risk" },
   ]
 
+
+  // Filter state: 'All' | 'At Risk' | 'Inactive' | 'On Track'
+  const [filter, setFilter] = useState<'All' | 'At Risk' | 'Inactive' | 'On Track'>('All')
+  // Time range filter: 'all' | 'week' | 'month'
+  const [timeRange, setTimeRange] = useState<'all' | 'week' | 'month'>('all')
+
+  // Compute filtered students list
+  const filteredStudents = useMemo(() => {
+    if (filter === 'All') return students
+    if (filter === 'At Risk') return students.filter(s => s.status === 'At Risk')
+    if (filter === 'On Track') return students.filter(s => s.status === 'On Track')
+    if (filter === 'Inactive') return students.filter(s => s.status === 'Inactive')
+    return students
+  }, [filter, students])
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Sticky Top Gray Header */}
-      <div className="bg-gray-100 w-full sticky top-0 z-50 shadow-sm">
-        <header className="relative max-w-7xl mx-auto py-4 px-8 flex items-center justify-between">
-          {/* Left: Page title */}
-          <div className="flex items-center gap-2 z-10">
-            <h1 className="text-lg font-semibold text-gray-800">
-              Student Dashboard
-            </h1>
-            <span className="text-gray-500">|</span>
-            <span className="text-sm text-gray-600">Iteration 1</span>
-          </div>
+    <div className="min-h-screen bg-black-250">
+      {/* Sticky Top Black Header */}
+      <div className="bg-black w-full sticky top-0 z-50 shadow-sm">
+        <header className="relative w-full py-4 px-8 flex items-center justify-between">
+          <h1 className="text-lg font-semibold z-10">
+            <Image src={logo} alt="My Image" width={120} height={72} />
+          </h1>
           
           {/* Center: Search bar absolutely centered */}
           <div className="absolute left-1/2 transform -translate-x-1/2 w-full max-w-md">
             <Input
               type="text"
-              placeholder="Search students..."
-              className="w-full bg-white"
+              placeholder="Search for students, topics..."
+              className="w-full bg-white rounded-full"
             />
           </div>
           
           {/* Right: Instructor info + avatar */}
           <div className="flex items-start gap-4 z-10 justify-end">
-            <div className="flex flex-col items-center justify-end">
-              <span className="text-sm text-gray-700">Instructor</span>
-              <Button variant="outline" size="sm" className="mt-1">
-                Edit Profile
-              </Button>
+            <div className="flex items-center gap-3 mt-2">
+              {/* Avatar */}
+              <Avatar className="h-10 w-10">
+                <AvatarImage src="https://github.com/shadcn.png" alt="Instructor" />
+                <AvatarFallback>IN</AvatarFallback>
+              </Avatar>
+
+              {/* Button */}
+              <Button size="sm" className="mr-[0px] px-1 py-5 text-2xl bg-black" >Edit Profile</Button>
             </div>
-            <Avatar className="h-10 w-10 mt-2">
-              <AvatarImage src="https://github.com/shadcn.png" alt="Instructor" />
-              <AvatarFallback>IN</AvatarFallback>
-            </Avatar>
           </div>
         </header>
       </div>
@@ -75,85 +92,133 @@ export default function StudentRoster() {
       <main className="max-w-7xl mx-auto p-8">
         {/* Title and filters section */}
         <div className="mb-6">
-          <h2 className="text-2xl font-semibold text-gray-700 mb-4">All Students</h2>
           
-          {/* Filter buttons */}
-          <div className="flex items-center gap-3 mb-4">
-            <Button variant="outline" size="sm">All</Button>
-            <Button variant="outline" size="sm">Active</Button>
-            <Button variant="outline" size="sm">Behind</Button>
-            <Button variant="outline" size="sm">Completed</Button>
-            
-            {/* Avatar with initial */}
-            <div className="ml-auto">
-              <Avatar className="h-12 w-12 bg-blue-500">
-                <AvatarFallback className="bg-blue-500 text-white text-lg">
-                  D
-                </AvatarFallback>
-              </Avatar>
-            </div>
-          </div>
+          
         </div>
 
+        {/* Header/two Big filter buttons */}
+            <div className="flex items-center mb-4 pl-[25px]">
+              <Button variant="outline" size="lg" className="ml-[-25px] px-7 py-7 text-lg font-bold text-black bg-white">Cohort Overview</Button>
+              <Button
+                variant="outline"
+                size="lg"
+                className="ml-[30px] px-8 py-7 text-lg font-bold text-white bg-black border-0"
+              >
+                Students
+              </Button>
+            
+  
+           
+          </div>
+      
         {/* Students table */}
-        <Card className="shadow-sm">
+        <Card className="shadow-sm mt-8 rounded-lg border border-gray-200 py-2 gap-1">
+          <CardHeader className="flex items-center justify-between px-6 py-2">
+            <CardTitle className="text-2xl font-bold">My Students</CardTitle>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground hidden md:inline">Filter:</span>
+              <Select defaultValue={timeRange} onValueChange={(v) => setTimeRange(v as 'all' | 'week' | 'month')}>
+                <SelectTrigger className="h-8 w-25 rounded-full border border-gray-300 bg-gray-100 text-sm pl-3 pr-2">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Time</SelectItem>
+                  <SelectItem value="week">Last Week</SelectItem>
+                  <SelectItem value="month">Last Month</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardHeader>
+          {/* Filter buttons */}
+            <div className="flex items-center mb-0 px-6">
+              <Button
+                variant="outline"
+                size="sm"
+                className={`mr-3 px-5 py-2 text-sm ${filter === 'All' ? 'bg-[#A3E635] border-0' : ''}`}
+                onClick={() => setFilter('All')}
+              >
+                All
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className={`ml-4 px-5 py-2 text-sm ${filter === 'At Risk' ? 'bg-[#FFE2E2] border-0' : ''}`}
+                onClick={() => setFilter('At Risk')}
+              >
+                At Risk
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className={`ml-4 px-5 py-2 text-sm ${filter === 'Inactive' ? 'bg-[#A3E635] border-0' : ''}`}
+                onClick={() => setFilter('Inactive')}
+              >
+                Inactive
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className={`ml-4 px-5 py-2 text-sm ${filter === 'On Track' ? 'bg-[#A3E635] border-0' : ''}`}
+                onClick={() => setFilter('On Track')}
+              >
+                On Track
+              </Button>
+            </div>
+
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-b bg-gray-50">
-                    <TableHead className="w-[50px]"></TableHead>
-                    <TableHead className="w-[250px]">Student Name</TableHead>
-                    <TableHead className="w-[300px]">Email</TableHead>
-                    <TableHead className="w-[200px]">Progress</TableHead>
-                    <TableHead className="w-[100px]">Status</TableHead>
-                    <TableHead className="text-right w-[150px]">Actions</TableHead>
+                  <TableRow className="border-solid">
+                 
+                      <TableHead className="w-[250px] pl-6 text-sm text-gray-500">Student</TableHead>
+                      <TableHead className="w-[300px] text-center text-sm text-gray-500">Progress</TableHead>
+                      <TableHead className="w-[220px] pl-4 text-sm text-gray-500 text-left">Engagement</TableHead>
+                      <TableHead className="w-[120px] pl-4 text-sm text-gray-500 text-left">Status</TableHead>
+          
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {students.map((student) => (
+                  {filteredStudents.map((student) => (
                     <TableRow key={student.id} className="hover:bg-gray-50">
-                      <TableCell>
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={student.avatar} alt={student.name} />
-                          <AvatarFallback className="bg-gray-300">
-                            {student.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                      </TableCell>
+                      
                       <TableCell className="font-medium">
-                        <div className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md inline-block">
+                        <div className="text-black px-4 py-2 rounded-md inline-block">
                           {student.name}
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md inline-block">
-                          {student.email}
+                      
+                      <TableCell className="text-center">
+                        <div className="flex items-center gap-2 justify-center">
+                          <Progress 
+                            value={student.progress} 
+                            className="w-[242px] h-3.5 [&>div]:bg-[#A3E635]"
+                          />
+                          <span className="text-sm text-black-600">{student.progress}%</span>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Progress value={student.progress} className="w-[140px]" />
-                          <span className="text-sm text-gray-600">{student.progress}%</span>
+                      <TableCell className="font-medium">
+
+                        <div className="text-black px-4 py-2 rounded-md inline-block text-sm">
+                            {student.engagement} 
                         </div>
                       </TableCell>
-                      <TableCell>
+
+                      <TableCell className="pl-4">
                         <Badge 
-                          variant={student.status === "Active" ? "default" : "secondary"}
-                          className={student.status === "Behind" ? "bg-orange-100 text-orange-800" : ""}
+                          variant={student.status === "On Track" ? "outline" : "secondary"}
+                          className={
+                            (student.status === "On Track" 
+                              ? "bg-[#A3E635] border-0 text-gray-800" 
+                              : student.status === "At Risk" 
+                                ? "bg-[#FFE2E2] text-orange-800" 
+                                : "") + " text-sm"
+                          }
                         >
                           {student.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="bg-gray-200 hover:bg-gray-300 text-gray-700"
-                        >
-                          View Details
-                        </Button>
-                      </TableCell>
+                      
                     </TableRow>
                   ))}
                 </TableBody>
@@ -162,16 +227,7 @@ export default function StudentRoster() {
           </CardContent>
         </Card>
 
-        {/* Pagination or additional controls can go here */}
-        <div className="mt-4 flex items-center justify-between">
-          <p className="text-sm text-gray-600">
-            Showing {students.length} of {students.length} students
-          </p>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled>Previous</Button>
-            <Button variant="outline" size="sm">Next</Button>
-          </div>
-        </div>
+        
       </main>
     </div>
   )
