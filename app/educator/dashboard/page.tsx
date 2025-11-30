@@ -48,7 +48,7 @@ export default function InstructorDashboard() {
             <AvatarImage src="https://github.com/shadcn.png" alt="Instructor" />
             <AvatarFallback>IN</AvatarFallback>
           </Avatar>
-          <h2 className="text-3xl font-bold">Hello Instructor!</h2>
+          <h2 className="text-3xl font-bold">Hello Instructor</h2>
         </div>
 
         {/* Top cards */}
