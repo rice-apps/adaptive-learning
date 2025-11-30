@@ -18,7 +18,7 @@ export const learningFeedbackAgent = new Agent({
     
     Keep feedback concise but thorough - aim for 3-5 paragraphs that genuinely help the student understand.
   `,
-  model: 'google/gemini-2.5-pro',
+  model: 'google/gemini-2.5-flash-lite',
   tools: { singleQuestionFeedbackTool },
 
   memory: new Memory({
