@@ -45,6 +45,12 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 For the program to run correctly, please make sure that your env file has the following:
 NEXT_PUBLIC_SUPABASE_URL
+
+
 NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+
 SUPABASE_SERVICE_ROLE_KEY
+
+
 GOOGLE_GENERATIVE_AI_API_KEY
