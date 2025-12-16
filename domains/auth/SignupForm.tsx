@@ -2,14 +2,20 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useState } from "react";
 import { UserRole } from "./types";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import Link from "next/link";
-import Image from 'next/image'
-import logo from "../../assets/logo.webp"
+import Image from "next/image";
+import logo from "../../assets/logo.webp";
 
 export default function SignupForm() {
   const [email, setEmail] = useState("");
@@ -91,20 +97,28 @@ export default function SignupForm() {
       <div className="flex flex-col gap-5 w-1/3 min-h-[300px] bg-white rounded-lg border p-8">
         <h1 className="text-2xl font-bold">Check your email</h1>
         <div className="flex flex-col gap-3">
-          <p className="text-gray-600">
-            We've sent a confirmation email to:
-          </p>
+          <p className="text-gray-600">We've sent a confirmation email to:</p>
           <p className="font-semibold">{email}</p>
           <p className="text-gray-600">
-            Click the link in the email to complete your signup and you'll be automatically redirected to the onboarding page.
+            Click the link in the email to complete your signup and you'll be
+            automatically redirected to the onboarding page.
           </p>
         </div>
         <Button
-          variant="outline"
-          onClick={() => setSignupComplete(false)}
-          className="mt-4"
+          onClick={handleSignup}
+          disabled={loading}
+          className="
+            w-full 
+            h-14 
+            rounded-full 
+            bg-lime-300 
+            text-black 
+            font-semibold
+            hover:bg-lime-400
+            border-none
+          "
         >
-          Back to Signup
+          {loading ? "Signing up..." : "Continue"}
         </Button>
       </div>
     );
@@ -114,13 +128,34 @@ export default function SignupForm() {
     <div className="flex w-full">
       {/* Left Column */}
       <div className="flex w-1/2 justify-center items-center p-5">
-        <div className="flex flex-col w-full max-w-lg h-1/2 bg-white border rounded-3xl overflow-hidden outline outline-1 outline-black">
-          <h1 className="text-2xl font-bold bg-lime-300 p-8 outline outline-1 outline-black flex justify-center">Sign Up</h1>
+        <div
+          className="
+          flex flex-col 
+          w-full 
+          max-w-md
+          bg-white 
+          border 
+          rounded-3xl 
+          overflow-hidden 
+          outline outline-1 outline-black
+        "
+        >
+          <h1 className="text-xl font-semibold bg-lime-300 py-6 text-center outline outline-1 outline-black">
+            Sign Up
+          </h1>
 
-          <div className="flex flex-col gap-4 p-9 h-full">
+          <div className="flex flex-col gap-5 px-8 py-10">
             <FormItem placeholder="Email" input={email} setInput={setEmail} />
-            <FormPassword placeholder="Password" input={password} setInput={setPassword} />
-            <FormPassword placeholder="Confirm Password" input={confirmPassword} setInput={setConfirmPassword} />
+            <FormPassword
+              placeholder="Password"
+              input={password}
+              setInput={setPassword}
+            />
+            <FormPassword
+              placeholder="Confirm Password"
+              input={confirmPassword}
+              setInput={setConfirmPassword}
+            />
             <RoleSelect role={role} setRole={setRole} />
             <div className="flex flex-col gap-4 justify-center h-full">
               <Button
@@ -145,7 +180,13 @@ export default function SignupForm() {
       {/* Right Column */}
       <div className="flex justify-center items-center w-1/2 bg-black">
         <h1>
-          <Image className="p-10 h-full w-full" src={logo} alt="My Image" width={1200} height={720} />
+          <Image
+            className="p-10 h-full w-full"
+            src={logo}
+            alt="8MS logo"
+            width={1200}
+            height={720}
+          />
         </h1>
       </div>
     </div>
@@ -169,7 +210,7 @@ const FormItem = ({
       value={input}
       onChange={(e) => setInput(e.target.value)}
       required
-      className="border border-black h-14 bg-gray-100 text-black placeholder:text-black"
+      className="border border-black h-11 bg-gray-100 text-black placeholder:text-black"
     />
   );
 };
@@ -191,12 +232,18 @@ const FormPassword = ({
       value={input}
       onChange={(e) => setInput(e.target.value)}
       required
-      className="border border-black h-14 bg-gray-100 text-black placeholder:text-black"
+      className="border border-black h-11 bg-gray-100 text-black placeholder:text-black"
     />
   );
 };
 
-const RoleSelect = ({ role, setRole }: { role: string; setRole: (role: string) => void }) => {
+const RoleSelect = ({
+  role,
+  setRole,
+}: {
+  role: string;
+  setRole: (role: string) => void;
+}) => {
   const roles = Object.values(UserRole);
   return (
     <Select value={role} onValueChange={setRole}>
