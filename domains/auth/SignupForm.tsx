@@ -109,7 +109,7 @@ export default function SignupForm() {
           disabled={loading}
           className="
             w-full 
-            h-14 
+            h-11
             rounded-full 
             bg-lime-300 
             text-black 
@@ -118,7 +118,7 @@ export default function SignupForm() {
             border-none
           "
         >
-          {loading ? "Signing up..." : "Continue"}
+          {loading ? "Signing up..." : "Resend Email"}
         </Button>
       </div>
     );
