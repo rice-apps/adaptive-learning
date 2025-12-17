@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -33,13 +34,61 @@ interface Student {
   avatar: string | null;
 }
 
+interface StudentDetails {
+  strengths: Array<{
+    skill: string
+    description: string
+  }>
+  weaknesses: Array<{
+    skill: string
+    description: string
+  }>
+  lessonHistory: Array<{
+    assignment: string
+    lastAttempt: string
+    feedback: string
+    date: string
+  }>
+  lastActive: string
+  totalLessons: number
+}
+
 export default function StudentRoster() {
 
   const [students, setStudents] = useState<Student[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [filterStatus, setFilterStatus] = useState<string>("all")
+  const [searchTerm, setSearchTerm] = useState<string>("")
+
+  // Dialog states here
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [studentDetails, setStudentDetails] = useState<StudentDetails | null>(null)
+  const [detailsLoading, setDetailsLoading] = useState(false)
   
+  const openDialogue = async (student: Student) => {
+    setSelectedStudent(student)
+    setDialogOpen(true)
+    setDetailsLoading(true)
+    setStudentDetails(null) // Clear previous details
+    
+    try {
+      const response = await fetch(`/api/educator/students/${student.id}/details`)
+      const data = await response.json()
+      
+      if (data.error) {
+        setError(data.error)
+      } else {
+        setStudentDetails(data)
+      }
+    } catch (err) {
+      setError('Failed to load student details')
+    } finally {
+      setDetailsLoading(false)
+    }
+  }
+
   useEffect(() => {
     const fetchStudents = async () => {
       try {
@@ -56,7 +105,7 @@ export default function StudentRoster() {
           email: student.email,
           progress: student.progress,
           status: student.status,
-          name: student.name,
+          name: student.profileName,
           avatar: student.avatar
           }))
           // Set the formatted students state
@@ -74,7 +123,7 @@ export default function StudentRoster() {
     fetchStudents()
   }, [])  
 
-   const filteredStudents = students.filter(student => {
+    const filteredStudents = students.filter(student => {
     if (filterStatus === 'all') return true;
     return student.status.toLowerCase() === filterStatus.toLowerCase(); 
     });
@@ -186,7 +235,7 @@ export default function StudentRoster() {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Progress value={student.progress} className="w-[140px]" />
-                          <span className="text-sm text-gray-600">{student.progress}%</span>
+                          <span className="bg-[#AEF35A] text-sm text-gray-600">{student.progress}%</span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -202,6 +251,7 @@ export default function StudentRoster() {
                           variant="outline" 
                           size="sm"
                           className="bg-gray-200 hover:bg-gray-300 text-gray-700"
+                          onClick={() => openDialogue(student)}
                         >
                           View Details
                         </Button>
@@ -225,6 +275,87 @@ export default function StudentRoster() {
           </div>
         </div>
       </main>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {selectedStudent ? selectedStudent.name : 'Student Details'}
+              </DialogTitle>
+              {studentDetails && (
+                <p className="text-sm text-gray-600">
+                  Last Active: {studentDetails.lastActive} | Total Lessons: {studentDetails.totalLessons}
+                </p>
+              )}
+            </DialogHeader>
+
+            {detailsLoading ? (
+              <div className="flex justify-center items-center p-12">
+                <div>Loading student details...</div>
+              </div>
+            ) : studentDetails ? (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                  {/* Top Strengths */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg">Top Strengths</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {studentDetails?.strengths?.map((strength, index) => (
+                        <div key={index}>
+                          <div className="font-medium">{strength.skill}</div>
+                          <div className="text-sm text-gray-600">{strength.description}</div>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+
+                  {/* Top Weaknesses */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg">Top Weaknesses</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {studentDetails?.weaknesses?.map((weakness, index) => (
+                        <div key={index}>
+                          <div className="font-medium">{weakness.skill}</div>
+                          <div className="text-sm text-gray-600">{weakness.description}</div>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Lesson Tracker */}
+                <Card className="mt-6">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Lesson Tracker</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Assignment</TableHead>
+                          <TableHead>Last Attempt</TableHead>
+                          <TableHead>Feedback</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {studentDetails?.lessonHistory?.map((lesson, index) =>  (
+                          <TableRow key={index}>
+                            <TableCell>{lesson.assignment}</TableCell>
+                            <TableCell>{lesson.lastAttempt}</TableCell>
+                            <TableCell>{lesson.feedback}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              </>
+            ) : null}
+          </DialogContent>
+        </Dialog>
     </div>
   )
 }
