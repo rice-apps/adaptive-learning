@@ -2,7 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
@@ -21,7 +27,7 @@ interface Question {
 
 export default function LearningStyleQuiz() {
   const router = useRouter();
-  
+
   // Form state
   const [reasonForGED, setReasonForGED] = useState("");
   const [worriedSubject, setWorriedSubject] = useState("");
@@ -98,7 +104,8 @@ export default function LearningStyleQuiz() {
     {
       id: "wrongAnswerAction",
       type: "select",
-      label: "When you get a question wrong, what do you want most out of the following:",
+      label:
+        "When you get a question wrong, what do you want most out of the following:",
       options: [
         "Show me the right answer",
         "Explain why I was wrong",
@@ -115,7 +122,8 @@ export default function LearningStyleQuiz() {
     {
       id: "oneThing",
       type: "text",
-      label: "If you could tell us one thing to make this platform work for you, what would it be?",
+      label:
+        "If you could tell us one thing to make this platform work for you, what would it be?",
     },
   ];
 
@@ -211,12 +219,23 @@ export default function LearningStyleQuiz() {
         toast.error("Please select an option");
         return false;
       }
-    } else if (question.type === "multi-select" || question.type === "multi-select-other") {
+    } else if (
+      question.type === "multi-select" ||
+      question.type === "multi-select-other"
+    ) {
       if (!Array.isArray(value) || value.length !== question.maxSelections) {
-        toast.error(`Please select exactly ${question.maxSelections} option${question.maxSelections! > 1 ? "s" : ""}`);
+        toast.error(
+          `Please select exactly ${question.maxSelections} option${
+            question.maxSelections! > 1 ? "s" : ""
+          }`
+        );
         return false;
       }
-      if (question.type === "multi-select-other" && value.includes("Other") && !hardFactorOther.trim()) {
+      if (
+        question.type === "multi-select-other" &&
+        value.includes("Other") &&
+        !hardFactorOther.trim()
+      ) {
         toast.error("Please specify what makes learning hard for you");
         return false;
       }
@@ -259,7 +278,9 @@ export default function LearningStyleQuiz() {
       return false;
     }
     if (hardFactors.length !== 2) {
-      toast.error("Please select exactly 2 factors that make learning hard for you");
+      toast.error(
+        "Please select exactly 2 factors that make learning hard for you"
+      );
       return false;
     }
     if (hardFactors.includes("Other") && !hardFactorOther.trim()) {
@@ -267,19 +288,27 @@ export default function LearningStyleQuiz() {
       return false;
     }
     if (appFeatures.length !== 3) {
-      toast.error("Please select exactly 3 features that would make you want to use a learning app");
+      toast.error(
+        "Please select exactly 3 features that would make you want to use a learning app"
+      );
       return false;
     }
     if (!wrongAnswerAction) {
-      toast.error("Please select what you want most when you get a question wrong");
+      toast.error(
+        "Please select what you want most when you get a question wrong"
+      );
       return false;
     }
     if (!importance) {
-      toast.error("Please select how important it is that the app learns your way of learning");
+      toast.error(
+        "Please select how important it is that the app learns your way of learning"
+      );
       return false;
     }
     if (!oneThing.trim()) {
-      toast.error("Please tell us one thing to make this platform work for you");
+      toast.error(
+        "Please tell us one thing to make this platform work for you"
+      );
       return false;
     }
     return true;
@@ -295,9 +324,12 @@ export default function LearningStyleQuiz() {
 
     try {
       const supabase = createClient();
-      
+
       // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
       if (userError || !user) {
         toast.error("You must be logged in to submit this quiz");
         setIsSubmitting(false);
@@ -310,8 +342,11 @@ export default function LearningStyleQuiz() {
         reasonForGED: reasonForGED.trim(),
         worriedSubject,
         learnBest,
-        hardFactors: hardFactors.includes("Other") 
-          ? [...hardFactors.filter(f => f !== "Other"), hardFactorOther.trim()]
+        hardFactors: hardFactors.includes("Other")
+          ? [
+              ...hardFactors.filter((f) => f !== "Other"),
+              hardFactorOther.trim(),
+            ]
           : hardFactors,
         appFeatures,
         wrongAnswerAction,
@@ -323,27 +358,27 @@ export default function LearningStyleQuiz() {
       // Update Students table
       const { error } = await supabase
         .from("Students")
-        .update({ "learning_style": learningStyleData })
+        .update({ learning_style: learningStyleData })
         .eq("id", user.id);
 
-        if (error) {
-          // --- START DEBUGGING ---
-          // Log the full error to the console to see its properties
-          console.log("Full error object:", JSON.stringify(error, null, 2));
-  
-          // Log specific PostgrestError properties if they exist
-          console.error("Error Code:", error?.code);
-          console.error("Error Message:", error?.message);
-          console.error("Error Details:", error?.details);
-          // --- END DEBUGGING ---
-  
-          // Original line (you can keep or remove)
-          console.error("Error updating learning style:", error); 
-          
-          toast.error("Failed to save your responses. Please try again.");
-          setIsSubmitting(false);
-          return;
-        }
+      if (error) {
+        // --- START DEBUGGING ---
+        // Log the full error to the console to see its properties
+        console.log("Full error object:", JSON.stringify(error, null, 2));
+
+        // Log specific PostgrestError properties if they exist
+        console.error("Error Code:", error?.code);
+        console.error("Error Message:", error?.message);
+        console.error("Error Details:", error?.details);
+        // --- END DEBUGGING ---
+
+        // Original line (you can keep or remove)
+        console.error("Error updating learning style:", error);
+
+        toast.error("Failed to save your responses. Please try again.");
+        setIsSubmitting(false);
+        return;
+      }
 
       toast.success("Learning style quiz completed successfully!");
       router.push("/student/dashboard");
@@ -364,10 +399,12 @@ export default function LearningStyleQuiz() {
         {/* Question Box */}
         <div className="bg-gray-100 rounded-lg p-6 min-h-[200px] flex items-center">
           <div className="w-full">
-            <p className="text-gray-400 text-sm mb-2">Reading Question</p>
+            <p className="text-gray-400 text-sm mb-2">Question</p>
             <p className="text-xl font-semibold">{question.label}</p>
             {question.instructions && (
-              <p className="text-sm text-gray-600 mt-3">{question.instructions}</p>
+              <p className="text-sm text-gray-600 mt-3">
+                {question.instructions}
+              </p>
             )}
           </div>
         </div>
@@ -379,7 +416,9 @@ export default function LearningStyleQuiz() {
               type="text"
               placeholder="Enter your response"
               value={value as string}
-              onChange={(e) => setCurrentQuestionValue(question.id, e.target.value)}
+              onChange={(e) =>
+                setCurrentQuestionValue(question.id, e.target.value)
+              }
               className="w-full"
               autoFocus
             />
@@ -397,11 +436,15 @@ export default function LearningStyleQuiz() {
                     name={question.id}
                     value={option}
                     checked={value === option}
-                    onChange={(e) => setCurrentQuestionValue(question.id, e.target.value)}
+                    onChange={(e) =>
+                      setCurrentQuestionValue(question.id, e.target.value)
+                    }
                     className="mt-1 w-4 h-4"
                   />
                   <div className="flex-1">
-                    <span className="font-semibold block text-gray-900">{option}</span>
+                    <span className="font-semibold block text-gray-900">
+                      {option}
+                    </span>
                   </div>
                 </label>
               ))}
@@ -411,7 +454,8 @@ export default function LearningStyleQuiz() {
           {question.type === "multi-select" && question.options && (
             <div className="space-y-3">
               {question.options.map((option) => {
-                const isChecked = Array.isArray(value) && value.includes(option);
+                const isChecked =
+                  Array.isArray(value) && value.includes(option);
                 return (
                   <label
                     key={option}
@@ -428,14 +472,19 @@ export default function LearningStyleQuiz() {
                       className="mt-1 w-4 h-4"
                     />
                     <div className="flex-1">
-                      <span className="font-semibold block text-gray-900">{option}</span>
-                      <span className="text-sm text-gray-500 block mt-1">specifics</span>
+                      <span className="font-semibold block text-gray-900">
+                        {option}
+                      </span>
+                      <span className="text-sm text-gray-500 block mt-1">
+                        specifics
+                      </span>
                     </div>
                   </label>
                 );
               })}
               <p className="text-sm text-gray-500 mt-3">
-                Selected: {Array.isArray(value) ? value.length : 0}/{question.maxSelections}
+                Selected: {Array.isArray(value) ? value.length : 0}/
+                {question.maxSelections}
               </p>
             </div>
           )}
@@ -443,7 +492,8 @@ export default function LearningStyleQuiz() {
           {question.type === "multi-select-other" && question.options && (
             <div className="space-y-3">
               {question.options.map((option) => {
-                const isChecked = Array.isArray(value) && value.includes(option);
+                const isChecked =
+                  Array.isArray(value) && value.includes(option);
                 return (
                   <label
                     key={option}
@@ -452,12 +502,18 @@ export default function LearningStyleQuiz() {
                     <input
                       type="checkbox"
                       checked={isChecked}
-                      onChange={(e) => handleHardFactorChange(option, e.target.checked)}
+                      onChange={(e) =>
+                        handleHardFactorChange(option, e.target.checked)
+                      }
                       className="mt-1 w-4 h-4"
                     />
                     <div className="flex-1">
-                      <span className="font-semibold block text-gray-900">{option}</span>
-                      <span className="text-sm text-gray-500 block mt-1">specifics</span>
+                      <span className="font-semibold block text-gray-900">
+                        {option}
+                      </span>
+                      <span className="text-sm text-gray-500 block mt-1">
+                        specifics
+                      </span>
                     </div>
                   </label>
                 );
@@ -466,11 +522,15 @@ export default function LearningStyleQuiz() {
                 <input
                   type="checkbox"
                   checked={Array.isArray(value) && value.includes("Other")}
-                  onChange={(e) => handleHardFactorChange("Other", e.target.checked)}
+                  onChange={(e) =>
+                    handleHardFactorChange("Other", e.target.checked)
+                  }
                   className="mt-1 w-4 h-4"
                 />
                 <div className="flex-1">
-                  <span className="font-semibold block text-gray-900 mb-2">Other:</span>
+                  <span className="font-semibold block text-gray-900 mb-2">
+                    Other:
+                  </span>
                   {Array.isArray(value) && value.includes("Other") && (
                     <Input
                       type="text"
@@ -484,7 +544,8 @@ export default function LearningStyleQuiz() {
                 </div>
               </label>
               <p className="text-sm text-gray-500 mt-3">
-                Selected: {Array.isArray(value) ? value.length : 0}/{question.maxSelections}
+                Selected: {Array.isArray(value) ? value.length : 0}/
+                {question.maxSelections}
               </p>
             </div>
           )}
@@ -519,10 +580,7 @@ export default function LearningStyleQuiz() {
           >
             Previous
           </Button>
-          <Button
-            onClick={handleNext}
-            disabled={isSubmitting}
-          >
+          <Button onClick={handleNext} disabled={isSubmitting}>
             {currentQuestionIndex === totalQuestions - 1
               ? isSubmitting
                 ? "Submitting..."
