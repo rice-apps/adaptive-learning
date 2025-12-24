@@ -1,18 +1,22 @@
 import {UserRole} from "@/domains/auth/types";
 import {createClient} from "@/lib/supabase/server";
-import {getUserId} from "./authDal";
+import authDAL from "./authDal";
 
-export async function insertRole(role: UserRole) {
+async function insertUserRole(role: UserRole) {
   const supabase = await createClient();
-  const userId = await getUserId();
+  const userId = await authDAL.getUserId();
   const {data, error} = await supabase
     .from("user_role")
-    .insert([{userid: userId, role: role, onboarded: false}])
+    .insert([{user_id: userId, role: role}])
     .select();
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return "Role inserted successfully";
+  return data;
 }
+
+export default {
+  insertUserRole,
+};

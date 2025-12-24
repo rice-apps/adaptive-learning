@@ -1,32 +1,42 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import Image from "next/image";
+import logo from "../../assets/logo.png";
+import { Search, BellIcon } from "lucide-react";
+import Link from "next/link";
 
 export default function InstructorDashboard() {
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Top Header */}
-      <div className="bg-black text-white sticky top-0 z-50">
-        <header className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
-          {/* Left */}
-          <div className="font-semibold text-lg">8 Million Stories</div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-black w-full sticky top-0 z-50 shadow-sm">
+        <header className="relative w-full py-4 px-8 flex items-center justify-between">
+          <h1 className="text-lg font-semibold z-10">
+            <Image src={logo} alt="My Image" width={120} height={72} />
+          </h1>
 
-          {/* Center */}
-          <div className="w-full max-w-lg mx-6">
+          <div className="relative w-full max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black w-4 h-4" />
             <Input
-              placeholder="Search for students, topics..."
-              className="bg-white text-black"
+              type="text"
+              placeholder="      Search for lessons, assessments..."
+              className="w-full bg-white rounded-full"
             />
           </div>
 
-          {/* Right */}
-          <div className="flex items-center gap-4">
-            <span>🔔</span>
-            <Avatar className="h-9 w-9">
-              <AvatarImage src="https://github.com/shadcn.png" />
-              <AvatarFallback>IN</AvatarFallback>
-            </Avatar>
+          <div className="flex items-start gap-4 z-10 justify-end">
+            <div className="flex flex-col items-center justify-end"></div>
+
+            <div className="flex items-center space-x-4">
+              <BellIcon className="text-white h-10 w-10" />
+              <Avatar className="h-14 w-14">
+                <AvatarImage
+                  src="https://github.com/shadcn.png"
+                  alt="Instructor"
+                />
+              </Avatar>
+            </div>
           </div>
         </header>
       </div>
@@ -34,28 +44,33 @@ export default function InstructorDashboard() {
       {/* Main */}
       <main className="max-w-7xl mx-auto p-8 space-y-6">
         {/* Greeting Card */}
-        <Card className="rounded-2xl">
-          <CardContent className="flex items-center gap-4 py-6">
-            <Avatar className="h-16 w-16">
+        <Card className="rounded-xl">
+          <CardContent className="flex items-center gap-3 py-4 px-5">
+            <Avatar className="h-12 w-12">
               <AvatarImage src="https://github.com/shadcn.png" />
               <AvatarFallback>IN</AvatarFallback>
             </Avatar>
-            <h1 className="text-3xl font-bold">Hello Mr. Burns!</h1>
+            <h1 className="text-xl font-semibold">Hello Mr. Burns!</h1>
           </CardContent>
         </Card>
 
         {/* Tabs */}
         <div className="flex gap-3">
           <Button className="rounded-full">Cohort Overview</Button>
-          <Button variant="outline" className="rounded-full">
-            Students
-          </Button>
+          <Link href="/educator/students">
+            <Button variant="outline" className="rounded-full">
+              Students
+            </Button>
+          </Link>
         </div>
 
         {/* Recent Assessments */}
         <Card>
           <CardHeader>
-            <CardTitle>Recent Assessment Results</CardTitle>
+            <div className="flex items-center gap-2">
+              <BellIcon className="h-4 w-4 text-gray-600" />
+              <CardTitle>Recent Assessment Results</CardTitle>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex justify-between">
@@ -95,11 +110,15 @@ export default function InstructorDashboard() {
             <CardContent className="space-y-4">
               <div className="border rounded-lg p-3">
                 <p className="font-medium">Quadratic Equations</p>
-                <p className="text-sm text-gray-500">Math · 8 students affected</p>
+                <p className="text-sm text-gray-500">
+                  Math · 8 students affected
+                </p>
               </div>
               <div className="border rounded-lg p-3">
                 <p className="font-medium">Verb Conjugation</p>
-                <p className="text-sm text-gray-500">English · 6 students affected</p>
+                <p className="text-sm text-gray-500">
+                  English · 6 students affected
+                </p>
               </div>
               <Button className="w-full rounded-full">View All</Button>
             </CardContent>
@@ -107,5 +126,5 @@ export default function InstructorDashboard() {
         </div>
       </main>
     </div>
-  )
+  );
 }

@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
+import Image from 'next/image'
+import logo from "../../assets/logo.png"
 import { 
   Table, 
   TableBody, 
@@ -139,40 +141,35 @@ export default function StudentRoster() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Sticky Top Gray Header */}
-      <div className="bg-gray-100 w-full sticky top-0 z-50 shadow-sm">
-        <header className="relative max-w-7xl mx-auto py-4 px-8 flex items-center justify-between">
-          {/* Left: Page title */}
-          <div className="flex items-center gap-2 z-10">
-            <h1 className="text-lg font-semibold text-gray-800">
-              Student Dashboard
-            </h1>
-            <span className="text-gray-500">|</span>
-            <span className="text-sm text-gray-600">Iteration 1</span>
-          </div>
+    <div className="min-h-screen bg-black-250">
+      {/* Sticky Top Black Header */}
+      <div className="bg-black w-full sticky top-0 z-50 shadow-sm">
+        <header className="relative w-full py-4 px-8 flex items-center justify-between">
+          <h1 className="text-lg font-semibold z-10">
+            <Image src={logo} alt="My Image" width={120} height={72} />
+          </h1>
           
           {/* Center: Search bar absolutely centered */}
           <div className="absolute left-1/2 transform -translate-x-1/2 w-full max-w-md">
             <Input
               type="text"
-              placeholder="Search students..."
-              className="w-full bg-white"
+              placeholder="Search for students, topics..."
+              className="w-full bg-white rounded-full"
             />
           </div>
           
           {/* Right: Instructor info + avatar */}
           <div className="flex items-start gap-4 z-10 justify-end">
-            <div className="flex flex-col items-center justify-end">
-              <span className="text-sm text-gray-700">Instructor</span>
-              <Button variant="outline" size="sm" className="mt-1">
-                Edit Profile
-              </Button>
+            <div className="flex items-center gap-3 mt-2">
+              {/* Avatar */}
+              <Avatar className="h-10 w-10">
+                <AvatarImage src="https://github.com/shadcn.png" alt="Instructor" />
+                <AvatarFallback>IN</AvatarFallback>
+              </Avatar>
+
+              {/* Button */}
+              <Button size="sm" className="mr-[0px] px-1 py-5 text-2xl bg-black" >Edit Profile</Button>
             </div>
-            <Avatar className="h-10 w-10 mt-2">
-              <AvatarImage src="https://github.com/shadcn.png" alt="Instructor" />
-              <AvatarFallback>IN</AvatarFallback>
-            </Avatar>
           </div>
         </header>
       </div>
@@ -197,18 +194,70 @@ export default function StudentRoster() {
         </div>
 
         {/* Students table */}
-        <Card className="shadow-sm">
+        <Card className="shadow-sm mt-8 rounded-lg border border-gray-200 py-2 gap-1">
+          <CardHeader className="flex items-center justify-between px-6 py-2">
+            <CardTitle className="text-2xl font-bold">My Students</CardTitle>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground hidden md:inline">Filter:</span>
+              <Select defaultValue={timeRange} onValueChange={(v) => setTimeRange(v as 'all' | 'week' | 'month')}>
+                <SelectTrigger className="h-8 w-25 rounded-full border border-gray-300 bg-gray-100 text-sm pl-3 pr-2">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Time</SelectItem>
+                  <SelectItem value="week">Last Week</SelectItem>
+                  <SelectItem value="month">Last Month</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardHeader>
+          {/* Filter buttons */}
+            <div className="flex items-center mb-0 px-6">
+              <Button
+                variant="outline"
+                size="sm"
+                className={`mr-3 px-5 py-2 text-sm ${filter === 'All' ? 'bg-[#A3E635] border-0' : ''}`}
+                onClick={() => setFilter('All')}
+              >
+                All
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className={`ml-4 px-5 py-2 text-sm ${filter === 'At Risk' ? 'bg-[#FFE2E2] border-0' : ''}`}
+                onClick={() => setFilter('At Risk')}
+              >
+                At Risk
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className={`ml-4 px-5 py-2 text-sm ${filter === 'Inactive' ? 'bg-[#A3E635] border-0' : ''}`}
+                onClick={() => setFilter('Inactive')}
+              >
+                Inactive
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className={`ml-4 px-5 py-2 text-sm ${filter === 'On Track' ? 'bg-[#A3E635] border-0' : ''}`}
+                onClick={() => setFilter('On Track')}
+              >
+                On Track
+              </Button>
+            </div>
+
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-b bg-gray-50">
-                    <TableHead className="w-[50px]"></TableHead>
-                    <TableHead className="w-[250px]">Student Name</TableHead>
-                    <TableHead className="w-[300px]">Email</TableHead>
-                    <TableHead className="w-[200px]">Progress</TableHead>
-                    <TableHead className="w-[100px]">Status</TableHead>
-                    <TableHead className="text-right w-[150px]">Actions</TableHead>
+                  <TableRow className="border-solid">
+                 
+                      <TableHead className="w-[250px] pl-6 text-sm text-gray-500">Student</TableHead>
+                      <TableHead className="w-[300px] text-center text-sm text-gray-500">Progress</TableHead>
+                      <TableHead className="w-[220px] pl-4 text-sm text-gray-500 text-left">Engagement</TableHead>
+                      <TableHead className="w-[120px] pl-4 text-sm text-gray-500 text-left">Status</TableHead>
+          
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -223,13 +272,18 @@ export default function StudentRoster() {
                         </Avatar>
                       </TableCell>
                       <TableCell className="font-medium">
-                        <div className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md inline-block">
+                        <div className="text-black px-4 py-2 rounded-md inline-block">
                           {student.name}
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md inline-block">
-                          {student.email}
+                      
+                      <TableCell className="text-center">
+                        <div className="flex items-center gap-2 justify-center">
+                          <Progress 
+                            value={student.progress} 
+                            className="w-[242px] h-3.5 [&>div]:bg-[#A3E635]"
+                          />
+                          <span className="text-sm text-black-600">{student.progress}%</span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -238,10 +292,17 @@ export default function StudentRoster() {
                           <span className="bg-[#AEF35A] text-sm text-gray-600">{student.progress}%</span>
                         </div>
                       </TableCell>
-                      <TableCell>
+
+                      <TableCell className="pl-4">
                         <Badge 
-                          variant={student.status === "Active" ? "default" : "secondary"}
-                          className={student.status === "Behind" ? "bg-orange-100 text-orange-800" : ""}
+                          variant={student.status === "On Track" ? "outline" : "secondary"}
+                          className={
+                            (student.status === "On Track" 
+                              ? "bg-[#A3E635] border-0 text-gray-800" 
+                              : student.status === "At Risk" 
+                                ? "bg-[#FFE2E2] text-orange-800" 
+                                : "") + " text-sm"
+                          }
                         >
                           {student.status}
                         </Badge>
