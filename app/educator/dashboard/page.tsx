@@ -5,88 +5,106 @@ import { Input } from "@/components/ui/input"
 
 export default function InstructorDashboard() {
   return (
-    <div className="min-h-screen bg-gray-50">
-        {/*Sticky Top Gray Header */}
-        <div className="bg-gray-100 w-full sticky top-0 z-50 shadow-sm">
-            <header className="relative max-w-6xl mx-auto py-4 px-8 flex items-center justify-between">
-                {/* Left: Page title */}
-                <h1 className="text-lg font-semibold text-gray-800 z-10">
-                Instructor Dashboard
-                </h1>
+    <div className="min-h-screen bg-gray-100">
+      {/* Top Header */}
+      <div className="bg-black text-white sticky top-0 z-50">
+        <header className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+          {/* Left */}
+          <div className="font-semibold text-lg">8 Million Stories</div>
 
-                {/* Center: Search bar absolutely centered */}
-                <div className="absolute left-1/2 transform -translate-x-1/2 w-full max-w-md">
-                <Input
-                    type="text"
-                    placeholder="Search..."
-                    className="w-full bg-white"
-                />
-                </div>
+          {/* Center */}
+          <div className="w-full max-w-lg mx-6">
+            <Input
+              placeholder="Search for students, topics..."
+              className="bg-white text-black"
+            />
+          </div>
 
-                {/* Right: Instructor info + avatar */}
-                <div className="flex items-start gap-4 z-10 justify-end">
-                <div className="flex flex-col items-center justify-end">
-                    <span className="text-sm text-gray-700">Instructor</span>
-                    <Button variant="outline" size="sm" className="mt-1">
-                    Edit Profile
-                    </Button>
-                </div>
+          {/* Right */}
+          <div className="flex items-center gap-4">
+            <span>🔔</span>
+            <Avatar className="h-9 w-9">
+              <AvatarImage src="https://github.com/shadcn.png" />
+              <AvatarFallback>IN</AvatarFallback>
+            </Avatar>
+          </div>
+        </header>
+      </div>
 
-                <Avatar className="h-14 w-14">
-                    <AvatarImage src="https://github.com/shadcn.png" alt="Instructor" />
-                    <AvatarFallback>IN</AvatarFallback>
-                </Avatar>
-                </div>
-            </header>
+      {/* Main */}
+      <main className="max-w-7xl mx-auto p-8 space-y-6">
+        {/* Greeting Card */}
+        <Card className="rounded-2xl">
+          <CardContent className="flex items-center gap-4 py-6">
+            <Avatar className="h-16 w-16">
+              <AvatarImage src="https://github.com/shadcn.png" />
+              <AvatarFallback>IN</AvatarFallback>
+            </Avatar>
+            <h1 className="text-3xl font-bold">Hello Mr. Burns!</h1>
+          </CardContent>
+        </Card>
+
+        {/* Tabs */}
+        <div className="flex gap-3">
+          <Button className="rounded-full">Cohort Overview</Button>
+          <Button variant="outline" className="rounded-full">
+            Students
+          </Button>
         </div>
 
-
-      {/* Main content area */}
-      <main className="max-w-6xl mx-auto p-8">
-        <div className="flex items-center gap-4 mb-8">
-          <Avatar className="h-20 w-20">
-            <AvatarImage src="https://github.com/shadcn.png" alt="Instructor" />
-            <AvatarFallback>IN</AvatarFallback>
-          </Avatar>
-          <h2 className="text-3xl font-bold">Hello Instructor!</h2>
-        </div>
-
-        {/* Top cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <Card><CardContent className="h-24" /></Card>
-          <Card><CardContent className="h-24" /></Card>
-          <Card><CardContent className="h-24" /></Card>
-        </div>
-
-        {/* Cohort Analytics */}
+        {/* Recent Assessments */}
         <Card>
           <CardHeader>
-            <CardTitle>Cohort Analytics</CardTitle>
+            <CardTitle>Recent Assessment Results</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Proficiency</CardTitle>
-                </CardHeader>
-                <CardContent className="h-40" />
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Engagement</CardTitle>
-                </CardHeader>
-                <CardContent className="h-40" />
-              </Card>
+          <CardContent className="space-y-4">
+            <div className="flex justify-between">
+              <div>
+                <p className="font-medium">Sarah Johnson</p>
+                <p className="text-sm text-gray-500">Math Quiz 3</p>
+              </div>
+              <div className="text-sm text-gray-600">95% · 10 min ago</div>
             </div>
-
-            {/* Action buttons */}
-            <div className="flex gap-4">
-              <Button variant="outline">View All Students</Button>
-              <Button variant="outline">Send Message</Button>
-              <Button variant="outline">Assign Lessons</Button>
+            <div className="flex justify-between">
+              <div>
+                <p className="font-medium">Emily Rodriguez</p>
+                <p className="text-sm text-gray-500">Reading Quiz 2</p>
+              </div>
+              <div className="text-sm text-gray-600">95% · 10 min ago</div>
             </div>
           </CardContent>
         </Card>
+
+        {/* Analytics Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Proficiency */}
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle>Student Proficiency</CardTitle>
+            </CardHeader>
+            <CardContent className="h-64 flex items-center justify-center text-gray-400">
+              Chart goes here
+            </CardContent>
+          </Card>
+
+          {/* Weaknesses */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Cohort Weaknesses</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="border rounded-lg p-3">
+                <p className="font-medium">Quadratic Equations</p>
+                <p className="text-sm text-gray-500">Math · 8 students affected</p>
+              </div>
+              <div className="border rounded-lg p-3">
+                <p className="font-medium">Verb Conjugation</p>
+                <p className="text-sm text-gray-500">English · 6 students affected</p>
+              </div>
+              <Button className="w-full rounded-full">View All</Button>
+            </CardContent>
+          </Card>
+        </div>
       </main>
     </div>
   )
