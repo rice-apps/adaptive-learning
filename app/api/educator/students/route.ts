@@ -1,51 +1,61 @@
-import { createClient } from '@supabase/supabase-js'
-import { NextResponse } from 'next/server'
+import { createClient } from "@supabase/supabase-js";
+import { NextResponse } from "next/server";
 
-const supabaseURL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+export async function GET() {
+  const supabaseURL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseURL || !supabaseKEY) {
-  throw new Error('missing supabase environment variables')
-}
+  if (!supabaseURL || !supabaseKEY) {
+    return NextResponse.json(
+      { error: "Supabase environment variables not configured" },
+      { status: 500 }
+    );
+  }
 
-const supabase = createClient(
-    supabaseURL,
-    supabaseKEY
-);
+  const supabase = createClient(supabaseURL, supabaseKEY);
 
-export async function GET (request: Request){
-    try {
-        const { data: students, error } = await supabase
-        .from('Students')
-        .select(`
-            id,
-            email,
-            progress,
-            status:isActive,
-            profileName,
-            avatar
-        `)
-        .order('created_at', { ascending: false })
+  try {
+    const { data: students, error } = await supabase
+      .from("Students")
+      .select(
+        `
+        id,
+        email,
+        progress,
+        isActive,
+        profileName,
+        avatar
+      `
+      )
+      .order("created_at", { ascending: false });
 
-        if (error) {
-            console.error(error);
-        return NextResponse.json(
-            { error: 'something went wrong :(' },
-            {status: 500}
-        ) 
-        }
-
-        return NextResponse.json({
-            students: students,
-            total: students?.length || 0
-        })
+    if (error) {
+      console.error("Supabase error:", error);
+      return NextResponse.json(
+        { error: "Failed to fetch students" },
+        { status: 500 }
+      );
     }
 
-    catch (error) {
-        return NextResponse.json(
-            { error: 'failed to get students' },
-            {status: 500}
-        )
-    }
-}
+    // normalize status to what frontend expects
+    const formattedStudents = students.map((s) => ({
+      id: s.id,
+      email: s.email,
+      progress: s.progress,
+      status: s.isActive ? "On Track" : "At Risk",
+      profileName: s.profileName,
+      avatar: s.avatar,
+    }));
 
+    return NextResponse.json({
+      students: formattedStudents,
+      total: formattedStudents.length,
+    });
+  } catch (err) {
+    console.error("Route error:", err);
+    return NextResponse.json(
+      { error: "Unexpected server error" },
+      { status: 500 }
+    );
+  }
+}
