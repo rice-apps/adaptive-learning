@@ -1,3 +1,4 @@
+"use client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,8 +7,10 @@ import Image from "next/image";
 import logo from "../../assets/logo.png";
 import { Search, BellIcon } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function InstructorDashboard() {
+  const pathname = usePathname();
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-black w-full sticky top-0 z-50 shadow-sm">
@@ -56,9 +59,24 @@ export default function InstructorDashboard() {
 
         {/* Tabs */}
         <div className="flex gap-3">
-          <Button className="rounded-full">Cohort Overview</Button>
+          <Link href="/educator/dashboard">
+            <Button
+              className="rounded-md"
+              variant={
+                pathname === "/educator/dashboard" ? "default" : "outline"
+              }
+            >
+              Cohort Overview
+            </Button>
+          </Link>
+
           <Link href="/educator/students">
-            <Button variant="outline" className="rounded-full">
+            <Button
+              className="rounded-md"
+              variant={
+                pathname === "/educator/students" ? "default" : "outline"
+              }
+            >
               Students
             </Button>
           </Link>

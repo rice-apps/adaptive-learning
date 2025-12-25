@@ -25,6 +25,8 @@ import {
 } from "@/components/ui/select";
 import { Search, BellIcon } from "lucide-react";
 import StudentDetailsDialog from "./StudentDetailsDialog";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +59,7 @@ interface StudentDetails {
 }
 
 export default function StudentRoster() {
+  const pathname = usePathname();
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -179,208 +182,176 @@ export default function StudentRoster() {
 
       {/* Main content area */}
       <main className="max-w-7xl mx-auto p-8">
-        {/* Title and filters section */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-semibold text-gray-700 mb-4">
-            All Students
-          </h2>
+        {/* Tabs */}
+        <div className="flex gap-3">
+          <Link href="/educator/dashboard">
+            <Button
+              className="rounded-md"
+              variant={
+                pathname === "/educator/dashboard" ? "default" : "outline"
+              }
+            >
+              Cohort Overview
+            </Button>
+          </Link>
 
-          {/* Filter buttons */}
-          <div className="flex items-center gap-3 mb-4">
+          <Link href="/educator/students">
             <Button
-              variant={filter === "All" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setFilter("All")}
+              className="rounded-md"
+              variant={
+                pathname === "/educator/students" ? "default" : "outline"
+              }
             >
-              All
+              Students
             </Button>
-            <Button
-              variant={filter === "On Track" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setFilter("On Track")}
-            >
-              On Track
-            </Button>
-            <Button
-              variant={filter === "At Risk" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setFilter("At Risk")}
-            >
-              At Risk
-            </Button>
-            <Button
-              variant={filter === "Inactive" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setFilter("Inactive")}
-            >
-              Inactive
-            </Button>
-          </div>
+          </Link>
         </div>
 
         {/* Students table */}
         <Card className="shadow-sm mt-8 rounded-lg border border-gray-200 py-2 gap-1">
           <CardHeader className="flex items-center justify-between px-6 py-2">
             <CardTitle className="text-2xl font-bold">My Students</CardTitle>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground hidden md:inline">
-                Filter:
-              </span>
-              <Select
-                defaultValue={timeRange}
-                onValueChange={(v) =>
-                  setTimeRange(v as "all" | "week" | "month")
-                }
-              >
-                <SelectTrigger className="h-8 w-25 rounded-full border border-gray-300 bg-gray-100 text-sm pl-3 pr-2">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Time</SelectItem>
-                  <SelectItem value="week">Last Week</SelectItem>
-                  <SelectItem value="month">Last Month</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </CardHeader>
+
           {/* Filter buttons */}
-          <div className="flex items-center mb-0 px-6">
-            <Button
-              variant="outline"
-              size="sm"
-              className={`mr-3 px-5 py-2 text-sm ${
-                filter === "All" ? "bg-[#A3E635] border-0" : ""
-              }`}
-              onClick={() => setFilter("All")}
+          <div className="flex items-center justify-between px-6 py-3">
+            <div className="flex items-center gap-6">
+              <Button
+                variant="outline"
+                size="sm"
+                className={`h-9 px-5 text-sm ${
+                  filter === "All" ? "bg-[#ABFF2C80] border-0" : ""
+                }`}
+                onClick={() => setFilter("All")}
+              >
+                All
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className={`h-9 px-5 text-sm ${
+                  filter === "At Risk" ? "bg-[#ABFF2C80] border-0" : ""
+                }`}
+                onClick={() => setFilter("At Risk")}
+              >
+                At Risk
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className={`h-9 px-5 text-sm ${
+                  filter === "Inactive" ? "bg-[#ABFF2C80] border-0" : ""
+                }`}
+                onClick={() => setFilter("Inactive")}
+              >
+                Inactive
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className={`h-9 px-5 text-sm ${
+                  filter === "On Track" ? "bg-[#ABFF2C80] border-0" : ""
+                }`}
+                onClick={() => setFilter("On Track")}
+              >
+                On Track
+              </Button>
+            </div>
+
+            <Select
+              defaultValue={timeRange}
+              onValueChange={(v) => setTimeRange(v as "all" | "week" | "month")}
             >
-              All
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className={`ml-4 px-5 py-2 text-sm ${
-                filter === "At Risk" ? "bg-[#FFE2E2] border-0" : ""
-              }`}
-              onClick={() => setFilter("At Risk")}
-            >
-              At Risk
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className={`ml-4 px-5 py-2 text-sm ${
-                filter === "Inactive" ? "bg-[#A3E635] border-0" : ""
-              }`}
-              onClick={() => setFilter("Inactive")}
-            >
-              Inactive
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className={`ml-4 px-5 py-2 text-sm ${
-                filter === "On Track" ? "bg-[#A3E635] border-0" : ""
-              }`}
-              onClick={() => setFilter("On Track")}
-            >
-              On Track
-            </Button>
+              <SelectTrigger className="h-9 w-35 rounded-md border border-gray-300 bg-gray-100 text-sm pl-3 pr-2">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Sort By Date</SelectItem>
+                <SelectItem value="week">Last Week</SelectItem>
+                <SelectItem value="month">Last Month</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          <CardContent className="p-0">
+          <CardContent className="p-6">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-solid">
-                    <TableHead className="w-[250px] pl-6 text-sm text-gray-500">
+                  <TableRow>
+                    <TableHead className="w-[260px] text-sm text-gray-500">
                       Student
                     </TableHead>
-                    <TableHead className="w-[300px] text-center text-sm text-gray-500">
+                    <TableHead className="w-[280px] text-sm text-gray-500">
                       Progress
                     </TableHead>
-                    <TableHead className="w-[220px] pl-4 text-sm text-gray-500 text-left">
+                    <TableHead className="w-[220px] text-sm text-gray-500">
                       Engagement
                     </TableHead>
-                    <TableHead className="w-[120px] pl-4 text-sm text-gray-500 text-left">
+                    <TableHead className="w-[100px] text-sm text-gray-500">
                       Status
                     </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredStudents.map((student) => (
-                    <TableRow key={student.id} className="hover:bg-gray-50">
+                    <TableRow
+                      key={student.id}
+                      onClick={() => openDialogue(student)}
+                      className="cursor-pointer hover:bg-gray-100 transition-colors"
+                    >
+                      {/* Student */}
                       <TableCell>
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage
-                            src={student.avatar ?? undefined}
-                            alt={student.name}
-                          />
-                          <AvatarFallback className="bg-gray-300">
-                            {student.name
-                              ? student.name
-                                  .split(" ")
-                                  .map((n) => n[0])
-                                  .join("")
-                              : "?"}
-                          </AvatarFallback>
-                        </Avatar>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        <div className="text-black px-4 py-2 rounded-md inline-block">
-                          {student.name}
-                        </div>
-                      </TableCell>
-
-                      <TableCell className="text-center">
-                        <div className="flex items-center gap-2 justify-center">
-                          <Progress
-                            value={student.progress}
-                            className="w-[242px] h-3.5 [&>div]:bg-[#A3E635]"
-                          />
-                          <span className="text-sm text-black-600">
-                            {student.progress}%
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-9 w-9">
+                            <AvatarImage src={student.avatar ?? undefined} />
+                            <AvatarFallback>
+                              {student.name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium text-gray-900">
+                            {student.name}
                           </span>
                         </div>
                       </TableCell>
+
+                      {/* Progress */}
                       <TableCell>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3">
                           <Progress
                             value={student.progress}
-                            className="w-[140px]"
+                            className="h-3 w-[180px] [&>div]:bg-[#ABFF2C80]"
                           />
-                          <span className="bg-[#AEF35A] text-sm text-gray-600">
+                          <span className="text-sm text-gray-700 w-10 text-right">
                             {student.progress}%
                           </span>
                         </div>
                       </TableCell>
 
-                      <TableCell className="pl-4">
+                      {/* Engagement - fix later */}
+                      <TableCell className="text-sm text-gray-700">
+                        {student.progress >= 80
+                          ? "more than 10 hours"
+                          : student.progress >= 60
+                          ? "more than 6 hours"
+                          : student.progress >= 40
+                          ? "more than 5 hours"
+                          : "less than 3 hours"}
+                      </TableCell>
+
+                      {/* Status */}
+                      <TableCell>
                         <Badge
-                          variant={
+                          className={`rounded-full px-3 py-1 text-sm font-medium ${
                             student.status === "On Track"
-                              ? "outline"
-                              : "secondary"
-                          }
-                          className={
-                            (student.status === "On Track"
-                              ? "bg-[#A3E635] border-0 text-gray-800"
-                              : student.status === "At Risk"
-                              ? "bg-[#FFE2E2] text-orange-800"
-                              : "") + " text-sm"
-                          }
+                              ? "bg-lime-400 text-black"
+                              : "bg-red-100 text-red-700"
+                          }`}
                         >
                           {student.status}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="bg-gray-200 hover:bg-gray-300 text-gray-700"
-                          onClick={() => openDialogue(student)}
-                        >
-                          View Details
-                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -391,17 +362,17 @@ export default function StudentRoster() {
         </Card>
 
         {/* Pagination or additional controls can go here */}
-        <div className="mt-4 flex items-center justify-between">
-          <p className="text-sm text-gray-600">
+        <div className="mt-2 flex items-center justify-between">
+          <p className="text-sm text-gray-600 ml-1">
             Showing {filteredStudents.length} of {filteredStudents.length}{" "}
             students
           </p>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" disabled>
-              Previous
+              ←
             </Button>
             <Button variant="outline" size="sm">
-              Next
+              →
             </Button>
           </div>
         </div>
