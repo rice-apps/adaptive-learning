@@ -21,7 +21,8 @@ import {
 
 interface Student {
   id: string;
-  name: string;
+  first_name: string;
+  last_name: string;
 }
 
 interface StudentDetails {
@@ -58,7 +59,7 @@ export default function StudentDetailsDialog({
         showCloseButton={false}
       >
         <VisuallyHidden>
-          <DialogTitle>{student?.name ?? "Student Details"}</DialogTitle>
+          <DialogTitle>{student ? `${student.first_name} ${student.last_name}` : "Student Details"}</DialogTitle>
         </VisuallyHidden>
         {/* Header */}
         <div className="relative bg-[#A3E635] px-8 py-3 shrink-0">
@@ -70,7 +71,7 @@ export default function StudentDetailsDialog({
           </button>
 
           <h2 className="text-2xl font-bold capitalize text-black">
-            {student?.name}
+            {student ? `${student.first_name} ${student.last_name}` : ""}
           </h2>
 
           {details && (

@@ -31,9 +31,7 @@ import QuizCompletionCard from "@/components/quiz-completion";
 import logo from "../../../assets/logo.webp";
 
 interface Props {
-  student: {
-    profileName: string | null;
-  };
+  student: string | null;
   completedQuizzes: any[];
   hasCompletedDiagnostic: boolean;
 }
@@ -65,7 +63,7 @@ export default function StudentDashboardClient({
             <Avatar className="h-12 w-12">
               <AvatarImage src="https://github.com/shadcn.png" />
               <AvatarFallback>
-                {student?.profileName?.charAt(0).toUpperCase() || "S"}
+                {student?.charAt(0).toUpperCase() || "S"}
               </AvatarFallback>
             </Avatar>
           </div>
@@ -80,11 +78,11 @@ export default function StudentDashboardClient({
               <Avatar className="h-20 w-20">
                 <AvatarImage src="https://github.com/shadcn.png" />
                 <AvatarFallback>
-                  {student?.profileName?.charAt(0).toUpperCase() || "S"}
+                  {student?.charAt(0).toUpperCase() || "S"}
                 </AvatarFallback>
               </Avatar>
               <h1 className="text-3xl font-bold">
-                Hello {student?.profileName || "Student"}!
+                Hello {student || "Student"}!
               </h1>
             </div>
 

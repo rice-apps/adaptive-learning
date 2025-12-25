@@ -32,7 +32,8 @@ export async function GET(request: Request) {
             email,
             progress,
             status:isActive,
-            name:profileName,
+            first_name,
+            last_name,
             avatar,
             current_level,
             grade_reading,
@@ -66,7 +67,13 @@ export async function GET(request: Request) {
             );
         }
 
-        return NextResponse.json({ student });
+        // Format response with name as first_name
+        const formattedStudent = {
+            ...student,
+            name: student.first_name || null
+        };
+
+        return NextResponse.json({ student: formattedStudent });
     }
     
     catch (error) {
