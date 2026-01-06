@@ -24,7 +24,8 @@ export async function GET(
         `
         id,
         email,
-        profileName,
+        first_name,
+        last_name,
         avatar,
         attributes
       `
@@ -87,7 +88,7 @@ export async function GET(
     // Return the formatted response
     return NextResponse.json({
       id: student.id,
-      name: student.profileName,
+      name: `${student.first_name || ""} ${student.last_name || ""}`.trim(),
       email: student.email,
       avatar: student.avatar,
 
