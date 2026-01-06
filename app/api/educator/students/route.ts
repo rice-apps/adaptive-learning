@@ -23,7 +23,8 @@ export async function GET() {
         email,
         progress,
         isActive,
-        profileName,
+        first_name,
+        last_name,
         avatar
       `
       )
@@ -43,7 +44,8 @@ export async function GET() {
       email: s.email,
       progress: s.progress,
       status: s.isActive ? "On Track" : "At Risk",
-      profileName: s.profileName,
+      first_name: s.first_name,
+      last_name: s.last_name,
       avatar: s.avatar,
     }));
 

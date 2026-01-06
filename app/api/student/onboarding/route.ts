@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
   try {
     const formData = await request.json();
-    const { name, plan, grade_reading, grade_math, current_level, career_interests, goals } = formData;
+    const { firstname, lastname, plan, grade_reading, grade_math, current_level, career_interests, goals } = formData;
     
     console.log("Received onboarding data:", formData);
     
@@ -120,8 +120,9 @@ export async function POST(request: Request) {
       role: 'student',
     };
 
-    // Add profileName from the 'name' field in the form
-    if (name) studentInsertData.profileName = name;
+    // Add first_name and last_name from the form
+    if (firstname) studentInsertData.first_name = firstname;
+    if (lastname) studentInsertData.last_name = lastname;
     
     // Add optional fields only if they have values AND the column exists
     if (plan) studentInsertData.plan = plan;

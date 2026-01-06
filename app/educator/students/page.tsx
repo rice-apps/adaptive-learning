@@ -35,7 +35,8 @@ interface Student {
   email: string;
   progress: number;
   status: string;
-  name: string;
+  first_name: string;
+  last_name: string;
   avatar: string | null;
 }
 
@@ -119,7 +120,8 @@ export default function StudentRoster() {
               email: student.email,
               progress: student.progress,
               status: student.status,
-              name: student.profileName,
+              first_name: student.first_name,
+              last_name: student.last_name,
               avatar: student.avatar,
             })
           );
@@ -305,14 +307,11 @@ export default function StudentRoster() {
                           <Avatar className="h-9 w-9">
                             <AvatarImage src={student.avatar ?? undefined} />
                             <AvatarFallback>
-                              {student.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
+                              {student.first_name?.[0] || ""}{student.last_name?.[0] || ""}
                             </AvatarFallback>
                           </Avatar>
                           <span className="font-medium text-gray-900">
-                            {student.name}
+                            {student.first_name} {student.last_name}
                           </span>
                         </div>
                       </TableCell>
