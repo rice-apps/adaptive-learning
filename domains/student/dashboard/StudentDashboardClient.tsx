@@ -1,7 +1,6 @@
 "use client";
 
 import {useState} from "react";
-import Link from "next/link";
 
 import {Button} from "@/components/ui/button";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
@@ -10,8 +9,9 @@ import {Table, TableHeader, TableRow, TableHead, TableBody, TableCell} from "@/c
 
 import QuizCompletionCard from "@/components/quiz-completion";
 import GreetingCard from "./GreetingCard";
+import PromptDiagnosticCard from "./PromptDiagnosticCard";
 import StudentDashboardHeader from "./StudentDashboardHeader";
-import { Badge } from "@/components/ui/badge";
+import {Badge} from "@/components/ui/badge";
 
 interface Props {
   student: string | null;
@@ -32,20 +32,7 @@ export default function StudentDashboardClient({student, completedQuizzes, hasCo
         <GreetingCard student={student} />
 
         {/* Diagnostic Lock Card */}
-        {!hasCompletedDiagnostic && (
-          <Card className="mb-8 border-2 border-dashed border-gray-300">
-            <CardContent className="py-10 flex flex-col items-center text-center gap-4">
-              <h2 className="text-2xl font-semibold">Start Your Diagnostic Assessment</h2>
-              <p className="text-gray-500 max-w-md">
-                Complete this one-time quiz to unlock lessons, feedback, and progress tracking.
-              </p>
-
-              <Link href="/student/quizzes">
-                <Button className="bg-black text-white px-8 py-3 text-lg">Start Quiz</Button>
-              </Link>
-            </CardContent>
-          </Card>
-        )}
+        {!hasCompletedDiagnostic && <PromptDiagnosticCard />}
 
         {/* Recommended Quizzes (Locked Overlay) */}
         <div className="relative mb-10">
