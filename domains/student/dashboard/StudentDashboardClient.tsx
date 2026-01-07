@@ -3,16 +3,15 @@
 import {useState} from "react";
 import Link from "next/link";
 
-import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
-import {Badge} from "@/components/ui/badge";
 import {Button} from "@/components/ui/button";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
-import {Progress} from "@/components/ui/progress";
 import {Select, SelectTrigger, SelectValue, SelectContent, SelectItem} from "@/components/ui/select";
 import {Table, TableHeader, TableRow, TableHead, TableBody, TableCell} from "@/components/ui/table";
 
 import QuizCompletionCard from "@/components/quiz-completion";
+import GreetingCard from "./GreetingCard";
 import StudentDashboardHeader from "./StudentDashboardHeader";
+import { Badge } from "@/components/ui/badge";
 
 interface Props {
   student: string | null;
@@ -30,24 +29,7 @@ export default function StudentDashboardClient({student, completedQuizzes, hasCo
 
       <main className="max-w-6xl mx-auto p-8">
         {/* Greeting / Progress */}
-        <Card className="mb-8">
-          <CardContent>
-            <div className="flex items-center gap-4 mb-6">
-              <Avatar className="h-20 w-20">
-                <AvatarImage src="https://github.com/shadcn.png" />
-                <AvatarFallback>{student?.charAt(0).toUpperCase() || "S"}</AvatarFallback>
-              </Avatar>
-              <h1 className="text-3xl font-bold">Hello {student || "Student"}!</h1>
-            </div>
-
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="font-bold text-lg">COURSE PROGRESS</h2>
-              <Badge className="bg-white text-black">33%</Badge>
-            </div>
-
-            <Progress value={33} className="[&>div]:bg-lime-400" />
-          </CardContent>
-        </Card>
+        <GreetingCard student={student} />
 
         {/* Diagnostic Lock Card */}
         {!hasCompletedDiagnostic && (
