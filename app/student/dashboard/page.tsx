@@ -1,4 +1,4 @@
-import StudentDashboardClient from "./StudentDashboardClient";
+import StudentDashboardClient from "@/domains/student/dashboard/StudentDashboardClient";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
