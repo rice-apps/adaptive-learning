@@ -17,6 +17,8 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface Quiz {
   id: string;
@@ -39,12 +41,20 @@ export default function AssignQuizDialog({
   studentName,
   educatorId,
 }: AssignQuizDialogProps) {
+  // Existing quiz states
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [selectedQuizId, setSelectedQuizId] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [fetchingQuizzes, setFetchingQuizzes] = useState(false);
+
+  // AI generation states
+  const [aiTotalQuestions, setAiTotalQuestions] = useState(10);
+  const [aiFocusAreas, setAiFocusAreas] = useState<string[]>([]);
+  const [aiGenerating, setAiGenerating] = useState(false);
+
+  const availableFocusAreas = ['Math', 'Science', 'Social Studies', 'Reading/Language Arts'];
 
   useEffect(() => {
     if (isOpen && educatorId) {
@@ -65,16 +75,12 @@ export default function AssignQuizDialog({
       
       const data = await response.json();
       
-      // Make sure data is an array
       if (Array.isArray(data)) {
         setQuizzes(data);
       } else {
-        console.error('Expected array but got:', data);
         setQuizzes([]);
-        setError('No quizzes found');
       }
     } catch (err) {
-      console.error('Error fetching quizzes:', err);
       setError('Failed to load quizzes');
       setQuizzes([]);
     } finally {
@@ -82,7 +88,7 @@ export default function AssignQuizDialog({
     }
   };
 
-  const handleAssign = async () => {
+  const handleAssignExisting = async () => {
     if (!selectedQuizId) {
       setError('Please select a quiz');
       return;
@@ -108,9 +114,8 @@ export default function AssignQuizDialog({
       }
 
       alert(`Quiz assigned to ${studentName} successfully!`);
+      resetForm();
       onClose();
-      setSelectedQuizId('');
-      setDueDate('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to assign quiz');
     } finally {
@@ -118,59 +123,210 @@ export default function AssignQuizDialog({
     }
   };
 
+  const handleGenerateAI = async () => {
+    if (aiTotalQuestions === 0) {
+      setError('Please specify number of questions');
+      return;
+    }
+
+    setAiGenerating(true);
+    setError('');
+
+    try {
+      const distributionResponse = await fetch('/api/quiz/generate-smart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentId,
+          educatorId,
+          totalQuestions: aiTotalQuestions,
+          focusAreas: aiFocusAreas.length > 0 ? aiFocusAreas : undefined,
+        }),
+      });
+
+      if (!distributionResponse.ok) {
+        const errorData = await distributionResponse.json();
+        throw new Error(errorData.error || 'Failed to generate intelligent quiz');
+      }
+
+      const data = await distributionResponse.json();
+
+      if (dueDate && data.quiz?.id) {
+        await addDeadline(data.quiz.id);
+      }
+
+      alert(
+        `AI-generated quiz assigned to ${studentName}!\n\n` +
+        `Topics: ${Object.entries(data.topicDistribution).map(([topic, count]) => `${topic}: ${count}`).join(', ')}\n\n` +
+        `Reasoning: ${data.reasoning}`
+      );
+      resetForm();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to generate AI quiz');
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
+  const addDeadline = async (quizId: string) => {
+    try {
+      await fetch('/api/quiz/deadline', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          quizId,
+          studentId,
+          educatorId,
+          dueDate,
+        }),
+      });
+    } catch (err) {
+      // Silently fail - deadline is optional
+    }
+  };
+
+  const resetForm = () => {
+    setSelectedQuizId('');
+    setDueDate('');
+    setAiTotalQuestions(10);
+    setAiFocusAreas([]);
+    setError('');
+  };
+
+  const toggleFocusArea = (area: string) => {
+    setAiFocusAreas(prev => 
+      prev.includes(area) 
+        ? prev.filter(a => a !== area)
+        : [...prev, area]
+    );
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Assign Quiz</DialogTitle>
+          <DialogTitle>Assign Quiz to {studentName}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div>
-            <p className="text-sm text-gray-600 mb-4">
-              Assigning to: <span className="font-semibold">{studentName}</span>
-            </p>
+          <Tabs defaultValue="ai" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="ai">AI Generate</TabsTrigger>
+              <TabsTrigger value="existing">Existing</TabsTrigger>
+            </TabsList>
 
-            <div className="space-y-2">
-              <Label>Select Quiz</Label>
-              <Select 
-                value={selectedQuizId} 
-                onValueChange={setSelectedQuizId}
-                disabled={fetchingQuizzes}
+            {/* AI-Generated Quiz Tab */}
+            <TabsContent value="ai" className="space-y-4 mt-4">
+              <div className="p-3 bg-blue-50 rounded-md text-sm text-blue-700">
+                <strong>🤖 AI-Powered:</strong> Mastra will analyze {studentName}&apos;s learning style, 
+                past performance, and weaknesses to create a personalized quiz.
+              </div>
+
+              <div className="space-y-2">
+                <Label>Number of Questions</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={aiTotalQuestions}
+                  onChange={(e) => setAiTotalQuestions(parseInt(e.target.value) || 10)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Focus Areas (Optional)</Label>
+                <div className="space-y-2">
+                  {availableFocusAreas.map(area => (
+                    <div key={area} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={area}
+                        checked={aiFocusAreas.includes(area)}
+                        onCheckedChange={() => toggleFocusArea(area)}
+                      />
+                      <label
+                        htmlFor={area}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        {area}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Leave empty for Mastra to decide based on student needs
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Due Date (Optional)</Label>
+                <Input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                />
+              </div>
+
+              <Button
+                onClick={handleGenerateAI}
+                disabled={aiGenerating || aiTotalQuestions === 0}
+                className="w-full"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder={fetchingQuizzes ? "Loading quizzes..." : "-- Select a quiz --"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {fetchingQuizzes ? (
-                    <SelectItem value="loading" disabled>
-                      Loading...
-                    </SelectItem>
-                  ) : quizzes.length === 0 ? (
-                    <SelectItem value="none" disabled>
-                      No quizzes available
-                    </SelectItem>
-                  ) : (
-                    quizzes.map((quiz) => (
-                      <SelectItem key={quiz.id} value={quiz.id}>
-                        Quiz from {new Date(quiz.created_at).toLocaleDateString()} (
-                        {quiz.questions?.length || 0} questions)
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+                {aiGenerating ? 'AI Generating...' : `Generate Smart Quiz (${aiTotalQuestions} questions)`}
+              </Button>
+            </TabsContent>
 
-            <div className="space-y-2 mt-4">
-              <Label>Due Date (Optional)</Label>
-              <Input
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-              />
-            </div>
-          </div>
+            {/* Assign Existing Quiz Tab */}
+            <TabsContent value="existing" className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label>Select Quiz</Label>
+                <Select 
+                  value={selectedQuizId} 
+                  onValueChange={setSelectedQuizId}
+                  disabled={fetchingQuizzes}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={fetchingQuizzes ? "Loading..." : "-- Select a quiz --"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fetchingQuizzes ? (
+                      <SelectItem value="loading" disabled>
+                        Loading...
+                      </SelectItem>
+                    ) : quizzes.length === 0 ? (
+                      <SelectItem value="none" disabled>
+                        No quizzes available
+                      </SelectItem>
+                    ) : (
+                      quizzes.map((quiz) => (
+                        <SelectItem key={quiz.id} value={quiz.id}>
+                          Quiz from {new Date(quiz.created_at).toLocaleDateString()} (
+                          {quiz.questions?.length || 0} questions)
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Due Date (Optional)</Label>
+                <Input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                />
+              </div>
+
+              <Button
+                onClick={handleAssignExisting}
+                disabled={loading || !selectedQuizId || fetchingQuizzes}
+                className="w-full"
+              >
+                {loading ? 'Assigning...' : 'Assign Existing Quiz'}
+              </Button>
+            </TabsContent>
+          </Tabs>
 
           {error && (
             <div className="p-3 bg-red-100 text-red-700 rounded-md text-sm">
@@ -178,18 +334,9 @@ export default function AssignQuizDialog({
             </div>
           )}
 
-          <div className="flex gap-2">
-            <Button
-              onClick={handleAssign}
-              disabled={loading || !selectedQuizId || fetchingQuizzes}
-              className="flex-1"
-            >
-              {loading ? 'Assigning...' : 'Assign Quiz'}
-            </Button>
-            <Button onClick={onClose} variant="outline" className="flex-1">
-              Cancel
-            </Button>
-          </div>
+          <Button onClick={onClose} variant="outline" className="w-full">
+            Cancel
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
