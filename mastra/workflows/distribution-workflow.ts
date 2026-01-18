@@ -41,11 +41,11 @@ const generateDistributionStep = createStep({
 
     const learningStyle = typeof studentData.learning_style === 'string'
       ? JSON.parse(studentData.learning_style)
-      : studentData.learning_style;
+      : (studentData.learning_style || {});
 
     const attributes = typeof studentData.attributes === 'string'
       ? JSON.parse(studentData.attributes)
-      : studentData.attributes;
+      : (studentData.attributes || {});
 
     // Get student's past performance
     const { data: pastResults } = await supabase
@@ -145,11 +145,11 @@ const generateDistributionStep = createStep({
     const prompt = `You are an expert GED quiz designer. Create an intelligent topic distribution for a quiz.
 
 STUDENT PROFILE:
-- Learning Style: ${learningStyle.learnBest}
-- Worried About: ${learningStyle.worriedSubject || 'None'}
-- Challenges: ${learningStyle.hardFactors?.join(', ') || 'None'}
-- Strengths (self-reported): ${attributes['strength-skill']?.join(', ') || 'None identified'}
-- Weaknesses (self-reported): ${attributes['weaknesses-skill']?.join(', ') || 'None identified'}
+- Learning Style: ${learningStyle?.learnBest || 'Not specified'}
+- Worried About: ${learningStyle?.worriedSubject || 'None'}
+- Challenges: ${learningStyle?.hardFactors?.join(', ') || 'None'}
+- Strengths (self-reported): ${attributes?.['strength-skill']?.join(', ') || 'None identified'}
+- Weaknesses (self-reported): ${attributes?.['weaknesses-skill']?.join(', ') || 'None identified'}
 
 PAST PERFORMANCE BY TOPIC:
 ${Object.entries(performanceByTopic).length > 0 
@@ -234,10 +234,9 @@ CRITICAL:
 
     // Select questions based on distribution with duplicate prevention
     const selectedQuestionIds: string[] = [...requiredQuestionIds];
-    const usedQuestionIds = new Set(requiredQuestionIds); // Track used IDs to avoid duplicates
+    const usedQuestionIds = new Set(requiredQuestionIds);
 
     for (const [topic, count] of Object.entries(result.topicDistribution) as [string, number][]) {
-      // Build exclusion list for query
       const exclusionList = Array.from(usedQuestionIds);
       
       let query = supabase
@@ -245,7 +244,6 @@ CRITICAL:
         .select('id')
         .eq('topic', topic);
       
-      // Only add NOT IN clause if we have IDs to exclude
       if (exclusionList.length > 0) {
         query = query.not('id', 'in', `(${exclusionList.join(',')})`);
       }
@@ -262,7 +260,6 @@ CRITICAL:
         continue;
       }
 
-      // Take up to 'count' questions from this topic
       const questionsToAdd = questions.slice(0, count);
       
       if (questionsToAdd.length < count) {
@@ -277,7 +274,6 @@ CRITICAL:
       });
     }
 
-    // Check if we got enough questions
     if (selectedQuestionIds.length < totalQuestions) {
       console.warn(`Only found ${selectedQuestionIds.length} questions out of ${totalQuestions} requested`);
     }
@@ -299,4 +295,4 @@ const distributionWorkflow = createWorkflow({
 
 distributionWorkflow.commit();
 
-export { distributionWorkflow };
+export { distributionWorkflow, generateDistributionStep };
