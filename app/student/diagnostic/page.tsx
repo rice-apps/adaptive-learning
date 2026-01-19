@@ -69,9 +69,12 @@ export default function QuizzesPage() {
   const fetchQuestions = async () => {
     try {
       const supabase = createClient();
+      // Fetch only diagnostic questions - all students get the same set
+      // Questions are filtered by topic='Diagnostic' and ordered by question number in the question text
       const { data, error } = await supabase
         .from("Questions")
         .select("*")
+        .eq("topic", "Diagnostic")
         .order("created_at", { ascending: true });
 
       if (error) {
@@ -81,7 +84,13 @@ export default function QuizzesPage() {
       }
 
       if (data) {
-        setQuestions(data as Question[]);
+        // Sort by question number extracted from question text to ensure consistent order
+        const sortedQuestions = [...data].sort((a, b) => {
+          const numA = parseInt((a.question_details as any)?.question?.match(/Diagnostic Question (\d+)/)?.[1] || "0");
+          const numB = parseInt((b.question_details as any)?.question?.match(/Diagnostic Question (\d+)/)?.[1] || "0");
+          return numA - numB;
+        });
+        setQuestions(sortedQuestions as Question[]);
       }
     } catch (error) {
       console.error("Error fetching questions:", error);
