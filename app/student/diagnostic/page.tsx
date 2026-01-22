@@ -230,7 +230,7 @@ export default function QuizzesPage() {
       }
 
       // Insert completed diagnostic quiz
-      const { data, error: insertError } = await supabase
+      const { data: quizData, error: insertError } = await supabase
         .from("Quizzes")
         .insert({
           student_id: user.id,
@@ -241,17 +241,52 @@ export default function QuizzesPage() {
           time_spent: timeSpentSeconds,
           score: calculateScore(),
         })
-        .select();
+        .select()
+        .single();
 
-      console.log("QUIZ INSERT DATA:", data);
-      console.log("QUIZ INSERT ERROR:", insertError);
-
-      if (insertError) {
-        toast.error(insertError.message);
+      if (insertError || !quizData) {
+        toast.error(insertError?.message || "Failed to save quiz");
         return;
       }
 
-      toast.success("Quiz completed successfully!");
+      // Submit diagnostic quiz results to server-side API
+      // This handles RLS issues and database column checks
+      const submitResponse = await fetch("/api/student/diagnostic/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          quizId: quizData.id,
+          questions: questions,
+          answers: answers,
+          score: calculateScore(),
+          timeSpentSeconds: timeSpentSeconds,
+          quizStartTime: quizStartTime,
+        }),
+      });
+
+      const submitResult = await submitResponse.json();
+
+      if (!submitResponse.ok) {
+        console.error("Error submitting diagnostic results:", submitResult);
+        
+        // Check if it's the missing column error
+        if (submitResult.error?.includes("column does not exist") || 
+            submitResult.error?.includes("PGRST204")) {
+          toast.error(
+            "Please add the diagnostic_results column to the Students table. Check the migration file."
+          );
+        } else {
+          toast.error(
+            submitResult.error || "Failed to save diagnostic results"
+          );
+        }
+        // Quiz is still saved, but results weren't analyzed
+        return;
+      }
+
+      toast.success("Diagnostic quiz completed successfully!");
       router.push("/student/dashboard");
     } catch (err) {
       console.error("Error submitting quiz:", err);
