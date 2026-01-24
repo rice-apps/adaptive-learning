@@ -19,6 +19,7 @@ import logo from "../../../assets/logo.webp";
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import Link from "next/link"
 
 
 interface StudentDashboardHeaderProps {
@@ -68,9 +69,18 @@ export default function StudentDashboardHeader({student}: StudentDashboardHeader
           </DropdownMenuTrigger>
 
           <DropdownMenuContent>
-            <DropdownMenuItem>
-              <UserIcon />
-              Profile
+            <DropdownMenuItem
+              // onSelect={(e) => {
+              //   e.preventDefault();
+              //   console.log("switching to profile page");
+              //   router.push("/student/profile");
+              // }}
+              asChild
+            >
+              <Link href="/student/profile">
+                <UserIcon />
+                Profile
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem 
