@@ -12,7 +12,7 @@ export default function PromptDiagnosticCard() {
           Complete this one-time quiz to unlock lessons, feedback, and progress tracking.
         </p>
 
-        <Link href="/student/quizzes">
+        <Link href="/student/diagnostic">
           <Button className="bg-black text-white px-8 py-3 text-lg">Start Quiz</Button>
         </Link>
       </CardContent>
