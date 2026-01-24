@@ -5,15 +5,16 @@ import {Progress} from "@/components/ui/progress";
 
 interface GreetingCardProps {
   student: string | null;
+  avatar: string | null;
 }
 
-export default function GreetingCard({student}: GreetingCardProps) {
+export default function GreetingCard({student, avatar}: GreetingCardProps) {
   return (
     <Card className="mb-8">
       <CardContent>
         <div className="flex items-center gap-4 mb-6">
           <Avatar className="h-20 w-20">
-            <AvatarImage src="https://github.com/shadcn.png" />
+            <AvatarImage src={avatar || undefined} />
             <AvatarFallback>{student?.charAt(0).toUpperCase() || "S"}</AvatarFallback>
           </Avatar>
           <h1 className="text-3xl font-bold">Hello {student || "Student"}!</h1>

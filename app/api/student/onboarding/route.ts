@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
   try {
     const formData = await request.json();
-    const { firstname, lastname, plan, grade_reading, grade_math, current_level, career_interests, goals } = formData;
+    const { firstname, lastname, plan, grade_reading, grade_math, current_level, career_interests, goals, avatar } = formData;
     
     console.log("Received onboarding data:", formData);
     
@@ -129,6 +129,7 @@ export async function POST(request: Request) {
     if (grade_reading) studentInsertData.grade_reading = grade_reading;
     if (grade_math) studentInsertData.grade_math = grade_math;
     if (current_level) studentInsertData.current_level = current_level;
+    if (avatar) studentInsertData.avatar = avatar;
     
     console.log("Data to insert:", studentInsertData);
     

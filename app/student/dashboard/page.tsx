@@ -12,7 +12,7 @@ export default async function StudentDashboard() {
 
   const { data: student } = await supabase
     .from("Students")
-    .select("first_name")
+    .select("first_name, avatar")
     .eq("id", user.id)
     .single();
 
@@ -29,6 +29,7 @@ export default async function StudentDashboard() {
   return (
     <StudentDashboardClient
       student={student?.first_name}
+      avatar={student?.avatar}
       completedQuizzes={completedQuizzes ?? []}
       hasCompletedDiagnostic={hasCompletedDiagnostic}
     />

@@ -15,6 +15,8 @@ export default function StudentOnboardingForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(1);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [formData, setFormData] = useState({
     firstname: "",
     lastname: "",
@@ -24,6 +26,7 @@ export default function StudentOnboardingForm() {
     current_level: "",
     career_interests: "",
     goals: "",
+    avatar: "",
   });
 
   const stepOneValid =
@@ -40,7 +43,10 @@ export default function StudentOnboardingForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          avatar: avatarUrl || formData.avatar,
+        }),
       });
 
       const data = await response.json();
@@ -98,7 +104,14 @@ export default function StudentOnboardingForm() {
 
             <form onSubmit={handleSubmit}>
               {step === 1 && (
-                <StepOne formData={formData} setFormData={setFormData} />
+                <StepOne 
+                  formData={formData} 
+                  setFormData={setFormData}
+                  avatarUrl={avatarUrl}
+                  setAvatarUrl={setAvatarUrl}
+                  uploadingAvatar={uploadingAvatar}
+                  setUploadingAvatar={setUploadingAvatar}
+                />
               )}
 
               {step === 2 && (
@@ -150,7 +163,65 @@ export default function StudentOnboardingForm() {
   );
 }
 
-function StepOne({ formData, setFormData }: any) {
+function StepOne({ 
+  formData, 
+  setFormData, 
+  avatarUrl, 
+  setAvatarUrl, 
+  uploadingAvatar, 
+  setUploadingAvatar 
+}: any) {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file");
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size must be less than 5MB");
+      return;
+    }
+
+    // Create preview URL
+    const previewUrl = URL.createObjectURL(file);
+    setAvatarUrl(previewUrl);
+
+    // Upload the file
+    setUploadingAvatar(true);
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append("file", file);
+
+      const response = await fetch("/api/upload/avatar", {
+        method: "POST",
+        body: uploadFormData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to upload image");
+      }
+
+      // Update form data with the uploaded URL
+      setFormData({ ...formData, avatar: data.url });
+      setAvatarUrl(data.url);
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert(error instanceof Error ? error.message : "Failed to upload image");
+      setAvatarUrl(null);
+      // Reset file input
+      e.target.value = "";
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Profile photo */}
@@ -162,15 +233,18 @@ function StepOne({ formData, setFormData }: any) {
         <div className="relative">
           {/* Avatar */}
           <Avatar className="h-32 w-32 bg-gray-200 text-3xl">
-            {/* add uploaded image here */}
-            {/* <AvatarImage src={photoUrl} /> */}
+            {avatarUrl && <AvatarImage src={avatarUrl} />}
 
             <AvatarFallback className="bg-gray-300 text-gray-700 font-semibold">
-              {formData.firstname || formData.lastname
-                ? `${formData.firstname?.[0]?.toUpperCase() ?? ""}${
-                    formData.lastname?.[0]?.toUpperCase() ?? ""
-                  }`
-                : "?"}
+              {uploadingAvatar ? (
+                <span className="text-sm">Uploading...</span>
+              ) : formData.firstname || formData.lastname ? (
+                `${formData.firstname?.[0]?.toUpperCase() ?? ""}${
+                  formData.lastname?.[0]?.toUpperCase() ?? ""
+                }`
+              ) : (
+                "?"
+              )}
             </AvatarFallback>
           </Avatar>
 
@@ -178,6 +252,7 @@ function StepOne({ formData, setFormData }: any) {
           <button
             type="button"
             onClick={() => document.getElementById("photo-upload")?.click()}
+            disabled={uploadingAvatar}
             className="
               absolute
               bottom-1
@@ -192,6 +267,8 @@ function StepOne({ formData, setFormData }: any) {
               shadow
               hover:bg-lime-400
               transition
+              disabled:opacity-50
+              disabled:cursor-not-allowed
             "
           >
             <Image
@@ -209,13 +286,8 @@ function StepOne({ formData, setFormData }: any) {
             type="file"
             accept="image/*"
             className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                // TODO: handle upload later
-                console.log(file);
-              }
-            }}
+            onChange={handleFileChange}
+            disabled={uploadingAvatar}
           />
         </div>
 
