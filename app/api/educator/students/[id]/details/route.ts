@@ -12,10 +12,11 @@ const supabase = createClient(supabaseURL, supabaseKEY);
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const studentId = params.id;
+    const { id } = await params;
+    const studentId = id;
 
     // Fetch student with diagnostic_results and attributes (for backward compatibility)
     const { data: student, error: studentError } = await supabase
@@ -47,11 +48,24 @@ export async function GET(
     // Get attributes for lesson history (always needed)
     const attributes = student.attributes || {};
 
+    // Extract diagnostic results data
+    let diagnosticResultsData: any = null;
     if (student.diagnostic_results) {
       // Use diagnostic_results column (new format)
       const diagnosticResults = student.diagnostic_results;
       strengths = diagnosticResults.strengths || [];
       weaknesses = diagnosticResults.weaknesses || [];
+      
+      // Extract diagnostic results for display
+      diagnosticResultsData = {
+        score: diagnosticResults.score || 0,
+        total_questions: diagnosticResults.total_questions || 0,
+        completed_at: diagnosticResults.completed_at || null,
+        // Calculate correct and wrong counts from results array
+        correct: (diagnosticResults.results || []).filter((r: any) => r.is_correct === true).length,
+        wrong: (diagnosticResults.results || []).filter((r: any) => r.is_correct === false).length,
+        performance_by_subject: diagnosticResults.performance_by_subject || {},
+      };
     } else {
       // Fall back to attributes (legacy format)
       // Transform strengths from parallel arrays
@@ -114,6 +128,7 @@ export async function GET(
 
       lastActive,
       totalLessons,
+      diagnosticResults: diagnosticResultsData,
     });
   } catch (error) {
     console.error("Error fetching student details:", error);
