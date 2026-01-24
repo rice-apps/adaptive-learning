@@ -8,6 +8,7 @@ import logo from "../../assets/logo.png";
 import { Search, BellIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import StudentProficiencyChart from "@/components/StudentProficiencyChart";
 
 export default function InstructorDashboard() {
   const pathname = usePathname();
@@ -115,8 +116,8 @@ export default function InstructorDashboard() {
             <CardHeader>
               <CardTitle>Student Proficiency</CardTitle>
             </CardHeader>
-            <CardContent className="h-64 flex items-center justify-center text-gray-400">
-              Chart goes here
+            <CardContent className="p-6">
+              <StudentProficiencyChart />
             </CardContent>
           </Card>
 
