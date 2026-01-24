@@ -10,12 +10,21 @@ export default async function StudentDashboard() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // Get student data and check diagnostic_results column for completion
   const { data: student } = await supabase
     .from("Students")
-    .select("first_name")
+    .select("first_name, diagnostic_results")
     .eq("id", user.id)
     .single();
 
+  // Check if diagnostic quiz is completed by looking at diagnostic_results column
+  // If diagnostic_results exists and has completed_at, diagnostic is done
+  const hasCompletedDiagnostic = !!(
+    student?.diagnostic_results && 
+    student.diagnostic_results.completed_at
+  );
+
+  // Get recent completed quizzes for display
   const { data: completedQuizzes } = await supabase
     .from("Quizzes")
     .select("id, start_time, end_time, time_spent, submitted")
@@ -23,8 +32,6 @@ export default async function StudentDashboard() {
     .not("submitted", "is", null)
     .order("submitted", { ascending: false })
     .limit(3);
-
-  const hasCompletedDiagnostic = !!completedQuizzes?.length;
 
   return (
     <StudentDashboardClient
