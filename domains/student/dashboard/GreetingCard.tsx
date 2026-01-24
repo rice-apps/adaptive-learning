@@ -1,30 +1,44 @@
-import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
-import {Badge} from "@/components/ui/badge";
-import {Card, CardContent} from "@/components/ui/card";
-import {Progress} from "@/components/ui/progress";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface GreetingCardProps {
   student: string | null;
 }
 
-export default function GreetingCard({student}: GreetingCardProps) {
+export default function GreetingCard({ student }: GreetingCardProps) {
   return (
-    <Card className="mb-8">
-      <CardContent>
-        <div className="flex items-center gap-4 mb-6">
-          <Avatar className="h-20 w-20">
-            <AvatarImage src="https://github.com/shadcn.png" />
-            <AvatarFallback>{student?.charAt(0).toUpperCase() || "S"}</AvatarFallback>
-          </Avatar>
-          <h1 className="text-3xl font-bold">Hello {student || "Student"}!</h1>
+    <Card className="border border-gray-100 shadow-sm rounded-2xl bg-white overflow-hidden">
+      <CardContent className="p-8 flex items-center gap-8">
+        {/* Avatar Section */}
+        <div className="w-24 h-24 rounded-full bg-purple-100 overflow-hidden border-4 border-white shadow-sm flex-shrink-0">
+          <img 
+            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${student || 'Student'}`} 
+            alt="Avatar" 
+            className="w-full h-full object-cover" 
+          />
         </div>
 
-        <div className="flex justify-between items-center mb-2">
-          <h2 className="font-bold text-lg">COURSE PROGRESS</h2>
-          <Badge className="bg-white text-black">33%</Badge>
+        {/* Text & Progress Section */}
+        <div className="flex-1 space-y-6">
+          <h1 className="text-4xl font-bold text-gray-900 tracking-tight">
+            Hello {student || 'Student'}!
+          </h1>
+          
+          <div className="space-y-2">
+            <div className="flex justify-between items-end">
+              <span className="text-xs font-black text-gray-900 uppercase tracking-widest">
+                Course Progress
+              </span>
+              <span className="text-xs font-bold text-gray-900">
+                33%
+              </span>
+            </div>
+            
+            {/* The Green Progress Bar */}
+            <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-full bg-lime-500 w-1/3 rounded-full" />
+            </div>
+          </div>
         </div>
-
-        <Progress value={33} className="[&>div]:bg-lime-400" />
       </CardContent>
     </Card>
   );
