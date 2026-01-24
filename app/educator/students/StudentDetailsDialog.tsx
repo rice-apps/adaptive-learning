@@ -35,6 +35,18 @@ interface StudentDetails {
   }[];
   lastActive: string;
   totalLessons: number;
+  diagnosticResults?: {
+    score: number;
+    total_questions: number;
+    correct: number;
+    wrong: number;
+    completed_at: string | null;
+    performance_by_subject: Record<string, {
+      correct: number;
+      total: number;
+      topics: Record<string, { correct: number; total: number }>;
+    }>;
+  } | null;
 }
 
 interface Props {
@@ -89,6 +101,67 @@ export default function StudentDetailsDialog({
             </div>
           ) : details ? (
             <>
+              {/* Diagnostic Results */}
+              {details.diagnosticResults && (
+                <Card className="p-5 rounded-2xl">
+                  <h3 className="text-xl font-semibold text-[#4D6A12] mb-4">
+                    Diagnostic Results
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <div className="text-sm text-gray-500">Score</div>
+                        <div className="text-2xl font-bold text-[#4D6A12]">
+                          {details.diagnosticResults.score}%
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-500">Correct</div>
+                        <div className="text-2xl font-bold text-green-600">
+                          {details.diagnosticResults.correct}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-500">Wrong</div>
+                        <div className="text-2xl font-bold text-red-600">
+                          {details.diagnosticResults.wrong}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Total Questions: {details.diagnosticResults.total_questions}
+                      {details.diagnosticResults.completed_at && (
+                        <span className="ml-4">
+                          Completed: {new Date(details.diagnosticResults.completed_at).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                    
+                    {/* Performance by Subject */}
+                    {Object.keys(details.diagnosticResults.performance_by_subject || {}).length > 0 && (
+                      <div className="mt-4">
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                          Performance by Subject
+                        </h4>
+                        <div className="space-y-2">
+                          {Object.entries(details.diagnosticResults.performance_by_subject).map(([subject, data]: [string, any]) => {
+                            const accuracy = data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0;
+                            return (
+                              <div key={subject} className="flex items-center justify-between text-sm">
+                                <span className="font-medium">{subject}</span>
+                                <span className="text-gray-600">
+                                  {data.correct}/{data.total} ({accuracy}%)
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              )}
+
               {/* Strengths & Weaknesses */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Strengths */}
