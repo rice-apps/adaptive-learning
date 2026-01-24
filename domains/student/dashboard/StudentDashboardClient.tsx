@@ -11,17 +11,18 @@ interface Props {
   student: string | null;
   completedQuizzes: any[];
   hasCompletedDiagnostic: boolean;
+  avatar: string | null;
 }
 
-export default function StudentDashboardClient({student, completedQuizzes, hasCompletedDiagnostic}: Props) {
+export default function StudentDashboardClient({student, avatar, completedQuizzes, hasCompletedDiagnostic}: Props) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Sticky Header */}
-      <StudentDashboardHeader student={student} />
+      <StudentDashboardHeader student={student} avatar={avatar} />
 
       <main className="max-w-6xl mx-auto p-8">
         {/* Greeting / Progress */}
-        <GreetingCard student={student} />
+        <GreetingCard student={student} avatar={avatar} />
 
         {/* Diagnostic Lock Card */}
         {!hasCompletedDiagnostic && <PromptDiagnosticCard />}
