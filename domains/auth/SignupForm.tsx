@@ -94,57 +94,68 @@ export default function SignupForm() {
 
   if (signupComplete) {
     return (
-      <div className="flex flex-col gap-5 w-1/3 min-h-[300px] bg-white rounded-lg border p-8">
-        <h1 className="text-2xl font-bold">Check your email</h1>
-        <div className="flex flex-col gap-3">
-          <p className="text-gray-600">We've sent a confirmation email to:</p>
-          <p className="font-semibold">{email}</p>
-          <p className="text-gray-600">
-            Click the link in the email to complete your signup and you'll be
-            automatically redirected to the onboarding page.
-          </p>
+      <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gray-50">
+        <div className="flex flex-col gap-4 sm:gap-5 w-full max-w-sm sm:max-w-md min-h-[280px] sm:min-h-[300px] bg-white rounded-lg border p-6 sm:p-8">
+          <h1 className="text-xl sm:text-2xl font-bold">Check your email</h1>
+          <div className="flex flex-col gap-2 sm:gap-3">
+            <p className="text-sm sm:text-base text-gray-600">
+              We've sent a confirmation email to:
+            </p>
+            <p className="font-semibold text-sm sm:text-base break-all">
+              {email}
+            </p>
+            <p className="text-sm sm:text-base text-gray-600">
+              Click the link in the email to complete your signup and you'll be
+              automatically redirected to the onboarding page.
+            </p>
+          </div>
+          <Button
+            onClick={handleSignup}
+            disabled={loading}
+            className="
+              w-full 
+              h-10
+              sm:h-11
+              rounded-full 
+              bg-lime-300 
+              text-black 
+              font-semibold
+              hover:bg-lime-400
+              border-none
+              text-sm
+              sm:text-base
+            "
+          >
+            {loading ? "Signing up..." : "Resend Email"}
+          </Button>
         </div>
-        <Button
-          onClick={handleSignup}
-          disabled={loading}
-          className="
-            w-full 
-            h-11
-            rounded-full 
-            bg-lime-300 
-            text-black 
-            font-semibold
-            hover:bg-lime-400
-            border-none
-          "
-        >
-          {loading ? "Signing up..." : "Resend Email"}
-        </Button>
       </div>
     );
   }
 
   return (
-    <div className="flex w-full">
-      {/* Left Column */}
-      <div className="flex w-1/2 justify-center items-center p-5">
+    <div className="flex flex-col lg:flex-row w-full min-h-screen">
+      {/* Left Column - Form */}
+      <div className="flex w-full lg:w-1/2 justify-center items-center p-4 sm:p-6 md:p-8 lg:p-5 order-2 lg:order-1">
         <div
           className="
-          flex flex-col 
-          w-full 
-          max-w-md
-          bg-white 
-          border 
-          rounded-3xl 
-          overflow-hidden 
-          outline outline-1 outline-black
-        "
+            flex flex-col 
+            w-full 
+            max-w-sm
+            sm:max-w-md
+            bg-white 
+            border 
+            rounded-2xl
+            sm:rounded-3xl 
+            overflow-hidden 
+            outline outline-1 outline-black
+          "
         >
-          <h1 className="text-xl font-semibold bg-lime-300 py-6 text-center outline outline-1 outline-black">
+          <h1 className="text-lg sm:text-xl font-semibold bg-lime-300 py-4 sm:py-6 text-center outline outline-1 outline-black">
             Sign Up
           </h1>
 
-          <div className="flex flex-col gap-5 px-8 py-10">
+          <div className="flex flex-col gap-4 sm:gap-5 px-5 sm:px-8 py-6 sm:py-10">
             <FormItem placeholder="Email" input={email} setInput={setEmail} />
             <FormPassword
               placeholder="Password"
@@ -157,16 +168,16 @@ export default function SignupForm() {
               setInput={setConfirmPassword}
             />
             <RoleSelect role={role} setRole={setRole} />
-            <div className="flex flex-col gap-4 justify-center h-full">
+            <div className="flex flex-col gap-3 sm:gap-4 justify-center h-full">
               <Button
                 variant="outline"
                 onClick={handleSignup}
                 disabled={loading}
-                className="w-full bg-lime-300 border rounded-3xl"
+                className="w-full bg-lime-300 border rounded-3xl text-sm sm:text-base h-10 sm:h-11"
               >
                 {loading ? "Signing up..." : "Sign Up"}
               </Button>
-              <p className="text-center text-sm text-gray-600">
+              <p className="text-center text-xs sm:text-sm text-gray-600">
                 Already have an account?{" "}
                 <Link href="/login" className="text-blue-600 hover:underline">
                   Log in
@@ -177,17 +188,15 @@ export default function SignupForm() {
         </div>
       </div>
 
-      {/* Right Column */}
-      <div className="flex justify-center items-center w-1/2 bg-black">
-        <h1>
-          <Image
-            className="p-10 h-full w-full"
-            src={logo}
-            alt="8MS logo"
-            width={1200}
-            height={720}
-          />
-        </h1>
+      {/* Right Column - Logo */}
+      <div className="flex justify-center items-center w-full lg:w-1/2 bg-black p-6 sm:p-8 lg:p-10 min-h-[200px] sm:min-h-[250px] lg:min-h-screen order-1 lg:order-2">
+        <Image
+          className="w-full max-w-[200px] sm:max-w-[300px] lg:max-w-[500px] h-auto"
+          src={logo}
+          alt="8MS logo"
+          width={1200}
+          height={720}
+        />
       </div>
     </div>
   );
@@ -210,7 +219,7 @@ const FormItem = ({
       value={input}
       onChange={(e) => setInput(e.target.value)}
       required
-      className="border border-black h-11 bg-gray-100 text-black placeholder:text-black"
+      className="border border-black h-10 sm:h-11 bg-gray-100 text-black placeholder:text-black text-sm sm:text-base"
     />
   );
 };
@@ -232,7 +241,7 @@ const FormPassword = ({
       value={input}
       onChange={(e) => setInput(e.target.value)}
       required
-      className="border border-black h-11 bg-gray-100 text-black placeholder:text-black"
+      className="border border-black h-10 sm:h-11 bg-gray-100 text-black placeholder:text-black text-sm sm:text-base"
     />
   );
 };
@@ -247,12 +256,12 @@ const RoleSelect = ({
   const roles = Object.values(UserRole);
   return (
     <Select value={role} onValueChange={setRole}>
-      <SelectTrigger className="border border-black h-14">
+      <SelectTrigger className="border border-black h-12 sm:h-14 text-sm sm:text-base">
         <SelectValue placeholder="Select a role" />
       </SelectTrigger>
       <SelectContent>
         {roles.map((role) => (
-          <SelectItem key={role} value={role}>
+          <SelectItem key={role} value={role} className="text-sm sm:text-base">
             {role}
           </SelectItem>
         ))}
