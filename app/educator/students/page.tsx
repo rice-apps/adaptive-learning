@@ -66,9 +66,7 @@ export default function StudentRoster() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [timeRange, setTimeRange] = useState<"all" | "week" | "month">("all");
-  const [filter, setFilter] = useState<
-    "All" | "At Risk" | "Inactive" | "On Track"
-  >("All");
+  const [filter, setFilter] = useState<"All" | "At Risk" | "Inactive" | "On Track">("All");
 
   // Dialog states here
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -140,8 +138,14 @@ export default function StudentRoster() {
   }, []);
 
   const filteredStudents = students.filter((student) => {
-    if (filter === "All") return true;
-    return student.status === filter;
+    // Filter by status
+    const matchesStatus = filter === "All" || student.status === filter;
+    
+    // Filter by search term
+    const matchesSearch = searchTerm === "" || 
+      student.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.last_name?.toLowerCase().includes(searchTerm.toLowerCase())    
+    return matchesStatus && matchesSearch;
   });
 
   if (loading) {
@@ -161,8 +165,10 @@ export default function StudentRoster() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black w-4 h-4" />
             <Input
               type="text"
-              placeholder="      Search for lessons, assessments..."
-              className="w-full bg-white rounded-full"
+              placeholder="Search for students..."
+              className="w-full bg-white rounded-full pl-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
@@ -363,7 +369,7 @@ export default function StudentRoster() {
         {/* Pagination or additional controls can go here */}
         <div className="mt-2 flex items-center justify-between">
           <p className="text-sm text-gray-600 ml-1">
-            Showing {filteredStudents.length} of {filteredStudents.length}{" "}
+            Showing {filteredStudents.length} of {students.length}{" "}
             students
           </p>
           <div className="flex gap-2">
