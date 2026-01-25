@@ -218,11 +218,7 @@ export default function AssignQuizDialog({
 
             {/* AI-Generated Quiz Tab */}
             <TabsContent value="ai" className="space-y-4 mt-4">
-              <div className="p-3 bg-blue-50 rounded-md text-sm text-blue-700">
-                <strong>🤖 AI-Powered:</strong> Mastra will analyze {studentName}&apos;s learning style, 
-                past performance, and weaknesses to create a personalized quiz.
-              </div>
-
+              
               <div className="space-y-2">
                 <Label>Number of Questions</Label>
                 <Input
