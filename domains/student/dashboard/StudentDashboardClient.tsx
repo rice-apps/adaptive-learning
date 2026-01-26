@@ -8,34 +8,41 @@ import StudentDashboardHeader from "./StudentDashboardHeader";
 import WritingFeedback from "./WritingFeedback";
 
 interface Props {
-  student: string | null;
+  studentName: string;
   completedQuizzes: any[];
+  assignedQuizzes: any[];
   hasCompletedDiagnostic: boolean;
 }
 
-export default function StudentDashboardClient({student, completedQuizzes, hasCompletedDiagnostic}: Props) {
+export default function StudentDashboardClient({
+  studentName,
+  completedQuizzes,
+  assignedQuizzes,
+  hasCompletedDiagnostic,
+}: Props) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Sticky Header */}
-      <StudentDashboardHeader student={student} />
+    <div className="min-h-screen bg-gray-50/50">
+      <StudentDashboardHeader student={studentName} />
 
-      <main className="max-w-6xl mx-auto p-8">
-        {/* Greeting / Progress */}
-        <GreetingCard student={student} />
+      <main className="max-w-6xl mx-auto p-8 space-y-10">
+        
+        <GreetingCard student={studentName} />
 
-        {/* Diagnostic Lock Card */}
+        {/* LOGIC: Only show this card if diagnostic is NOT complete */}
         {!hasCompletedDiagnostic && <PromptDiagnosticCard />}
 
-        {/* Recommended Quizzes (Locked Overlay) */}
-        <RecommendedQuizzes hasCompletedDiagnostic={hasCompletedDiagnostic} />
+        <RecommendedQuizzes 
+          assignedQuizzes={assignedQuizzes} 
+          hasCompletedDiagnostic={hasCompletedDiagnostic} 
+        />
 
-        {/* Writing Feedback + Quiz Completions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Writing Feedback */}
-          <WritingFeedback />
-
-          {/* Recent Quiz Completions */}
-          <RecentQuizCompletions completedQuizzes={completedQuizzes} />
+          <div className="md:col-span-2">
+            <WritingFeedback />
+          </div>
+          <div className="md:col-span-1 h-full">
+             <RecentQuizCompletions completedQuizzes={completedQuizzes} />
+          </div>
         </div>
       </main>
     </div>
