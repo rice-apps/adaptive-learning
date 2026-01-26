@@ -5,39 +5,59 @@ import { redirect } from "next/navigation";
 export default async function StudentDashboard() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // Get student data and check diagnostic_results column for completion
+  // 1. Get Student Data
   const { data: student } = await supabase
     .from("Students")
     .select("first_name, diagnostic_results")
     .eq("id", user.id)
     .single();
 
-  // Check if diagnostic quiz is completed by looking at diagnostic_results column
-  // If diagnostic_results exists and has completed_at, diagnostic is done
-  const hasCompletedDiagnostic = !!(
-    student?.diagnostic_results && 
-    student.diagnostic_results.completed_at
-  );
+  // 2. Check if Diagnostic is done
+  // logic: if diagnostic_results is not null, they are done.
+  const hasCompletedDiagnostic = !!student?.diagnostic_results;
 
-  // Get recent completed quizzes for display
+  // 3. Get Completed Quizzes (for Recent Activity)
   const { data: completedQuizzes } = await supabase
     .from("Quizzes")
-    .select("id, start_time, end_time, time_spent, submitted")
+    .select("*")
     .eq("student_id", user.id)
-    .not("submitted", "is", null)
-    .order("submitted", { ascending: false })
-    .limit(3);
+    .eq("submitted", true)
+    .order("end_time", { ascending: false })
+    .limit(5);
+
+  // 4. Get Assigned Quizzes (Pending)
+  const { data: assignedQuizzesRaw } = await supabase
+    .from("Quizzes")
+    .select("*")
+    .eq("student_id", user.id)
+    .is("submitted", null) // Only fetch unsubmitted ones
+    .order("created_at", { ascending: false });
+
+  // 5. Enrich Assigned Quizzes with Subject
+  const assignedQuizzes = await Promise.all(
+    (assignedQuizzesRaw || []).map(async (quiz) => {
+      let subject = "General";
+      if (quiz.questions && quiz.questions.length > 0) {
+        const { data: qData } = await supabase
+          .from("Questions")
+          .select("subject")
+          .eq("id", quiz.questions[0])
+          .single();
+        if (qData) subject = qData.subject;
+      }
+      return { ...quiz, subject };
+    })
+  );
 
   return (
     <StudentDashboardClient
-      student={student?.first_name}
-      completedQuizzes={completedQuizzes ?? []}
+      studentName={student?.first_name || "Student"}
       hasCompletedDiagnostic={hasCompletedDiagnostic}
+      completedQuizzes={completedQuizzes || []}
+      assignedQuizzes={assignedQuizzes || []}
     />
   );
 }

@@ -6,13 +6,15 @@ import { weatherAgent } from './agents/weather-agent';
 import { learningFeedbackWorkflow } from './workflows/feedback-workflow';
 import { learningFeedbackAgent } from './agents/feedback-agent';
 import { distributionWorkflow } from './workflows/distribution-workflow'; 
-import { distributionAgent } from './agents/distribution-agent'; 
+import { distributionAgent } from './agents/distribution-agent';
+import { singleQuestionFeedbackWorkflow } from './workflows/single-question-feedback-workflow';
 
 export const mastra = new Mastra({
   workflows: { 
     weatherWorkflow,
     learningFeedbackWorkflow,
-    distributionWorkflow, 
+    distributionWorkflow,
+    singleQuestionFeedbackWorkflow, // ← Add this
   },
   agents: { 
     weatherAgent,
