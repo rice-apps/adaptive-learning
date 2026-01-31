@@ -7,6 +7,7 @@ export interface Question {
   topic: string | null;
   question_type: string | null;
   question_details: Record<string, any> | null;
+  image_url?: string | null;
 }
 
 export type QuestionTopic =
@@ -36,6 +37,10 @@ export type QuestionTopic =
   | "Colonization, Civil War, Reconstruction, Civil Rights Movement, modern America"
   | "Supply and demand, markets, and government influence"
   | "Global interdependence, historical movements, and geography skills";
+
+// Optional shape for question_details when it includes an image.
+// image_url points to e.g. Supabase Storage (quiz-images).
+export type QuestionDetailsWithImage = Record<string, any> & { image_url?: string };
 
 async function getRandomQuestionsByTopic(topic: QuestionTopic, amount: number): Promise<Question[]> {
   const supabase = await createClient();

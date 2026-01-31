@@ -24,6 +24,7 @@ interface FreeResponseDetails {
   question: string;
   answer: string;
   passage?: string;
+  image_url?: string;
 }
 
 interface MCQDetails {
@@ -31,6 +32,7 @@ interface MCQDetails {
   answer: string;
   options: string[];
   passage?: string;
+  image_url?: string;
 }
 
 interface DragDropDetails {
@@ -40,6 +42,7 @@ interface DragDropDetails {
     answer: string;
   }>;
   passage?: string;
+  image_url?: string;
 }
 
 interface Question {
@@ -49,6 +52,7 @@ interface Question {
   topic: string;
   question_type: QuestionType;
   question_details: FreeResponseDetails | MCQDetails | DragDropDetails;
+  image_url?: string | null;
 }
 
 export default function QuizzesPage() {
@@ -349,6 +353,15 @@ export default function QuizzesPage() {
               <p className="text-xl font-semibold">
                 Match each item with the correct answer from the dropdowns.
               </p>
+            )}
+            {currentQuestion.image_url && (
+              <div className="mt-4">
+                <img
+                  src={currentQuestion.image_url}
+                  alt="Question diagram"
+                  className="rounded-lg max-w-full h-auto border border-gray-200"
+                />
+              </div>
             )}
           </div>
         </div>
