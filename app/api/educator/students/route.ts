@@ -25,7 +25,8 @@ export async function GET() {
         isActive,
         first_name,
         last_name,
-        avatar
+        avatar,
+        diagnostic_results
       `
       )
       .order("created_at", { ascending: false });
@@ -47,6 +48,7 @@ export async function GET() {
       first_name: s.first_name,
       last_name: s.last_name,
       avatar: s.avatar,
+      diagnostic_results: s.diagnostic_results ?? null,
     }));
 
     return NextResponse.json({

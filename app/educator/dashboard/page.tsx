@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useMemo, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,9 +9,99 @@ import logo from "../../assets/logo.png";
 import { Search, BellIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { timeAgo } from "@/lib/utils/timeAgo";
+
+type StudentWithDiagnostic = {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  diagnostic_results: {
+    score?: number | null;
+    completed_at?: string | null;
+  } | null;
+};
 
 export default function InstructorDashboard() {
   const pathname = usePathname();
+  const [students, setStudents] = useState<StudentWithDiagnostic[]>([]);
+  const [loadingRecent, setLoadingRecent] = useState(true);
+  const [recentError, setRecentError] = useState<string | null>(null);
+  const [, setTick] = useState(0); // forces periodic re-render so timeAgo stays fresh
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setTick((t) => t + 1), 60_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchRecent() {
+      setLoadingRecent(true);
+      setRecentError(null);
+
+      try {
+        const res = await fetch("/api/educator/students", { cache: "no-store" });
+        const json = await res.json();
+
+        if (!res.ok || json?.error) {
+          throw new Error(json?.error || "Failed to load recent assessments");
+        }
+
+        const rawStudents = Array.isArray(json?.students) ? json.students : [];
+
+        const normalized: StudentWithDiagnostic[] = rawStudents.map((s: any) => ({
+          id: String(s.id),
+          first_name: s.first_name ?? null,
+          last_name: s.last_name ?? null,
+          diagnostic_results: s.diagnostic_results ?? null,
+        }));
+
+        if (!cancelled) setStudents(normalized);
+      } catch (e) {
+        if (!cancelled) {
+          setStudents([]);
+          setRecentError(e instanceof Error ? e.message : "Failed to load recent assessments");
+        }
+      } finally {
+        if (!cancelled) setLoadingRecent(false);
+      }
+    }
+
+    fetchRecent();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const recentAssessments = useMemo(() => {
+    const rows = students
+      .map((s) => {
+        const completedAt = s.diagnostic_results?.completed_at ?? null;
+        if (!completedAt) return null;
+        const score = s.diagnostic_results?.score ?? null;
+        const name = `${s.first_name ?? ""} ${s.last_name ?? ""}`.trim() || "Student";
+        return {
+          studentName: name,
+          assessmentName: "Diagnostic",
+          completedAt,
+          score,
+        };
+      })
+      .filter(Boolean) as Array<{
+      studentName: string;
+      assessmentName: string;
+      completedAt: string;
+      score: number | null;
+    }>;
+
+    rows.sort(
+      (a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
+    );
+
+    return rows.slice(0, 5);
+  }, [students]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-black w-full sticky top-0 z-50 shadow-sm">
@@ -91,20 +182,25 @@ export default function InstructorDashboard() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex justify-between">
-              <div>
-                <p className="font-medium">Sarah Johnson</p>
-                <p className="text-sm text-gray-500">Math Quiz 3</p>
-              </div>
-              <div className="text-sm text-gray-600">95% · 10 min ago</div>
-            </div>
-            <div className="flex justify-between">
-              <div>
-                <p className="font-medium">Emily Rodriguez</p>
-                <p className="text-sm text-gray-500">Reading Quiz 2</p>
-              </div>
-              <div className="text-sm text-gray-600">95% · 10 min ago</div>
-            </div>
+            {loadingRecent ? (
+              <div className="text-sm text-gray-500">Loading…</div>
+            ) : recentError ? (
+              <div className="text-sm text-red-600">{recentError}</div>
+            ) : recentAssessments.length === 0 ? (
+              <div className="text-sm text-gray-500">No recent assessments yet.</div>
+            ) : (
+              recentAssessments.map((a) => (
+                <div key={`${a.studentName}-${a.completedAt}`} className="flex justify-between">
+                  <div>
+                    <p className="font-medium">{a.studentName}</p>
+                    <p className="text-sm text-gray-500">{a.assessmentName}</p>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {(typeof a.score === "number" ? `${a.score}%` : "—")} · {timeAgo(a.completedAt)}
+                  </div>
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
 
