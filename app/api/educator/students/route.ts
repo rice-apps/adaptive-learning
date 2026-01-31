@@ -37,7 +37,7 @@ export async function GET() {
       );
     }
 
-    // normalize status to what frontend expects
+    // Format students
     const formattedStudents = students.map((s) => ({
       id: s.id,
       email: s.email,
@@ -51,6 +51,7 @@ export async function GET() {
       students: formattedStudents,
       total: formattedStudents.length,
     });
+
   } catch (err) {
     console.error("Route error:", err);
     return NextResponse.json(
@@ -59,3 +60,4 @@ export async function GET() {
     );
   }
 }
+

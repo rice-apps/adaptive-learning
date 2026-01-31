@@ -8,9 +8,78 @@ import logo from "../../assets/logo.png";
 import { Search, BellIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
+
+interface Weakness {
+  id: number;
+  topic: string;
+  subject: string;
+  studentCount: number;
+}
+
+interface RecentAssessment {
+  studentName: string;
+  quizName: string;
+  score: number;
+  timeAgo: string;
+}
+
+interface Student {
+  id: string;
+  email: string;
+  progress: number;
+  status: string;
+  profileName: string;
+  avatar: string;
+}
+
+interface DashboardData {
+  students: Student[];
+  total: number;
+  weaknesses: Weakness[];
+  recentAssessments: RecentAssessment[];
+}
 
 export default function InstructorDashboard() {
   const pathname = usePathname();
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [showAllWeaknesses, setShowAllWeaknesses] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchDashboard() {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await fetch('/api/educator/dashboard');
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch dashboard data');
+        }
+        
+        const data = await response.json();
+        console.log('Dashboard data:', data); // For debugging
+        setDashboardData(data);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+        setError(errorMessage);
+        console.error('Error fetching dashboard:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchDashboard();
+  }, []);
+
+  const displayedWeaknesses = showAllWeaknesses 
+    ? dashboardData?.weaknesses || []
+    : (dashboardData?.weaknesses || []).slice(0, 2);
+
+// export default function InstructorDashboard() {
+//   const pathname = usePathname();
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-black w-full sticky top-0 z-50 shadow-sm">
@@ -91,20 +160,27 @@ export default function InstructorDashboard() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex justify-between">
-              <div>
-                <p className="font-medium">Sarah Johnson</p>
-                <p className="text-sm text-gray-500">Math Quiz 3</p>
+            {loading ? (
+              <div className="text-center text-gray-500 py-4">Loading...</div>
+            ) : error ? (
+              <div className="text-center text-red-500 py-4">{error}</div>
+            ) : dashboardData?.recentAssessments && dashboardData.recentAssessments.length > 0 ? (
+              dashboardData.recentAssessments.slice(0, 2).map((assessment, index) => (
+                <div key={index} className="flex justify-between">
+                  <div>
+                    <p className="font-medium">{assessment.studentName}</p>
+                    <p className="text-sm text-gray-500">{assessment.quizName}</p>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {assessment.score}% · {assessment.timeAgo}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-gray-500 py-4">
+                No recent assessments
               </div>
-              <div className="text-sm text-gray-600">95% · 10 min ago</div>
-            </div>
-            <div className="flex justify-between">
-              <div>
-                <p className="font-medium">Emily Rodriguez</p>
-                <p className="text-sm text-gray-500">Reading Quiz 2</p>
-              </div>
-              <div className="text-sm text-gray-600">95% · 10 min ago</div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
@@ -126,19 +202,39 @@ export default function InstructorDashboard() {
               <CardTitle>Cohort Weaknesses</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="border rounded-lg p-3">
-                <p className="font-medium">Quadratic Equations</p>
-                <p className="text-sm text-gray-500">
-                  Math · 8 students affected
-                </p>
-              </div>
-              <div className="border rounded-lg p-3">
-                <p className="font-medium">Verb Conjugation</p>
-                <p className="text-sm text-gray-500">
-                  English · 6 students affected
-                </p>
-              </div>
-              <Button className="w-full rounded-full">View All</Button>
+              {loading ? (
+                <div className="text-center text-gray-500 py-8">
+                  Loading...
+                </div>
+              ) : error ? (
+                <div className="text-center text-red-500 py-8">
+                  {error}
+                </div>
+              ) : displayedWeaknesses.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">
+                  No weaknesses found
+                  <p className="text-xs mt-2">Students are doing great! 🎉</p>
+                </div>
+              ) : (
+                <>
+                  {displayedWeaknesses.map((weakness) => (
+                    <div key={weakness.id} className="border rounded-lg p-3">
+                      <p className="font-medium">{weakness.topic}</p>
+                      <p className="text-sm text-gray-500">
+                        {weakness.subject} · {weakness.studentCount} student{weakness.studentCount !== 1 ? 's' : ''} affected
+                      </p>
+                    </div>
+                  ))}
+                  {dashboardData && dashboardData.weaknesses.length > 2 && (
+                    <Button 
+                      className="w-full rounded-full"
+                      onClick={() => setShowAllWeaknesses(!showAllWeaknesses)}
+                    >
+                      {showAllWeaknesses ? "Show Less" : "View All"}
+                    </Button>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
