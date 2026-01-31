@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function TakeQuizPage() {
   const router = useRouter();
@@ -22,6 +23,8 @@ export default function TakeQuizPage() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [currentFeedback, setCurrentFeedback] = useState<string>("");
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [hasInvalidChars, setHasInvalidChars] = useState(false);
 
   useEffect(() => {
     const fetchQuizData = async () => {
@@ -38,6 +41,35 @@ export default function TakeQuizPage() {
     fetchQuizData();
   }, [quizId]);
 
+  useEffect(() => {
+    if (hasInvalidChars) {
+      const timer = setTimeout(() => {
+        setHasInvalidChars(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [hasInvalidChars]);
+
+  const validateFreeResponse = (input: string): { isValid: boolean; error?: string } => {
+    const trimmed = input.trim();
+
+    if (trimmed.length === 0) {
+      return { isValid: false, error: "Answer can't be empty"};
+    }
+
+    if (trimmed.length > 5000) {
+      return { isValid: false, error: "Answer cannot exceed 5000 characters" };
+    }
+
+    // Allow all printable ASCII characters (blocks emojis, weird unicode, control chars)
+    const validChars = /^[\x20-\x7E\n\r\t]*$/;
+    if (!validChars.test(trimmed)) {
+      return { isValid: false, error: "Answer contains unsupported characters (emojis or special symbols)."};
+    }
+
+    return {isValid: true};
+  };
+
   const currentQ = questions[currentIdx];
   const progress = questions.length > 0 ? ((currentIdx + 1) / questions.length) * 100 : 0;
 
@@ -49,6 +81,21 @@ export default function TakeQuizPage() {
     if (!answer || (Array.isArray(answer) && answer.length === 0) || answer === '') {
       toast.error('Please answer the question before continuing');
       return;
+    }
+
+    if (currentQ.question_type === "free_response") {
+      const validation = validateFreeResponse(answer);
+      if (!validation.isValid) {
+        setValidationErrors({...validationErrors, [currentQ.id]: validation.error || "Invalid input"});
+        toast.error(validation.error || "Please fix your answer before continuing");
+        return;
+      }
+
+      const newErrors = {...validationErrors};
+      delete newErrors[currentQ.id];
+      setValidationErrors(newErrors);
+
+
     }
 
     setIsSubmitting(true);
@@ -71,7 +118,6 @@ export default function TakeQuizPage() {
       const correct = answer === questionDetails.answer;
       setIsCorrect(correct);
 
-      // Insert the result for this question
       // Insert the result for this question
 const { data: resultData, error: insertError } = await supabase
 .from('Results')
@@ -263,13 +309,71 @@ return;
             ))}
 
             {currentQ.question_type === "free_response" && (
-              <Textarea 
-                className="rounded-2xl p-6 min-h-[160px] text-lg border-zinc-200 focus:ring-lime-400"
-                placeholder="Type your answer here..."
-                value={answers[currentQ.id] || ""}
-                onChange={(e) => setAnswers({...answers, [currentQ.id]: e.target.value})}
-                disabled={isSubmitting}
-              />
+              <>
+                <Textarea 
+                  className={`rounded-2xl p-6 min-h-[160px] text-lg ${
+                    validationErrors[currentQ.id] 
+                      ? 'border-red-300 focus:ring-red-400' 
+                      : 'border-zinc-200 focus:ring-lime-400'
+                  }`}
+                  placeholder="Type your answer here..."
+                  value={answers[currentQ.id] || ""}
+                  onChange={(e) => {
+                    const input = e.target.value;
+
+                    if (input.length > 5000) {
+                      setValidationErrors({...validationErrors, [currentQ.id]: "Answer cannot exceed 5000 characters"});
+                      return; 
+                    }
+                    // Allow all printable ASCII + newlines/tabs (blocks emojis, weird unicode)
+                    const validChars = /^[\x20-\x7E\n\r\t]*$/;
+
+                    // Block invalid characters completely
+                    if(!validChars.test(input) && input !== "") {
+                      setHasInvalidChars(true);
+                      // Don't update the answer - block the invalid character
+                      return;
+                    }
+                    
+                    // Valid input - update and clear warnings
+                    setHasInvalidChars(false);
+                    setAnswers({...answers, [currentQ.id]: input});
+
+                    // Clear validation error for this question if it exists
+                    if (validationErrors[currentQ.id]) {
+                      const newErrors = {...validationErrors};
+                      delete newErrors[currentQ.id];
+                      setValidationErrors(newErrors);
+                    }
+                  }}
+                  disabled={isSubmitting}
+                />
+
+               {/* Character counter */}
+                <div className="text-sm text-gray-500 mt-1">
+                  {(answers[currentQ.id] || "").length} / 5000 characters
+                </div>
+
+                {/* Red error box - shows on submit */}
+                {validationErrors[currentQ.id] && (
+                  <Alert variant="destructive" className="mt-3">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      {validationErrors[currentQ.id]}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Orange warning box - shows when user tries invalid chars */}
+                {hasInvalidChars && (
+                  <Alert className="mt-3 border-orange-300 bg-orange-50">
+                    <AlertCircle className="h-4 w-4 text-orange-600" />
+                    <AlertDescription className="text-orange-800">
+                      Invalid characters detected. Only letters, numbers, and basic punctuation (.,!?;:'"()-) are allowed.
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </>
             )}
 
             {currentQ.question_type === "drag_drop" && (
