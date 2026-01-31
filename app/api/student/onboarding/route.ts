@@ -129,6 +129,10 @@ export async function POST(request: Request) {
     if (grade_reading) studentInsertData.grade_reading = grade_reading;
     if (grade_math) studentInsertData.grade_math = grade_math;
     if (current_level) studentInsertData.current_level = current_level;
+
+    // Add career_interests and goals from the form
+    if (career_interests) studentInsertData.career_interests = career_interests;
+    if (goals) studentInsertData.goals = goals;
     
     console.log("Data to insert:", studentInsertData);
     
@@ -166,6 +170,82 @@ export async function POST(request: Request) {
     
   } catch (error) {
     console.error("Onboarding error:", error);
+    return NextResponse.json(
+      { 
+        error: "Internal server error", 
+        message: error instanceof Error ? error.message : "Unknown error"
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: Request) {
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.error("Missing environment variables!");
+      return NextResponse.json(
+        { error: "Server configuration error - missing environment variables" },
+        { status: 500 }
+      );
+    }
+    
+    // Create admin client with service role 
+    const supabaseAdmin = createClient(
+      supabaseUrl,
+      serviceRoleKey,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
+
+    console.log("Admin client created successfully");
+
+    // Get user from regular client for auth
+    const { createClient: createServerClient } = await import("@/lib/supabase/server");
+    const supabase = await createServerClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      console.error("Auth error:", authError);
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    console.log("User authenticated:", user.id);
+
+    const { data: studentData } = await supabaseAdmin
+      .from('Students')
+      .select()
+      .eq('id', user.id)
+    
+    if (!studentData) {
+      console.log("Student profile does not exist");
+      return NextResponse.json(
+        { error: "Student profile does not exist" },
+        { status: 404 }
+      );
+    }  
+
+    console.log("student data: ", studentData);
+    return NextResponse.json(
+      {
+        message: "Student profile info retreived successfully",
+        data: studentData, 
+      }, 
+      { status: 200 }
+    );
+
+  } catch (error) {
+    console.error("Error GETting student data: ", error);
     return NextResponse.json(
       { 
         error: "Internal server error", 
