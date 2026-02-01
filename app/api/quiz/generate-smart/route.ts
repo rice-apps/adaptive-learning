@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       throw new Error('Workflow completed but returned no valid question data');
     }
 
-    console.log(`✅ Extracted ${finalOutput.selectedQuestionIds.length} questions`);
+    console.log(`Extracted ${finalOutput.selectedQuestionIds.length} questions`);
 
     // 5. Save to Supabase
     const { data: quiz, error: quizError } = await supabase
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: quizError.message }, { status: 500 });
     }
 
-    console.log("✅ Quiz created successfully:", quiz.id);
+    console.log("Quiz created successfully:", quiz.id);
 
     return NextResponse.json({
       success: true,
