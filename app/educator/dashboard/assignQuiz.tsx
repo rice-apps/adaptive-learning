@@ -74,6 +74,7 @@ export default function AssignQuizDialog({
       }
       
       const data = await response.json();
+
       
       if (Array.isArray(data)) {
         setQuizzes(data);
