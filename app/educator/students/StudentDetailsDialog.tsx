@@ -51,13 +51,14 @@ interface StudentResult {
   question_id: string | null;
   student_answer: string | null;
   feedback: string | null;
+  quiz_feedback: string | null;
 }
 
 interface GroupedQuiz {
   quizId: string;
   questions: StudentResult[];
   completedAt: string;
-  allFeedback: string[];
+  quizFeedback: string | null;
 }
 
 interface Props {
@@ -82,15 +83,15 @@ function groupResultsByQuiz(results: StudentResult[]): GroupedQuiz[] {
     const sorted = [...questions].sort(
       (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
-    const allFeedback = questions
-      .map((q) => q.feedback)
-      .filter((f): f is string => !!f && f.trim() !== "");
+    
+    // quiz_feedback is the same on all rows for this quiz, so just grab it from the first one
+    const quizFeedback = sorted[0]?.quiz_feedback || null;
 
     grouped.push({
       quizId,
       questions: sorted,
       completedAt: sorted[sorted.length - 1].created_at,
-      allFeedback,
+      quizFeedback,
     });
   });
 
@@ -331,9 +332,7 @@ export default function StudentDetailsDialog({
                                   {new Date(quiz.completedAt).toLocaleDateString()}
                                 </TableCell>
                                 <TableCell className="text-sm text-gray-600 max-w-[200px]">
-                                  {quiz.allFeedback.length > 0
-                                    ? quiz.allFeedback.join(" | ")
-                                    : "—"}
+                                  {quiz.quizFeedback || "—"}
                                 </TableCell>
                               </TableRow>
                             ))
