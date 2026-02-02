@@ -1,7 +1,8 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import {
   Table,
@@ -11,13 +12,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface Student {
   id: string;
@@ -52,12 +46,63 @@ interface StudentDetails {
   } | null;
 }
 
+interface StudentResult {
+  id: number;
+  created_at: string;
+  student_id: string | null;
+  quiz_id: string | null;
+  question_id: string | null;
+  student_answer: string | null;
+  feedback: string | null;
+  quiz_feedback: string | null;
+}
+
+interface GroupedQuiz {
+  quizId: string;
+  questions: StudentResult[];
+  completedAt: string;
+  quizFeedback: string | null;
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   student: Student | null;
   details: StudentDetails | null;
   loading: boolean;
+}
+
+function groupResultsByQuiz(results: StudentResult[]): GroupedQuiz[] {
+  const map = new Map<string, StudentResult[]>();
+
+  for (const r of results) {
+    if (!r.quiz_id) continue;
+    if (!map.has(r.quiz_id)) map.set(r.quiz_id, []);
+    map.get(r.quiz_id)!.push(r);
+  }
+
+  const grouped: GroupedQuiz[] = [];
+  map.forEach((questions, quizId) => {
+    const sorted = [...questions].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+    
+    // quiz_feedback is the same on all rows for this quiz, so just grab it from the first one
+    const quizFeedback = sorted[0]?.quiz_feedback || null;
+
+    grouped.push({
+      quizId,
+      questions: sorted,
+      completedAt: sorted[sorted.length - 1].created_at,
+      quizFeedback,
+    });
+  });
+
+  grouped.sort(
+    (a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
+  );
+
+  return grouped;
 }
 
 export default function StudentDetailsDialog({
@@ -67,6 +112,31 @@ export default function StudentDetailsDialog({
   details,
   loading,
 }: Props) {
+  const [quizResults, setQuizResults] = useState<GroupedQuiz[]>([]);
+  const [resultsLoading, setResultsLoading] = useState(false);
+
+  useEffect(() => {
+    if (open && student?.id) {
+      const fetchResults = async () => {
+        setResultsLoading(true);
+        try {
+          const res = await fetch(`/api/quiz/results/student/${student.id}`);
+          if (!res.ok) throw new Error("Failed to fetch results");
+          const data: StudentResult[] = await res.json();
+          setQuizResults(groupResultsByQuiz(data));
+        } catch (err) {
+          console.error(err);
+          setQuizResults([]);
+        } finally {
+          setResultsLoading(false);
+        }
+      };
+      fetchResults();
+    } else {
+      setQuizResults([]);
+    }
+  }, [open, student?.id]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -353,10 +423,27 @@ export default function StudentDetailsDialog({
                                 {lesson.feedback}
                               </TableCell>
                             </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
+                          ) : (
+                            quizResults.map((quiz) => (
+                              <TableRow key={quiz.quizId}>
+                                <TableCell className="font-medium text-sm text-gray-600">
+                                  {quiz.quizId.slice(0, 8)}…
+                                </TableCell>
+                                <TableCell className="text-sm">
+                                  {quiz.questions.length} question{quiz.questions.length !== 1 ? "s" : ""}
+                                </TableCell>
+                                <TableCell className="text-sm">
+                                  {new Date(quiz.completedAt).toLocaleDateString()}
+                                </TableCell>
+                                <TableCell className="text-sm text-gray-600 max-w-[200px]">
+                                  {quiz.quizFeedback || "—"}
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    )}
                   </div>
                 </CardContent>
               </Card>

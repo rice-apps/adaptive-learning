@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 interface RecommendedQuizzesProps {
+  assignedQuizzes: Quiz[];
   hasCompletedDiagnostic: boolean;
 }
 
@@ -46,7 +47,7 @@ export default function RecommendedQuizzes({
             </Card>
           ))}
         </div>
-      </div>
+      )}
     </div>
   );
 }

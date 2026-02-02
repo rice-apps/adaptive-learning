@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import QuizCompletionCard from "@/components/quiz-completion";
 
 interface RecentQuizCompletionsProps {
-  completedQuizzes: any[];
+  // defaulting to empty array to prevent crash
+  completedQuizzes?: any[]; 
 }
 
 export default function RecentQuizCompletions({
