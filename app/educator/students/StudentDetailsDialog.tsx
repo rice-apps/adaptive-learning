@@ -1,7 +1,8 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import {
   Table,
@@ -11,13 +12,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface Student {
   id: string;
@@ -49,12 +43,63 @@ interface StudentDetails {
   } | null;
 }
 
+interface StudentResult {
+  id: number;
+  created_at: string;
+  student_id: string | null;
+  quiz_id: string | null;
+  question_id: string | null;
+  student_answer: string | null;
+  feedback: string | null;
+  quiz_feedback: string | null;
+}
+
+interface GroupedQuiz {
+  quizId: string;
+  questions: StudentResult[];
+  completedAt: string;
+  quizFeedback: string | null;
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   student: Student | null;
   details: StudentDetails | null;
   loading: boolean;
+}
+
+function groupResultsByQuiz(results: StudentResult[]): GroupedQuiz[] {
+  const map = new Map<string, StudentResult[]>();
+
+  for (const r of results) {
+    if (!r.quiz_id) continue;
+    if (!map.has(r.quiz_id)) map.set(r.quiz_id, []);
+    map.get(r.quiz_id)!.push(r);
+  }
+
+  const grouped: GroupedQuiz[] = [];
+  map.forEach((questions, quizId) => {
+    const sorted = [...questions].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+    
+    // quiz_feedback is the same on all rows for this quiz, so just grab it from the first one
+    const quizFeedback = sorted[0]?.quiz_feedback || null;
+
+    grouped.push({
+      quizId,
+      questions: sorted,
+      completedAt: sorted[sorted.length - 1].created_at,
+      quizFeedback,
+    });
+  });
+
+  grouped.sort(
+    (a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
+  );
+
+  return grouped;
 }
 
 export default function StudentDetailsDialog({
@@ -64,6 +109,31 @@ export default function StudentDetailsDialog({
   details,
   loading,
 }: Props) {
+  const [quizResults, setQuizResults] = useState<GroupedQuiz[]>([]);
+  const [resultsLoading, setResultsLoading] = useState(false);
+
+  useEffect(() => {
+    if (open && student?.id) {
+      const fetchResults = async () => {
+        setResultsLoading(true);
+        try {
+          const res = await fetch(`/api/quiz/results/student/${student.id}`);
+          if (!res.ok) throw new Error("Failed to fetch results");
+          const data: StudentResult[] = await res.json();
+          setQuizResults(groupResultsByQuiz(data));
+        } catch (err) {
+          console.error(err);
+          setQuizResults([]);
+        } finally {
+          setResultsLoading(false);
+        }
+      };
+      fetchResults();
+    } else {
+      setQuizResults([]);
+    }
+  }, [open, student?.id]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -136,7 +206,7 @@ export default function StudentDetailsDialog({
                         </span>
                       )}
                     </div>
-                    
+
                     {/* Performance by Subject */}
                     {Object.keys(details.diagnosticResults.performance_by_subject || {}).length > 0 && (
                       <div className="mt-4">
@@ -226,58 +296,50 @@ export default function StudentDetailsDialog({
                     Lesson Tracker
                   </h3>
 
-                  {/* Filters */}
-                  <div className="flex gap-3 mb-4">
-                    <Select>
-                      <SelectTrigger className="w-[140px] rounded-md">
-                        <SelectValue placeholder="Sort by Date" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="date">Sort by Date</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <Select>
-                      <SelectTrigger className="w-[160px] rounded-md">
-                        <SelectValue placeholder="Sort by Subject" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="subject">Sort by Subject</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Table */}
                   <div className="max-h-[260px] overflow-y-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Assignment</TableHead>
-                          <TableHead>Last Attempt</TableHead>
-                          <TableHead>Feedback</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {details.lessonHistory.length === 0 ? (
+                    {resultsLoading ? (
+                      <div className="text-center py-8 text-gray-500">Loading results…</div>
+                    ) : (
+                      <Table>
+                        <TableHeader>
                           <TableRow>
-                            <TableCell
-                              colSpan={3}
-                              className="text-center text-gray-400 py-8"
-                            >
-                              No lessons yet
-                            </TableCell>
+                            <TableHead>Quiz</TableHead>
+                            <TableHead>Questions</TableHead>
+                            <TableHead>Completed</TableHead>
+                            <TableHead>Feedback</TableHead>
                           </TableRow>
-                        ) : (
-                          details.lessonHistory.map((lesson, index) => (
-                            <TableRow key={index}>
-                              <TableCell>{lesson.assignment}</TableCell>
-                              <TableCell>{lesson.lastAttempt}</TableCell>
-                              <TableCell>{lesson.feedback}</TableCell>
+                        </TableHeader>
+                        <TableBody>
+                          {quizResults.length === 0 ? (
+                            <TableRow>
+                              <TableCell
+                                colSpan={4}
+                                className="text-center text-gray-400 py-8"
+                              >
+                                No quiz results yet
+                              </TableCell>
                             </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
+                          ) : (
+                            quizResults.map((quiz) => (
+                              <TableRow key={quiz.quizId}>
+                                <TableCell className="font-medium text-sm text-gray-600">
+                                  {quiz.quizId.slice(0, 8)}…
+                                </TableCell>
+                                <TableCell className="text-sm">
+                                  {quiz.questions.length} question{quiz.questions.length !== 1 ? "s" : ""}
+                                </TableCell>
+                                <TableCell className="text-sm">
+                                  {new Date(quiz.completedAt).toLocaleDateString()}
+                                </TableCell>
+                                <TableCell className="text-sm text-gray-600 max-w-[200px]">
+                                  {quiz.quizFeedback || "—"}
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    )}
                   </div>
                 </CardContent>
               </Card>

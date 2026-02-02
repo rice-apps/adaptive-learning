@@ -22,6 +22,7 @@ export default function TakeQuizPage() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [currentFeedback, setCurrentFeedback] = useState<string>("");
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [isFinishing, setIsFinishing] = useState(false);
 
   useEffect(() => {
     const fetchQuizData = async () => {
@@ -30,7 +31,7 @@ export default function TakeQuizPage() {
       
       if (quiz?.questions) {
         const { data: qs } = await supabase.from("Questions").select("*").in("id", quiz.questions);
-        const sorted = quiz.questions.map((id: string) => qs?.find(q => q.id === id)).filter(Boolean);
+        const sorted = quiz.questions.map((id: string) => qs?.find((q: any) => q.id === id)).filter(Boolean);
         setQuestions(sorted);
       }
       setIsLoading(false);
@@ -44,7 +45,6 @@ export default function TakeQuizPage() {
   const handleNext = async () => {
     if (!currentQ) return;
 
-    // Validate answer
     const answer = answers[currentQ.id];
     if (!answer || (Array.isArray(answer) && answer.length === 0) || answer === '') {
       toast.error('Please answer the question before continuing');
@@ -63,7 +63,6 @@ export default function TakeQuizPage() {
         return;
       }
 
-      // Get question details to check if correct
       const questionDetails = typeof currentQ.question_details === 'string'
         ? JSON.parse(currentQ.question_details)
         : currentQ.question_details;
@@ -71,34 +70,30 @@ export default function TakeQuizPage() {
       const correct = answer === questionDetails.answer;
       setIsCorrect(correct);
 
-      // Insert the result for this question
-      // Insert the result for this question
-const { data: resultData, error: insertError } = await supabase
-.from('Results')
-.insert({
-  quiz_id: quizId,
-  question_id: currentQ.id,
-  student_answer: answer,
-  student_id: user.id,
-})
-.select()
-.single();
+      const { data: resultData, error: insertError } = await supabase
+        .from('Results')
+        .insert({
+          quiz_id: quizId,
+          question_id: currentQ.id,
+          student_answer: answer,
+          student_id: user.id,
+        })
+        .select()
+        .single();
 
-if (insertError || !resultData) {
-console.error('Error saving result:', insertError); // This will show the actual error
-toast.error(`Failed to save answer: ${insertError?.message || 'Unknown error'}`);
-setIsSubmitting(false);
-return;
-}
+      if (insertError || !resultData) {
+        console.error('Error saving result:', insertError);
+        toast.error(`Failed to save answer: ${insertError?.message || 'Unknown error'}`);
+        setIsSubmitting(false);
+        return;
+      }
 
-      // Generate feedback and wait for it
       const feedback = await generateFeedback(resultData.id, currentQ.id, user.id, answer);
       
       if (feedback) {
         setCurrentFeedback(feedback);
         setShowFeedback(true);
       } else {
-        // If feedback generation fails, just move to next
         toast.error('Could not generate feedback, but answer was saved');
         proceedToNext();
       }
@@ -155,9 +150,11 @@ return;
   };
 
   const finishQuiz = async () => {
+    setIsFinishing(true);
     try {
       const supabase = createClient();
       
+      // Mark the quiz as submitted
       await supabase
         .from("Quizzes")
         .update({ 
@@ -166,11 +163,23 @@ return;
         })
         .eq("id", quizId);
 
+      // Generate the quiz summary from all the per-question feedback
+      const summaryRes = await fetch('/api/quiz/generate-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quizId }),
+      });
+
+      if (!summaryRes.ok) {
+        console.error('Summary generation failed:', await summaryRes.json());
+      }
+
       toast.success("Quiz submitted successfully!");
       router.push("/student/dashboard");
     } catch (error) {
       console.error('Error finishing quiz:', error);
       toast.error('Failed to submit quiz');
+      setIsFinishing(false);
     }
   };
 
@@ -185,7 +194,6 @@ return;
     return (
       <div className="min-h-screen bg-white py-12 px-6">
         <div className="max-w-3xl mx-auto space-y-8">
-          {/* Result Header */}
           <div className={`rounded-3xl p-10 text-center ${
             isCorrect ? 'bg-green-50 border-2 border-green-200' : 'bg-orange-50 border-2 border-orange-200'
           }`}>
@@ -199,7 +207,6 @@ return;
             </p>
           </div>
 
-          {/* Feedback Content */}
           <Card>
             <CardContent className="p-8">
               <h3 className="text-xl font-bold mb-4 text-gray-900">Personalized Feedback</h3>
@@ -209,13 +216,22 @@ return;
             </CardContent>
           </Card>
 
-          {/* Continue Button */}
           <div className="flex justify-center pt-6">
             <Button 
               onClick={proceedToNext}
+              disabled={isFinishing}
               className="bg-black text-white px-12 py-6 rounded-2xl font-bold text-lg"
             >
-              {currentIdx === questions.length - 1 ? "Finish Quiz" : "Continue to Next Question"}
+              {isFinishing ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Submitting Quiz...
+                </>
+              ) : currentIdx === questions.length - 1 ? (
+                "Finish Quiz"
+              ) : (
+                "Continue to Next Question"
+              )}
             </Button>
           </div>
         </div>
@@ -228,7 +244,6 @@ return;
     <div className="min-h-screen bg-white py-12 px-6">
       <div className="max-w-3xl mx-auto space-y-10">
         
-        {/* Progress Bar */}
         <div className="space-y-2">
           <div className="h-1.5 w-full bg-gray-100 rounded-full">
             <div className="h-full bg-black transition-all" style={{ width: `${progress}%` }} />
@@ -236,7 +251,6 @@ return;
           <p className="text-xs font-bold text-gray-400">QUESTION {currentIdx + 1} OF {questions.length}</p>
         </div>
 
-        {/* Question Area */}
         <div className="space-y-8">
           <div className="bg-zinc-50 rounded-3xl p-10 border border-zinc-100">
              <p className="text-lime-600 font-black text-[10px] uppercase tracking-[0.2em] mb-4">
@@ -247,7 +261,6 @@ return;
              </h2>
           </div>
 
-          {/* Dynamic Inputs Based on Type */}
           <div className="space-y-4">
             {currentQ.question_type === "mcq" && details.options.map((opt: string) => (
               <button
@@ -274,11 +287,11 @@ return;
 
             {currentQ.question_type === "drag_drop" && (
               <div className="space-y-3">
-                {details.qa_pairs.map((pair: any, i: number) => (
+                {details.qa_pairs.map((pair: { question: string; answer: string }, i: number) => (
                   <div key={i} className="flex items-center gap-4 bg-zinc-50 p-4 rounded-xl border border-zinc-100">
                     <span className="flex-1 font-bold text-zinc-700">{pair.question}</span>
                     <Select 
-                      onValueChange={(val) => {
+                      onValueChange={(val: string) => {
                         const current = answers[currentQ.id] || [];
                         current[i] = val;
                         setAnswers({...answers, [currentQ.id]: current});
@@ -301,7 +314,6 @@ return;
           </div>
         </div>
 
-        {/* Footer Actions */}
         <div className="flex justify-between items-center pt-10">
           <Button 
             variant="ghost" 
