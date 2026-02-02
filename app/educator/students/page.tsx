@@ -174,18 +174,49 @@ export default function StudentRoster() {
   });
 
   if (loading) {
+    // Displays Loading... state while waiting for data
     return <div>Loading...</div>;
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
+      {/* Header */}
+      <div className="bg-black w-full sticky top-0 z-50 shadow-sm">
+        <header className="relative w-full py-4 px-4 md:px-8 flex flex-col md:flex-row items-center gap-4 md:gap-0 justify-between">
+          <h1 className="text-lg font-semibold z-10 shrink-0">
+            <Image src={logo} alt="My Image" width={120} height={72} />
+          </h1>
 
-      <main className="max-w-7xl mx-auto p-8">
+          <div className="relative w-full max-w-sm order-3 md:order-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black w-4 h-4" />
+            <Input
+              type="text"
+              placeholder="      Search for lessons, assessments..."
+              className="w-full bg-white rounded-full"
+            />
+          </div>
+
+          <div className="flex items-center gap-4 z-10 order-2 md:order-3">
+            <div className="flex items-center space-x-4">
+              <BellIcon className="text-white h-8 w-8 md:h-10 md:w-10" />
+              <Avatar className="h-10 w-10 md:h-14 md:w-14">
+                <AvatarImage
+                  src="https://github.com/shadcn.png"
+                  alt="Instructor"
+                />
+              </Avatar>
+            </div>
+          </div>
+        </header>
+      </div>
+
+      {/* Main content area */}
+      <main className="max-w-7xl mx-auto p-4 md:p-8">
+        {/* Tabs */}
         <div className="flex gap-3">
           <Link href="/educator/dashboard">
             <Button
-              className="rounded-md"
+              className="rounded-md text-sm md:text-base"
               variant={
                 pathname === "/educator/dashboard" ? "default" : "outline"
               }
@@ -196,7 +227,7 @@ export default function StudentRoster() {
 
           <Link href="/educator/students">
             <Button
-              className="rounded-md"
+              className="rounded-md text-sm md:text-base"
               variant={
                 pathname === "/educator/students" ? "default" : "outline"
               }
@@ -206,17 +237,19 @@ export default function StudentRoster() {
           </Link>
         </div>
 
-        <Card className="shadow-sm mt-8 rounded-lg border border-gray-200 py-2 gap-1">
-          <CardHeader className="flex items-center justify-between px-6 py-2">
-            <CardTitle className="text-2xl font-bold">My Students</CardTitle>
+        {/* Students table */}
+        <Card className="shadow-sm mt-6 md:mt-8 rounded-lg border border-gray-200 py-2 gap-1">
+          <CardHeader className="flex items-center justify-between px-4 md:px-6 py-2">
+            <CardTitle className="text-xl md:text-2xl font-bold">My Students</CardTitle>
           </CardHeader>
 
-          <div className="flex items-center justify-between px-6 py-3">
-            <div className="flex items-center gap-6">
+          {/* Filter buttons */}
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between px-4 md:px-6 py-3 gap-4">
+            <div className="flex flex-wrap items-center gap-2 md:gap-6">
               <Button
                 variant="outline"
                 size="sm"
-                className={`h-9 px-5 text-sm ${
+                className={`h-8 md:h-9 px-3 md:px-5 text-xs md:text-sm ${
                   filter === "All" ? "bg-[#ABFF2C80] border-0" : ""
                 }`}
                 onClick={() => setFilter("All")}
@@ -226,7 +259,7 @@ export default function StudentRoster() {
               <Button
                 variant="outline"
                 size="sm"
-                className={`h-9 px-5 text-sm ${
+                className={`h-8 md:h-9 px-3 md:px-5 text-xs md:text-sm ${
                   filter === "At Risk" ? "bg-[#ABFF2C80] border-0" : ""
                 }`}
                 onClick={() => setFilter("At Risk")}
@@ -236,7 +269,7 @@ export default function StudentRoster() {
               <Button
                 variant="outline"
                 size="sm"
-                className={`h-9 px-5 text-sm ${
+                className={`h-8 md:h-9 px-3 md:px-5 text-xs md:text-sm ${
                   filter === "Inactive" ? "bg-[#ABFF2C80] border-0" : ""
                 }`}
                 onClick={() => setFilter("Inactive")}
@@ -246,7 +279,7 @@ export default function StudentRoster() {
               <Button
                 variant="outline"
                 size="sm"
-                className={`h-9 px-5 text-sm ${
+                className={`h-8 md:h-9 px-3 md:px-5 text-xs md:text-sm ${
                   filter === "On Track" ? "bg-[#ABFF2C80] border-0" : ""
                 }`}
                 onClick={() => setFilter("On Track")}
@@ -259,7 +292,7 @@ export default function StudentRoster() {
               defaultValue={timeRange}
               onValueChange={(v) => setTimeRange(v as "all" | "week" | "month")}
             >
-              <SelectTrigger className="h-9 w-35 rounded-md border border-gray-300 bg-gray-100 text-sm pl-3 pr-2">
+              <SelectTrigger className="h-8 md:h-9 w-full md:w-35 rounded-md border border-gray-300 bg-gray-100 text-xs md:text-sm pl-3 pr-2">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -270,21 +303,21 @@ export default function StudentRoster() {
             </Select>
           </div>
 
-          <CardContent className="p-6">
+          <CardContent className="p-4 md:p-6">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[260px] text-sm text-gray-500">
+                    <TableHead className="min-w-[180px] md:w-[260px] text-xs md:text-sm text-gray-500">
                       Student
                     </TableHead>
-                    <TableHead className="w-[280px] text-sm text-gray-500">
+                    <TableHead className="min-w-[160px] md:w-[280px] text-xs md:text-sm text-gray-500">
                       Progress
                     </TableHead>
-                    <TableHead className="w-[220px] text-sm text-gray-500">
+                    <TableHead className="hidden lg:table-cell w-[220px] text-sm text-gray-500">
                       Engagement
                     </TableHead>
-                    <TableHead className="w-[100px] text-sm text-gray-500">
+                    <TableHead className="min-w-[80px] md:w-[100px] text-xs md:text-sm text-gray-500">
                       Status
                     </TableHead>
                     <TableHead className="w-[120px] text-sm text-gray-500">
@@ -300,32 +333,33 @@ export default function StudentRoster() {
                       className="cursor-pointer hover:bg-gray-100 transition-colors"
                     >
                       <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-9 w-9">
+                        <div className="flex items-center gap-2 md:gap-3">
+                          <Avatar className="h-8 w-8 md:h-9 md:w-9 shrink-0">
                             <AvatarImage src={student.avatar ?? undefined} />
-                            <AvatarFallback>
+                            <AvatarFallback className="text-xs md:text-sm">
                               {student.first_name?.[0] || ""}{student.last_name?.[0] || ""}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="font-medium text-gray-900">
+                          <span className="font-medium text-gray-900 text-sm md:text-base truncate max-w-[120px] md:max-w-none">
                             {student.first_name} {student.last_name}
                           </span>
                         </div>
                       </TableCell>
 
                       <TableCell>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 md:gap-3">
                           <Progress
                             value={student.progress}
-                            className="h-3 w-[180px] [&>div]:bg-[#ABFF2C80]"
+                            className="h-2 md:h-3 w-[80px] md:w-[180px] [&>div]:bg-[#ABFF2C80]"
                           />
-                          <span className="text-sm text-gray-700 w-10 text-right">
+                          <span className="text-xs md:text-sm text-gray-700 w-8 md:w-10 text-right">
                             {student.progress}%
                           </span>
                         </div>
                       </TableCell>
 
-                      <TableCell className="text-sm text-gray-700">
+                      {/* Engagement - hidden on mobile */}
+                      <TableCell className="hidden lg:table-cell text-sm text-gray-700">
                         {student.progress >= 80
                           ? "more than 10 hours"
                           : student.progress >= 60
@@ -337,7 +371,7 @@ export default function StudentRoster() {
 
                       <TableCell>
                         <Badge
-                          className={`rounded-full px-3 py-1 text-sm font-medium ${
+                          className={`rounded-full px-2 md:px-3 py-0.5 md:py-1 text-xs md:text-sm font-medium whitespace-nowrap ${
                             student.status === "On Track"
                               ? "bg-lime-400 text-black"
                               : "bg-red-100 text-red-700"
@@ -365,9 +399,10 @@ export default function StudentRoster() {
           </CardContent>
         </Card>
 
-        <div className="mt-2 flex items-center justify-between">
-          <p className="text-sm text-gray-600 ml-1">
-            Showing {filteredStudents.length} of {students.length}{" "}
+        {/* Pagination */}
+        <div className="mt-2 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <p className="text-xs md:text-sm text-gray-600 ml-1">
+            Showing {filteredStudents.length} of {filteredStudents.length}{" "}
             students
           </p>
           <div className="flex gap-2">
