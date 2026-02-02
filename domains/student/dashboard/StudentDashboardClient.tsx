@@ -7,8 +7,9 @@ import StudentDashboardHeader from "./StudentDashboardHeader";
 import WritingFeedback from "./WritingFeedback";
 
 interface Props {
-  student: string | null;
+  studentName: string;
   completedQuizzes: any[];
+  assignedQuizzes: any[];
   hasCompletedDiagnostic: boolean;
 }
 
@@ -18,19 +19,20 @@ export default function StudentDashboardClient({
   hasCompletedDiagnostic,
 }: Props) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Sticky Header */}
-      <StudentDashboardHeader student={student} />
+    <div className="min-h-screen bg-gray-50/50">
+      <StudentDashboardHeader student={studentName} />
 
       <main className="max-w-6xl mx-auto p-4 sm:p-6 md:p-8">
         {/* Greeting / Progress */}
         <GreetingCard student={student} />
 
-        {/* Diagnostic Lock Card */}
+        {/* LOGIC: Only show this card if diagnostic is NOT complete */}
         {!hasCompletedDiagnostic && <PromptDiagnosticCard />}
 
-        {/* Recommended Quizzes (Locked Overlay) */}
-        <RecommendedQuizzes hasCompletedDiagnostic={hasCompletedDiagnostic} />
+        <RecommendedQuizzes 
+          assignedQuizzes={assignedQuizzes} 
+          hasCompletedDiagnostic={hasCompletedDiagnostic} 
+        />
 
         {/* Writing Feedback + Quiz Completions */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
