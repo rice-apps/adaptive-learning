@@ -2,10 +2,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import Image from "next/image";
-import logo from "../../assets/logo.png";
-import { Search, BellIcon } from "lucide-react";
+import Navbar from "@/components/ui/navbar";
+import { BellIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -13,36 +11,7 @@ export default function InstructorDashboard() {
   const pathname = usePathname();
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-black w-full sticky top-0 z-50 shadow-sm">
-        <header className="relative w-full py-4 px-8 flex items-center justify-between">
-          <h1 className="text-lg font-semibold z-10">
-            <Image src={logo} alt="My Image" width={120} height={72} />
-          </h1>
-
-          <div className="relative w-full max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black w-4 h-4" />
-            <Input
-              type="text"
-              placeholder="      Search for lessons, assessments..."
-              className="w-full bg-white rounded-full"
-            />
-          </div>
-
-          <div className="flex items-start gap-4 z-10 justify-end">
-            <div className="flex flex-col items-center justify-end"></div>
-
-            <div className="flex items-center space-x-4">
-              <BellIcon className="text-white h-10 w-10" />
-              <Avatar className="h-14 w-14">
-                <AvatarImage
-                  src="https://github.com/shadcn.png"
-                  alt="Instructor"
-                />
-              </Avatar>
-            </div>
-          </div>
-        </header>
-      </div>
+      <Navbar />
 
       {/* Main */}
       <main className="max-w-7xl mx-auto p-8 space-y-6">
