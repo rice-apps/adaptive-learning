@@ -43,22 +43,13 @@ interface StudentDetails {
   } | null;
 }
 
-interface StudentResult {
-  id: number;
+interface StudentQuiz {
+  id: string;
   created_at: string;
   student_id: string | null;
-  quiz_id: string | null;
-  question_id: string | null;
-  student_answer: string | null;
-  feedback: string | null;
   quiz_feedback: string | null;
-}
-
-interface GroupedQuiz {
-  quizId: string;
-  questions: StudentResult[];
-  completedAt: string;
-  quizFeedback: string | null;
+  submitted: boolean | null;
+  end_time: string | null;
 }
 
 interface Props {
@@ -69,39 +60,6 @@ interface Props {
   loading: boolean;
 }
 
-function groupResultsByQuiz(results: StudentResult[]): GroupedQuiz[] {
-  const map = new Map<string, StudentResult[]>();
-
-  for (const r of results) {
-    if (!r.quiz_id) continue;
-    if (!map.has(r.quiz_id)) map.set(r.quiz_id, []);
-    map.get(r.quiz_id)!.push(r);
-  }
-
-  const grouped: GroupedQuiz[] = [];
-  map.forEach((questions, quizId) => {
-    const sorted = [...questions].sort(
-      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-    );
-    
-    // quiz_feedback is the same on all rows for this quiz, so just grab it from the first one
-    const quizFeedback = sorted[0]?.quiz_feedback || null;
-
-    grouped.push({
-      quizId,
-      questions: sorted,
-      completedAt: sorted[sorted.length - 1].created_at,
-      quizFeedback,
-    });
-  });
-
-  grouped.sort(
-    (a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
-  );
-
-  return grouped;
-}
-
 export default function StudentDetailsDialog({
   open,
   onOpenChange,
@@ -109,28 +67,28 @@ export default function StudentDetailsDialog({
   details,
   loading,
 }: Props) {
-  const [quizResults, setQuizResults] = useState<GroupedQuiz[]>([]);
-  const [resultsLoading, setResultsLoading] = useState(false);
+  const [quizzes, setQuizzes] = useState<StudentQuiz[]>([]);
+  const [quizzesLoading, setQuizzesLoading] = useState(false);
 
   useEffect(() => {
     if (open && student?.id) {
-      const fetchResults = async () => {
-        setResultsLoading(true);
+      const fetchQuizzes = async () => {
+        setQuizzesLoading(true);
         try {
           const res = await fetch(`/api/quiz/results/student/${student.id}`);
-          if (!res.ok) throw new Error("Failed to fetch results");
-          const data: StudentResult[] = await res.json();
-          setQuizResults(groupResultsByQuiz(data));
+          if (!res.ok) throw new Error("Failed to fetch quizzes");
+          const data: StudentQuiz[] = await res.json();
+          setQuizzes(data);
         } catch (err) {
           console.error(err);
-          setQuizResults([]);
+          setQuizzes([]);
         } finally {
-          setResultsLoading(false);
+          setQuizzesLoading(false);
         }
       };
-      fetchResults();
+      fetchQuizzes();
     } else {
-      setQuizResults([]);
+      setQuizzes([]);
     }
   }, [open, student?.id]);
 
@@ -297,42 +255,48 @@ export default function StudentDetailsDialog({
                   </h3>
 
                   <div className="max-h-[260px] overflow-y-auto">
-                    {resultsLoading ? (
-                      <div className="text-center py-8 text-gray-500">Loading results…</div>
+                    {quizzesLoading ? (
+                      <div className="text-center py-8 text-gray-500">Loading quizzes…</div>
                     ) : (
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Quiz</TableHead>
-                            <TableHead>Questions</TableHead>
+                            <TableHead>Quiz ID</TableHead>
                             <TableHead>Completed</TableHead>
-                            <TableHead>Feedback</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Feedback Summary</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {quizResults.length === 0 ? (
+                          {quizzes.length === 0 ? (
                             <TableRow>
                               <TableCell
                                 colSpan={4}
                                 className="text-center text-gray-400 py-8"
                               >
-                                No quiz results yet
+                                No quizzes yet
                               </TableCell>
                             </TableRow>
                           ) : (
-                            quizResults.map((quiz) => (
-                              <TableRow key={quiz.quizId}>
+                            quizzes.map((quiz) => (
+                              <TableRow key={quiz.id}>
                                 <TableCell className="font-medium text-sm text-gray-600">
-                                  {quiz.quizId.slice(0, 8)}…
+                                  {quiz.id.slice(0, 8)}…
                                 </TableCell>
                                 <TableCell className="text-sm">
-                                  {quiz.questions.length} question{quiz.questions.length !== 1 ? "s" : ""}
+                                  {quiz.end_time 
+                                    ? new Date(quiz.end_time).toLocaleDateString()
+                                    : new Date(quiz.created_at).toLocaleDateString()}
                                 </TableCell>
                                 <TableCell className="text-sm">
-                                  {new Date(quiz.completedAt).toLocaleDateString()}
+                                  {quiz.submitted ? (
+                                    <span className="text-green-600 font-medium">Submitted</span>
+                                  ) : (
+                                    <span className="text-orange-600 font-medium">In Progress</span>
+                                  )}
                                 </TableCell>
                                 <TableCell className="text-sm text-gray-600 max-w-[200px]">
-                                  {quiz.quizFeedback || "—"}
+                                  {quiz.quiz_feedback || "—"}
                                 </TableCell>
                               </TableRow>
                             ))
