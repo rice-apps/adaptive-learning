@@ -20,7 +20,7 @@ export interface QuizResult {
   question_id: string | null;
   student_answer: string | null;
   feedback: string | null;
-  question_info: QuestionRow | null;
+  question_info: QuestionRow;
 }
 
 async function getResultsByQuizId(quizId: string): Promise<QuizResult[]> {
