@@ -414,6 +414,12 @@ export default function TakeQuizPage() {
           end_time: new Date().toISOString() 
         })
         .eq("id", quizId);
+      
+        fetch('/api/quiz/generate-from-feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ quizId }),
+        });
 
       // Generate the quiz summary from all the per-question feedback
       const summaryRes = await fetch('/api/quiz/generate-summary', {
