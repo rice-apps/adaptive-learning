@@ -1,10 +1,10 @@
 import studentResultDAL from "../dals/studentResultDal";
-import {StudentResult} from "../dals/studentResultDal";
+import {StudentQuiz} from "../dals/studentResultDal";
 
-async function getResultsByStudent(studentId: string): Promise<StudentResult[]> {
-  return await studentResultDAL.getResultsByStudentId(studentId);
+async function getQuizzesByStudent(studentId: string): Promise<StudentQuiz[]> {
+  return await studentResultDAL.getQuizzesByStudentId(studentId);
 }
 
 export default {
-  getResultsByStudent,
+  getQuizzesByStudent,
 };

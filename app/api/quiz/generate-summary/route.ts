@@ -75,9 +75,9 @@ Be specific — name the actual subjects and topics. Keep it to exactly 3-4 sent
 
     // 5. Write the summary to quiz_feedback on every row with this quiz_id
     const { error: updateError } = await supabase
-      .from('Results')
+      .from('Quizzes')
       .update({ quiz_feedback: summaryText })
-      .eq('quiz_id', quizId);
+      .eq('id', quizId);
 
     if (updateError) {
       return NextResponse.json({ error: 'Failed to save quiz summary' }, { status: 500 });
