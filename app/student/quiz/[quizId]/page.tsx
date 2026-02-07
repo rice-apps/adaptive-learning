@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { useRouter, useParams } from "next/navigation";
@@ -9,6 +9,27 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+
+type StimulusDocument = {
+  id: string;
+  title: string;
+  intro: string | null;
+  time_limit_minutes: number | null;
+  references: any | null;
+  source_pdf_storage_path: string | null;
+};
+
+type StimulusSource = {
+  id: string;
+  document_id: string;
+  sort_order: number;
+  label: string | null;
+  genre: string | null;
+  title: string | null;
+  author: string | null;
+  publication: string | null;
+  body_markdown: string;
+};
 
 export default function TakeQuizPage() {
   const router = useRouter();
@@ -23,6 +44,13 @@ export default function TakeQuizPage() {
   const [currentFeedback, setCurrentFeedback] = useState<string>("");
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [isFinishing, setIsFinishing] = useState(false);
+  const [stimulusByDocId, setStimulusByDocId] = useState<
+    Record<string, { document: StimulusDocument; sources: StimulusSource[] }>
+  >({});
+  const [leftPaneWidthPx, setLeftPaneWidthPx] = useState<number>(520);
+  const [isResizing, setIsResizing] = useState(false);
+  const [timeLeftSec, setTimeLeftSec] = useState<number | null>(null);
+  const timeoutSubmitOnceRef = useRef<Record<string, boolean>>({});
 
   useEffect(() => {
     const fetchQuizData = async () => {
@@ -39,17 +67,227 @@ export default function TakeQuizPage() {
     fetchQuizData();
   }, [quizId]);
 
+  useEffect(() => {
+    const saved = typeof window !== "undefined" ? window.localStorage.getItem("gedStimulusLeftPaneWidthPx") : null;
+    if (saved) {
+      const n = Number(saved);
+      if (Number.isFinite(n) && n >= 360 && n <= 820) setLeftPaneWidthPx(n);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const onMove = (e: MouseEvent) => {
+      const min = 360;
+      const max = 820;
+      const next = Math.max(min, Math.min(max, e.clientX - 24)); // account for page padding
+      setLeftPaneWidthPx(next);
+    };
+    const onUp = () => {
+      setIsResizing(false);
+      try {
+        window.localStorage.setItem("gedStimulusLeftPaneWidthPx", String(leftPaneWidthPx));
+      } catch {
+        // ignore
+      }
+    };
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+  }, [isResizing, leftPaneWidthPx]);
+
   const currentQ = questions[currentIdx];
   const progress = questions.length > 0 ? ((currentIdx + 1) / questions.length) * 100 : 0;
 
-  const handleNext = async () => {
+  const parseDetails = (q: any) => {
+    if (!q) return null;
+    return typeof q.question_details === "string" ? JSON.parse(q.question_details) : q.question_details;
+  };
+
+  const computeCorrectness = (q: any, details: any, answer: any): boolean | null => {
+    if (!q) return null;
+    if (q.question_type === "ged_extended_response") return null;
+    if (!details) return null;
+
+    if (q.question_type === "drag_drop") {
+      const correctAnswers = (details.qa_pairs || []).map((p: any) => p.answer);
+      if (!Array.isArray(answer) || answer.length !== correctAnswers.length) return false;
+      return answer.every((a, i) => a === correctAnswers[i]);
+    }
+
+    // mcq / free_response (and other scalar types)
+    return String(answer) === String(details.answer);
+  };
+
+  const ensureStimulusLoaded = async (stimulusDocumentId: string) => {
+    if (!stimulusDocumentId) return;
+    if (stimulusByDocId[stimulusDocumentId]) return;
+
+    const supabase = createClient();
+    const { data: doc, error: docError } = await supabase
+      .from("question_stimulus_documents")
+      .select("*")
+      .eq("id", stimulusDocumentId)
+      .single();
+
+    if (docError || !doc) {
+      console.error("Failed to fetch stimulus document:", docError);
+      toast.error("Failed to load reading materials");
+      return;
+    }
+
+    const { data: sources, error: srcError } = await supabase
+      .from("question_stimulus_sources")
+      .select("*")
+      .eq("document_id", stimulusDocumentId)
+      .order("sort_order", { ascending: true });
+
+    if (srcError) {
+      console.error("Failed to fetch stimulus sources:", srcError);
+      toast.error("Failed to load reading materials");
+      return;
+    }
+
+    setStimulusByDocId((prev) => ({
+      ...prev,
+      [stimulusDocumentId]: {
+        document: doc as StimulusDocument,
+        sources: (sources as StimulusSource[]) || [],
+      },
+    }));
+  };
+
+  useEffect(() => {
+    if (!currentQ) return;
+    if (currentQ.question_type !== "ged_extended_response") return;
+    const details = parseDetails(currentQ);
+    const stimulusDocumentId = details?.stimulus_document_id;
+    if (!stimulusDocumentId) return;
+    ensureStimulusLoaded(stimulusDocumentId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentQ?.id]);
+
+  const gedTimerKey = useMemo(() => {
+    if (!currentQ || !quizId) return null;
+    if (currentQ.question_type !== "ged_extended_response") return null;
+    return `gedErDeadline:${String(quizId)}:${String(currentQ.id)}`;
+  }, [currentQ, quizId]);
+
+  const forceSubmitDueToTimeout = async () => {
+    if (!currentQ) return;
+    const key = String(currentQ.id);
+    if (timeoutSubmitOnceRef.current[key]) return;
+    timeoutSubmitOnceRef.current[key] = true;
+
+    toast.error("Time’s up — submitting your response.");
+
+    // Submit whatever we have without enforcing min word count.
+    await handleNext({ force: true, reason: "timeout" });
+  };
+
+  // Countdown timer for GED extended response
+  useEffect(() => {
+    if (!currentQ || currentQ.question_type !== "ged_extended_response") {
+      setTimeLeftSec(null);
+      return;
+    }
+
+    const details = parseDetails(currentQ);
+    const stimulusDocumentId = details?.stimulus_document_id;
+    const stimulus = stimulusDocumentId ? stimulusByDocId[stimulusDocumentId] : null;
+    const minutes =
+      Number(stimulus?.document?.time_limit_minutes) ||
+      Number(details?.time_limit_minutes) ||
+      45;
+
+    if (!gedTimerKey) return;
+
+    let deadlineMs: number | null = null;
+    try {
+      const existing = window.localStorage.getItem(gedTimerKey);
+      if (existing) {
+        const n = Number(existing);
+        if (Number.isFinite(n) && n > 0) deadlineMs = n;
+      }
+      if (!deadlineMs) {
+        deadlineMs = Date.now() + minutes * 60 * 1000;
+        window.localStorage.setItem(gedTimerKey, String(deadlineMs));
+      }
+    } catch {
+      // If localStorage fails, fall back to in-memory deadline.
+      deadlineMs = Date.now() + minutes * 60 * 1000;
+    }
+
+    const tick = () => {
+      if (!deadlineMs) return;
+      const diff = Math.max(0, Math.floor((deadlineMs - Date.now()) / 1000));
+      setTimeLeftSec(diff);
+      if (diff <= 0 && !isSubmitting && !showFeedback && !isFinishing) {
+        forceSubmitDueToTimeout();
+      }
+    };
+
+    // Reset per question
+    timeoutSubmitOnceRef.current[String(currentQ.id)] = false;
+    tick();
+
+    const interval = window.setInterval(tick, 1000);
+    return () => window.clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentQ?.id, stimulusByDocId, gedTimerKey, isSubmitting, showFeedback, isFinishing]);
+
+  const validateAnswer = (q: any, details: any, answer: any): boolean => {
+    if (!q) return false;
+
+    if (q.question_type === "ged_extended_response") {
+      const essay = typeof answer === "object" && answer ? String(answer.essay || "") : "";
+      const minWords =
+        details?.response_fields?.find((f: any) => f.id === "essay")?.min_words ??
+        details?.response_fields?.[0]?.min_words ??
+        null;
+
+      if (!essay.trim()) {
+        toast.error("Please write your response before continuing");
+        return false;
+      }
+      if (typeof minWords === "number") {
+        const wc = essay.trim().split(/\s+/).filter(Boolean).length;
+        if (wc < minWords) {
+          toast.error(`Please write at least ${minWords} words (currently ${wc})`);
+          return false;
+        }
+      }
+      return true;
+    }
+
+    if (!answer || (Array.isArray(answer) && answer.length === 0) || answer === "") {
+      toast.error("Please answer the question before continuing");
+      return false;
+    }
+
+    if (q.question_type === "drag_drop") {
+      const expected = (details?.qa_pairs || []).length;
+      if (!Array.isArray(answer) || answer.length !== expected || answer.some((a) => !a || String(a).trim() === "")) {
+        toast.error("Please answer all items before continuing");
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  const handleNext = async (opts?: { force?: boolean; reason?: "timeout" | "user" }) => {
     if (!currentQ) return;
 
     const answer = answers[currentQ.id];
-    if (!answer || (Array.isArray(answer) && answer.length === 0) || answer === '') {
-      toast.error('Please answer the question before continuing');
-      return;
-    }
+    const questionDetails = parseDetails(currentQ);
+    const force = Boolean(opts?.force);
+    if (!force && !validateAnswer(currentQ, questionDetails, answer)) return;
 
     setIsSubmitting(true);
 
@@ -63,21 +301,30 @@ export default function TakeQuizPage() {
         return;
       }
 
-      const questionDetails = typeof currentQ.question_details === 'string'
-        ? JSON.parse(currentQ.question_details)
-        : currentQ.question_details;
-
-      const correct = answer === questionDetails.answer;
+      const correct = computeCorrectness(currentQ, questionDetails, answer);
       setIsCorrect(correct);
+
+      const insertPayload: Record<string, any> = {
+        quiz_id: quizId,
+        question_id: currentQ.id,
+        student_id: user.id,
+      };
+
+      if (currentQ.question_type === "ged_extended_response") {
+        const essay = typeof answer === "object" && answer ? String(answer.essay || "") : "";
+        insertPayload.student_answer = essay; // keep for simple display
+        insertPayload.student_answer_json = { essay };
+      } else if (typeof answer === "string") {
+        insertPayload.student_answer = answer;
+      } else {
+        // arrays / objects (e.g., drag_drop)
+        insertPayload.student_answer = JSON.stringify(answer);
+        insertPayload.student_answer_json = answer;
+      }
 
       const { data: resultData, error: insertError } = await supabase
         .from('Results')
-        .insert({
-          quiz_id: quizId,
-          question_id: currentQ.id,
-          student_answer: answer,
-          student_id: user.id,
-        })
+        .insert(insertPayload)
         .select()
         .single();
 
@@ -88,7 +335,12 @@ export default function TakeQuizPage() {
         return;
       }
 
-      const feedback = await generateFeedback(resultData.id, currentQ.id, user.id, answer);
+      const feedbackInput =
+        currentQ.question_type === "ged_extended_response"
+          ? { ...(insertPayload.student_answer_json || {}), essay: insertPayload.student_answer }
+          : answer;
+
+      const feedback = await generateFeedback(resultData.id, currentQ.id, user.id, feedbackInput);
       
       if (feedback) {
         setCurrentFeedback(feedback);
@@ -185,27 +437,27 @@ export default function TakeQuizPage() {
 
   if (isLoading) return <div className="p-20 text-center">Loading your quiz...</div>;
 
-  const details = typeof currentQ?.question_details === 'string' 
-    ? JSON.parse(currentQ.question_details) 
-    : currentQ?.question_details;
+  const details = parseDetails(currentQ);
 
   // Show feedback screen
   if (showFeedback) {
     return (
       <div className="min-h-screen bg-white py-12 px-6">
         <div className="max-w-3xl mx-auto space-y-8">
-          <div className={`rounded-3xl p-10 text-center ${
-            isCorrect ? 'bg-green-50 border-2 border-green-200' : 'bg-orange-50 border-2 border-orange-200'
-          }`}>
-            <h2 className={`text-4xl font-bold mb-2 ${
-              isCorrect ? 'text-green-700' : 'text-orange-700'
+          {isCorrect !== null && (
+            <div className={`rounded-3xl p-10 text-center ${
+              isCorrect ? 'bg-green-50 border-2 border-green-200' : 'bg-orange-50 border-2 border-orange-200'
             }`}>
-              {isCorrect ? '✓ Correct!' : '✗ Not Quite'}
-            </h2>
-            <p className="text-gray-600">
-              {isCorrect ? 'Great job! Keep it up.' : "Let's learn from this together."}
-            </p>
-          </div>
+              <h2 className={`text-4xl font-bold mb-2 ${
+                isCorrect ? 'text-green-700' : 'text-orange-700'
+              }`}>
+                {isCorrect ? '✓ Correct!' : '✗ Not Quite'}
+              </h2>
+              <p className="text-gray-600">
+                {isCorrect ? 'Great job! Keep it up.' : "Let's learn from this together."}
+              </p>
+            </div>
+          )}
 
           <Card>
             <CardContent className="p-8">
@@ -240,6 +492,165 @@ export default function TakeQuizPage() {
   }
 
   // Show question screen
+  if (currentQ?.question_type === "ged_extended_response") {
+    const stimulusDocumentId = details?.stimulus_document_id;
+    const stimulus = stimulusDocumentId ? stimulusByDocId[stimulusDocumentId] : null;
+    const essayValue =
+      typeof answers[currentQ.id] === "object" && answers[currentQ.id]
+        ? String(answers[currentQ.id].essay || "")
+        : "";
+    const timerText = (() => {
+      if (timeLeftSec === null) return null;
+      const m = Math.floor(timeLeftSec / 60);
+      const s = timeLeftSec % 60;
+      return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    })();
+
+    return (
+      <div className="h-screen bg-white p-6 overflow-hidden">
+        <div className="h-full flex flex-col gap-4">
+          <div className="shrink-0 space-y-2">
+            <div className="h-1.5 w-full bg-gray-100 rounded-full">
+              <div className="h-full bg-black transition-all" style={{ width: `${progress}%` }} />
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-xs font-bold text-gray-400">QUESTION {currentIdx + 1} OF {questions.length}</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em]">
+                {currentQ.subject} • {currentQ.topic}
+              </p>
+            </div>
+            <div className="flex items-center justify-end">
+              {timerText ? (
+                <div className={`text-xs font-black tracking-[0.2em] uppercase px-3 py-1 rounded-full border ${
+                  timeLeftSec !== null && timeLeftSec <= 60 ? "border-red-200 bg-red-50 text-red-700" : "border-zinc-200 bg-white text-zinc-700"
+                }`}>
+                  Time left: {timerText}
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="flex flex-1 w-full rounded-3xl border border-zinc-100 overflow-hidden bg-white">
+            {/* Left: stimulus */}
+            <div
+              className="shrink-0 border-r border-zinc-100 bg-zinc-50"
+              style={{ width: `${leftPaneWidthPx}px` }}
+            >
+              <div className="h-full overflow-y-auto p-6">
+                {!stimulus ? (
+                  <div className="text-sm text-gray-500">
+                    Loading reading materials…
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div>
+                      <h2 className="text-xl font-bold text-zinc-900">{stimulus.document.title}</h2>
+                      {stimulus.document.time_limit_minutes ? (
+                        <p className="text-xs font-bold text-gray-400 mt-2">
+                          Suggested time: {stimulus.document.time_limit_minutes} minutes
+                        </p>
+                      ) : null}
+                      {stimulus.document.intro ? (
+                        <p className="text-sm text-gray-700 mt-3 whitespace-pre-wrap">{stimulus.document.intro}</p>
+                      ) : null}
+                    </div>
+
+                    {stimulus.sources.map((src) => (
+                      <div key={src.id} className="space-y-2">
+                        <div className="text-xs font-bold text-gray-500 uppercase tracking-[0.2em]">
+                          {src.label || `Source ${src.sort_order}`}
+                        </div>
+                        <div className="space-y-1">
+                          {src.title ? <div className="font-semibold text-zinc-900">{src.title}</div> : null}
+                          {(src.author || src.publication || src.genre) ? (
+                            <div className="text-xs text-gray-500">
+                              {[src.author, src.publication, src.genre].filter(Boolean).join(" • ")}
+                            </div>
+                          ) : null}
+                        </div>
+                        <div className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                          {src.body_markdown}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Resize handle */}
+            <div
+              className={`w-2 shrink-0 cursor-col-resize bg-white hover:bg-zinc-100 ${isResizing ? "bg-zinc-100" : ""}`}
+              onMouseDown={() => setIsResizing(true)}
+              role="separator"
+              aria-orientation="vertical"
+              aria-label="Resize reading materials pane"
+            />
+
+            {/* Right: prompt + response */}
+            <div className="flex-1">
+              <div className="h-full overflow-y-auto p-8 space-y-6">
+                <div className="bg-white">
+                  <h3 className="text-2xl font-bold text-zinc-900 leading-tight">
+                    {details?.prompt || "Extended Response"}
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Write a well-organized response that uses evidence from the source materials.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="text-sm font-semibold text-zinc-900">Your response</div>
+                  <Textarea
+                    className="rounded-2xl p-6 min-h-[320px] text-base border-zinc-200 focus:ring-lime-400"
+                    placeholder="Write your response here…"
+                    value={essayValue}
+                    onChange={(e) =>
+                      setAnswers((prev) => ({
+                        ...prev,
+                        [currentQ.id]: { ...(prev[currentQ.id] || {}), essay: e.target.value },
+                      }))
+                    }
+                    disabled={isSubmitting || (timeLeftSec !== null && timeLeftSec <= 0)}
+                  />
+                  <div className="text-xs text-gray-500">
+                    Word count: {essayValue.trim() ? essayValue.trim().split(/\s+/).filter(Boolean).length : 0}
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center pt-2">
+                  <Button
+                    variant="ghost"
+                    onClick={() => setCurrentIdx(Math.max(0, currentIdx - 1))}
+                    disabled={currentIdx === 0 || isSubmitting}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    onClick={() => handleNext({ force: false, reason: "user" })}
+                    className="bg-black text-white px-10 py-6 rounded-2xl font-bold"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Generating Feedback...
+                      </>
+                    ) : currentIdx === questions.length - 1 ? (
+                      "Submit Quiz"
+                    ) : (
+                      "Submit Response"
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white py-12 px-6">
       <div className="max-w-3xl mx-auto space-y-10">
@@ -323,7 +734,7 @@ export default function TakeQuizPage() {
             Back
           </Button>
           <Button 
-            onClick={handleNext} 
+            onClick={() => handleNext({ force: false, reason: "user" })} 
             className="bg-black text-white px-10 py-6 rounded-2xl font-bold"
             disabled={isSubmitting}
           >
