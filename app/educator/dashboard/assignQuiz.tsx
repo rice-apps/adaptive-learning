@@ -67,7 +67,7 @@ export default function AssignQuizDialog({
     setError('');
     
     try {
-      const response = await fetch(`/api/quiz?educatorId=${educatorId}`);
+      const response = await fetch(`/api/quiz?educatorId=${educatorId}&includeTemplates=true`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch quizzes');
@@ -77,7 +77,17 @@ export default function AssignQuizDialog({
 
       
       if (Array.isArray(data)) {
-        setQuizzes(data);
+        // Dedupe by questions signature so "template-like" quizzes appear once
+        const bySig = new Map<string, Quiz>();
+        for (const q of data as Quiz[]) {
+          const sig = Array.isArray(q.questions) ? q.questions.join(",") : "";
+          const prev = bySig.get(sig);
+          // keep most recent as representative
+          if (!prev || new Date(q.created_at).getTime() > new Date(prev.created_at).getTime()) {
+            bySig.set(sig, q);
+          }
+        }
+        setQuizzes(Array.from(bySig.values()).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
       } else {
         setQuizzes([]);
       }
@@ -297,8 +307,7 @@ export default function AssignQuizDialog({
                     ) : (
                       quizzes.map((quiz) => (
                         <SelectItem key={quiz.id} value={quiz.id}>
-                          Quiz from {new Date(quiz.created_at).toLocaleDateString()} (
-                          {quiz.questions?.length || 0} questions)
+                          Quiz from {new Date(quiz.created_at).toLocaleDateString()} ({quiz.questions?.length || 0} questions)
                         </SelectItem>
                       ))
                     )}

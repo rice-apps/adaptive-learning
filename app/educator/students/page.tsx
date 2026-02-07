@@ -91,16 +91,8 @@ export default function StudentRoster() {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-
-    const { data: educatorData } = await supabase
-      .from('Educators')
-      .select('id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (educatorData) {
-      setEducatorId(educatorData.id);
-    }
+    // In this project, educator ids are the auth user ids (see FK Educators.id -> user_role.user_id)
+    setEducatorId(user.id);
   };
 
   const openDialogue = async (student: Student) => {

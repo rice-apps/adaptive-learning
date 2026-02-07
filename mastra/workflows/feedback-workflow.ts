@@ -86,10 +86,32 @@ const processAllQuestionsFeedback = createStep({
         ? JSON.parse(question.question_details)
         : question.question_details;
 
-      const isCorrect = result.student_answer === questionDetails.answer;
+      const isGedExtendedResponse = question.question_type === 'ged_extended_response';
+
+      const computeCorrectness = () => {
+        if (isGedExtendedResponse) return null;
+        if (question.question_type === 'drag_drop') {
+          const correctAnswers = (questionDetails?.qa_pairs || []).map((p: any) => p.answer);
+          let arr: any[] | null = null;
+          if (Array.isArray(result.student_answer_json)) arr = result.student_answer_json;
+          if (!arr && typeof result.student_answer === 'string') {
+            try {
+              const parsed = JSON.parse(result.student_answer);
+              if (Array.isArray(parsed)) arr = parsed;
+            } catch {
+              // ignore
+            }
+          }
+          if (!arr || arr.length !== correctAnswers.length) return false;
+          return arr.every((v, i) => v === correctAnswers[i]);
+        }
+        return String(result.student_answer) === String(questionDetails?.answer);
+      };
+
+      const isCorrect = computeCorrectness();
 
       try {
-        const prompt = `A student just answered a question. Please provide personalized feedback.
+        let prompt = `A student just answered a question. Please provide personalized feedback.
 
 ═══════════════════════════════════════════════════════════════
 STUDENT LEARNING PROFILE
@@ -104,19 +126,59 @@ QUESTION DETAILS
 ═══════════════════════════════════════════════════════════════
 Subject: ${question.subject}
 Topic: ${question.topic}
-Question: "${questionDetails.question}"
+Question: "${isGedExtendedResponse ? (questionDetails?.prompt || 'Extended response prompt') : questionDetails.question}"
 
 ${questionDetails.options ? `Options:\n${questionDetails.options.map((opt: string, i: number) => `  ${String.fromCharCode(65 + i)}) ${opt}`).join('\n')}` : ''}
 
 Student's Answer: ${result.student_answer}
-Correct Answer: ${questionDetails.answer}
-Result: ${isCorrect ? 'CORRECT' : 'INCORRECT'}
+${isCorrect === null ? '' : `Correct Answer: ${questionDetails.answer}\nResult: ${isCorrect ? 'CORRECT' : 'INCORRECT'}`}
 
 ═══════════════════════════════════════════════════════════════
 YOUR TASK
 ═══════════════════════════════════════════════════════════════
+`;
 
-${isCorrect ? `
+        if (isGedExtendedResponse) {
+          const essay = String(result.student_answer || '');
+          const stimulusDocumentId = questionDetails?.stimulus_document_id;
+          let stimulusBlock = '';
+
+          if (stimulusDocumentId) {
+            const { data: doc } = await supabase
+              .from('question_stimulus_documents')
+              .select('title,intro,time_limit_minutes')
+              .eq('id', stimulusDocumentId)
+              .single();
+
+            const { data: sources } = await supabase
+              .from('question_stimulus_sources')
+              .select('sort_order,label,title,author,publication,genre,body_markdown')
+              .eq('document_id', stimulusDocumentId)
+              .order('sort_order', { ascending: true });
+
+            const sourcesText = (sources || []).map((s: any) => {
+              const header = [
+                s.label || `Source ${s.sort_order}`,
+                s.title,
+                [s.author, s.publication, s.genre].filter(Boolean).join(' • '),
+              ].filter(Boolean).join('\n');
+              return `${header}\n\n${s.body_markdown}`;
+            }).join('\n\n---\n\n');
+
+            stimulusBlock = `\n\n═══════════════════════════════════════════════════════════════\nSOURCE MATERIALS\n═══════════════════════════════════════════════════════════════\nTitle: ${doc?.title || 'Stimulus'}\n${doc?.intro ? `Intro: ${doc.intro}\n` : ''}${doc?.time_limit_minutes ? `Suggested time: ${doc.time_limit_minutes} minutes\n` : ''}\n${sourcesText}\n`;
+          }
+
+          prompt += `${stimulusBlock}
+
+You are a GED RLA writing coach. Provide feedback on the student's extended response essay.
+
+Requirements:
+- Do NOT mark correct/incorrect.
+- Evaluate on: (1) claim/position & reasoning, (2) use of evidence from BOTH sources, (3) organization & coherence, (4) clarity/grammar.
+- Give 1 short strengths paragraph, 1 short improvements paragraph, then 4 bullet points: Evidence, Organization, Clarity, Next step.
+- Be supportive and match the student's learning preference: "${learningStyle.learnBest}".\n\nSTUDENT ESSAY:\n${essay}\n`;
+        } else {
+          prompt += `${isCorrect ? `
 Provide 2-3 paragraphs that:
 1. Celebrates their success
 2. Explains why their answer is correct
@@ -134,6 +196,7 @@ ${learningStyle.wrongAnswerAction === 'Show me an example' ? 'CRITICAL: Include 
 `}
 
 Use the "${learningStyle.learnBest}" learning approach in your explanation.`;
+        }
 
         const response = await agent.stream([{ role: 'user', content: prompt }]);
 
@@ -173,7 +236,7 @@ Use the "${learningStyle.learnBest}" learning approach in your explanation.`;
 const generateQuizSummary = createStep({
   id: 'generate-quiz-summary',
   description: 'Reads all per-question feedback for the quiz, summarizes into 3-4 sentences highlighting stronger/weaker topics, writes to quiz_feedback on all rows for that quiz_id',
-  inputSchema: quizFeedbackInputSchema,
+  inputSchema: quizFeedbackOutputSchema,
   outputSchema: quizSummaryOutputSchema,
   execute: async ({ inputData, mastra }) => {
     if (!inputData) throw new Error('Input data not found');
