@@ -165,6 +165,12 @@ return;
           end_time: new Date().toISOString() 
         })
         .eq("id", quizId);
+      
+        fetch('/api/quiz/generate-from-feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ quizId }),
+        });
 
       toast.success("Quiz submitted successfully!");
       router.push("/student/dashboard");
