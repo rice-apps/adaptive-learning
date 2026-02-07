@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useMemo, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,9 +7,38 @@ import Navbar from "@/components/ui/navbar";
 import { BellIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 export default function InstructorDashboard() {
   const pathname = usePathname();
+  const [instructorName, setInstructorName] = useState<string>("");
+
+  useEffect(() => {
+    const loadInstructorName = async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      const metadata = user.user_metadata ?? {};
+      const nameFromMetadata =
+        [metadata.first_name, metadata.last_name].filter(Boolean).join(" ") ||
+        metadata.full_name ||
+        metadata.name;
+      const fallbackName = user.email?.split("@")[0];
+
+      setInstructorName((nameFromMetadata || fallbackName || "").trim());
+    };
+
+    loadInstructorName();
+  }, []);
+
+  const greetingName = useMemo(() => {
+    return instructorName.length > 0 ? instructorName : "there";
+  }, [instructorName]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -22,7 +52,7 @@ export default function InstructorDashboard() {
               <AvatarImage src="https://github.com/shadcn.png" />
               <AvatarFallback>IN</AvatarFallback>
             </Avatar>
-            <h1 className="text-xl font-semibold">Hello Mr. Burns!</h1>
+            <h1 className="text-xl font-semibold">Hello {greetingName}!</h1>
           </CardContent>
         </Card>
 
