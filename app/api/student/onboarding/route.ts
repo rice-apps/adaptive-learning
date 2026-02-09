@@ -129,11 +129,6 @@ export async function POST(request: Request) {
     if (grade_reading) studentInsertData.grade_reading = grade_reading;
     if (grade_math) studentInsertData.grade_math = grade_math;
     if (current_level) studentInsertData.current_level = current_level;
-<<<<<<< profile-info
-
-    // Add career_interests and goals from the form
-=======
->>>>>>> main
     if (career_interests) studentInsertData.career_interests = career_interests;
     if (goals) studentInsertData.goals = goals;
     
