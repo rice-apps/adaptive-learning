@@ -1,8 +1,10 @@
+"use client";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
+import Navbar from "@/components/ui/navbar";
 import { 
   Table, 
   TableBody, 
@@ -31,50 +33,11 @@ export default function StudentRoster() {
     { id: 6, name: "Frank Miller", email: "frank@example.com", progress: 55, status: "Active", avatar: null },
     { id: 7, name: "Grace Wilson", email: "grace@example.com", progress: 78, status: "Active", avatar: null },
   ]
-
-  const [students, setStudents] = useState<any[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
-  const [error, setError] = useState<string | null>(null)
   
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Sticky Top Gray Header */}
-      <div className="bg-gray-100 w-full sticky top-0 z-50 shadow-sm">
-        <header className="relative max-w-7xl mx-auto py-4 px-8 flex items-center justify-between">
-          {/* Left: Page title */}
-          <div className="flex items-center gap-2 z-10">
-            <h1 className="text-lg font-semibold text-gray-800">
-              Student Dashboard
-            </h1>
-            <span className="text-gray-500">|</span>
-            <span className="text-sm text-gray-600">Iteration 1</span>
-          </div>
-          
-          {/* Center: Search bar absolutely centered */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 w-full max-w-md">
-            <Input
-              type="text"
-              placeholder="Search students..."
-              className="w-full bg-white"
-            />
-          </div>
-          
-          {/* Right: Instructor info + avatar */}
-          <div className="flex items-start gap-4 z-10 justify-end">
-            <div className="flex flex-col items-center justify-end">
-              <span className="text-sm text-gray-700">Instructor</span>
-              <Button variant="outline" size="sm" className="mt-1">
-                Edit Profile
-              </Button>
-            </div>
-            <Avatar className="h-10 w-10 mt-2">
-              <AvatarImage src="https://github.com/shadcn.png" alt="Instructor" />
-              <AvatarFallback>IN</AvatarFallback>
-            </Avatar>
-          </div>
-        </header>
-      </div>
+      <Navbar />
 
       {/* Main content area */}
       <main className="max-w-7xl mx-auto p-8">
@@ -120,7 +83,7 @@ export default function StudentRoster() {
                     <TableRow key={student.id} className="hover:bg-gray-50">
                       <TableCell>
                         <Avatar className="h-10 w-10">
-                          <AvatarImage src={student.avatar} alt={student.name} />
+                          <AvatarImage src={student.avatar ?? undefined} alt={student.name} />
                           <AvatarFallback className="bg-gray-300">
                             {student.name.split(' ').map(n => n[0]).join('')}
                           </AvatarFallback>
