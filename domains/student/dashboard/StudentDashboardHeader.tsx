@@ -1,4 +1,3 @@
-<<<<<<< profile-info
 import Image from "next/image";
 
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
@@ -22,15 +21,10 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import Link from "next/link"
 
-=======
-import Navbar from "@/components/ui/navbar";
->>>>>>> main
-
 interface StudentDashboardHeaderProps {
   student: string | null;
 }
 
-<<<<<<< profile-info
 export default function StudentDashboardHeader({student}: StudentDashboardHeaderProps) {
   const router = useRouter();
 
@@ -104,8 +98,4 @@ export default function StudentDashboardHeader({student}: StudentDashboardHeader
       </header>
     </div>
   );
-=======
-export default function StudentDashboardHeader({ student }: StudentDashboardHeaderProps) {
-  return <Navbar userName={student} />;
->>>>>>> main
 }
