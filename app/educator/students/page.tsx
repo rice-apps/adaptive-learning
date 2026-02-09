@@ -3,10 +3,8 @@ import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import Image from "next/image";
-import logo from "../../assets/logo.png";
+import Navbar from "@/components/ui/navbar";
 import {
   Table,
   TableBody,
@@ -23,10 +21,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, BellIcon } from "lucide-react";
+import { BellIcon } from "lucide-react";
 import StudentDetailsDialog from "./StudentDetailsDialog";
+import AssignQuizDialog from "../dashboard/assignQuiz";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 export const dynamic = "force-dynamic";
 
@@ -66,11 +66,9 @@ export default function StudentRoster() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [timeRange, setTimeRange] = useState<"all" | "week" | "month">("all");
-  const [filter, setFilter] = useState<
-    "All" | "At Risk" | "Inactive" | "On Track"
-  >("All");
+  const [filter, setFilter] = useState <"All" | "At Risk" | "Inactive" | "On Track" >("All");
 
-  // Dialog states here
+  // Dialog states
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [studentDetails, setStudentDetails] = useState<StudentDetails | null>(
@@ -79,11 +77,29 @@ export default function StudentRoster() {
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [detailsError, setDetailsError] = useState<string | null>(null);
 
+  // Assign Quiz Dialog states
+  const [assignQuizDialogOpen, setAssignQuizDialogOpen] = useState(false);
+  const [selectedStudentForQuiz, setSelectedStudentForQuiz] = useState<Student | null>(null);
+  const [educatorId, setEducatorId] = useState<string>("");
+
+  useEffect(() => {
+    fetchEducatorId();
+    fetchStudents();
+  }, []);
+
+  const fetchEducatorId = async () => {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    // In this project, educator ids are the auth user ids (see FK Educators.id -> user_role.user_id)
+    setEducatorId(user.id);
+  };
+
   const openDialogue = async (student: Student) => {
     setSelectedStudent(student);
     setDialogOpen(true);
     setDetailsLoading(true);
-    setStudentDetails(null); // Clear previous details
+    setStudentDetails(null);
     setDetailsError(null);
 
     try {
@@ -93,7 +109,7 @@ export default function StudentRoster() {
       const data = await response.json();
 
       if (data.error) {
-        setError(data.error);
+        setDetailsError(data.error);
       } else {
         setStudentDetails(data);
       }
@@ -104,87 +120,60 @@ export default function StudentRoster() {
     }
   };
 
-  useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        const response = await fetch("/api/educator/students");
-        const data = await response.json();
+  const openAssignQuizDialog = (student: Student, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent opening details dialog
+    setSelectedStudentForQuiz(student);
+    setAssignQuizDialogOpen(true);
+  };
 
-        if (data.error) {
-          // If there's an error, set the error state
-          setError(data.error);
-        } else {
-          const formattedStudents: Student[] = data.students.map(
-            (student: any) => ({
-              id: student.id,
-              email: student.email,
-              progress: student.progress,
-              status: student.status,
-              first_name: student.first_name,
-              last_name: student.last_name,
-              avatar: student.avatar,
-            })
-          );
-          // Set the formatted students state
-          setStudents(formattedStudents);
-        }
-      } catch (err) {
-        setError("Failed to load students data");
-      } finally {
-        //Finished data loading
-        setLoading(false);
+  const fetchStudents = async () => {
+    try {
+      const response = await fetch("/api/educator/students");
+      const data = await response.json();
+
+      if (data.error) {
+        setError(data.error);
+      } else {
+        const formattedStudents: Student[] = data.students.map(
+          (student: any) => ({
+            id: student.id,
+            email: student.email,
+            progress: student.progress,
+            status: student.status,
+            first_name: student.first_name,
+            last_name: student.last_name,
+            avatar: student.avatar,
+          })
+        );
+        setStudents(formattedStudents);
       }
-    };
-
-    fetchStudents();
-  }, []);
+    } catch (err) {
+      setError("Failed to load students data");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredStudents = students.filter((student) => {
-    if (filter === "All") return true;
-    return student.status === filter;
+    // Filter by status
+    const matchesStatus = filter === "All" || student.status === filter;
+    
+    // Filter by search term
+    const matchesSearch = searchTerm === "" || 
+      student.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.last_name?.toLowerCase().includes(searchTerm.toLowerCase())    
+    return matchesStatus && matchesSearch;
   });
 
   if (loading) {
-    // Diisplays Loading... state while waiting for data
     return <div>Loading...</div>;
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-black w-full sticky top-0 z-50 shadow-sm">
-        <header className="relative w-full py-4 px-8 flex items-center justify-between">
-          <h1 className="text-lg font-semibold z-10">
-            <Image src={logo} alt="My Image" width={120} height={72} />
-          </h1>
+      <Navbar />
 
-          <div className="relative w-full max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black w-4 h-4" />
-            <Input
-              type="text"
-              placeholder="      Search for lessons, assessments..."
-              className="w-full bg-white rounded-full"
-            />
-          </div>
-
-          <div className="flex items-start gap-4 z-10 justify-end">
-            <div className="flex flex-col items-center justify-end"></div>
-
-            <div className="flex items-center space-x-4">
-              <BellIcon className="text-white h-10 w-10" />
-              <Avatar className="h-14 w-14">
-                <AvatarImage
-                  src="https://github.com/shadcn.png"
-                  alt="Instructor"
-                />
-              </Avatar>
-            </div>
-          </div>
-        </header>
-      </div>
-
-      {/* Main content area */}
       <main className="max-w-7xl mx-auto p-8">
-        {/* Tabs */}
         <div className="flex gap-3">
           <Link href="/educator/dashboard">
             <Button
@@ -209,13 +198,11 @@ export default function StudentRoster() {
           </Link>
         </div>
 
-        {/* Students table */}
         <Card className="shadow-sm mt-8 rounded-lg border border-gray-200 py-2 gap-1">
           <CardHeader className="flex items-center justify-between px-6 py-2">
             <CardTitle className="text-2xl font-bold">My Students</CardTitle>
           </CardHeader>
 
-          {/* Filter buttons */}
           <div className="flex items-center justify-between px-6 py-3">
             <div className="flex items-center gap-6">
               <Button
@@ -292,6 +279,9 @@ export default function StudentRoster() {
                     <TableHead className="w-[100px] text-sm text-gray-500">
                       Status
                     </TableHead>
+                    <TableHead className="w-[120px] text-sm text-gray-500">
+                      Actions
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -301,7 +291,6 @@ export default function StudentRoster() {
                       onClick={() => openDialogue(student)}
                       className="cursor-pointer hover:bg-gray-100 transition-colors"
                     >
-                      {/* Student */}
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="h-9 w-9">
@@ -316,7 +305,6 @@ export default function StudentRoster() {
                         </div>
                       </TableCell>
 
-                      {/* Progress */}
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Progress
@@ -329,7 +317,6 @@ export default function StudentRoster() {
                         </div>
                       </TableCell>
 
-                      {/* Engagement - fix later */}
                       <TableCell className="text-sm text-gray-700">
                         {student.progress >= 80
                           ? "more than 10 hours"
@@ -340,7 +327,6 @@ export default function StudentRoster() {
                           : "less than 3 hours"}
                       </TableCell>
 
-                      {/* Status */}
                       <TableCell>
                         <Badge
                           className={`rounded-full px-3 py-1 text-sm font-medium ${
@@ -352,6 +338,17 @@ export default function StudentRoster() {
                           {student.status}
                         </Badge>
                       </TableCell>
+
+                      <TableCell>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => openAssignQuizDialog(student, e)}
+                          className="text-sm"
+                        >
+                          Assign Quiz
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -360,10 +357,9 @@ export default function StudentRoster() {
           </CardContent>
         </Card>
 
-        {/* Pagination or additional controls can go here */}
         <div className="mt-2 flex items-center justify-between">
           <p className="text-sm text-gray-600 ml-1">
-            Showing {filteredStudents.length} of {filteredStudents.length}{" "}
+            Showing {filteredStudents.length} of {students.length}{" "}
             students
           </p>
           <div className="flex gap-2">
@@ -376,6 +372,7 @@ export default function StudentRoster() {
           </div>
         </div>
       </main>
+
       <StudentDetailsDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
@@ -383,6 +380,19 @@ export default function StudentRoster() {
         details={studentDetails}
         loading={detailsLoading}
       />
+
+      {selectedStudentForQuiz && (
+        <AssignQuizDialog
+          isOpen={assignQuizDialogOpen}
+          onClose={() => {
+            setAssignQuizDialogOpen(false);
+            setSelectedStudentForQuiz(null);
+          }}
+          studentId={selectedStudentForQuiz.id}
+          studentName={`${selectedStudentForQuiz.first_name} ${selectedStudentForQuiz.last_name}`}
+          educatorId={educatorId}
+        />
+      )}
     </div>
   );
 }

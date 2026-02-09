@@ -1,7 +1,8 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import {
   Table,
@@ -11,13 +12,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface Student {
   id: string;
@@ -35,6 +29,27 @@ interface StudentDetails {
   }[];
   lastActive: string;
   totalLessons: number;
+  diagnosticResults?: {
+    score: number;
+    total_questions: number;
+    correct: number;
+    wrong: number;
+    completed_at: string | null;
+    performance_by_subject: Record<string, {
+      correct: number;
+      total: number;
+      topics: Record<string, { correct: number; total: number }>;
+    }>;
+  } | null;
+}
+
+interface StudentQuiz {
+  id: string;
+  created_at: string;
+  student_id: string | null;
+  quiz_feedback: string | null;
+  submitted: boolean | null;
+  end_time: string | null;
 }
 
 interface Props {
@@ -52,6 +67,31 @@ export default function StudentDetailsDialog({
   details,
   loading,
 }: Props) {
+  const [quizzes, setQuizzes] = useState<StudentQuiz[]>([]);
+  const [quizzesLoading, setQuizzesLoading] = useState(false);
+
+  useEffect(() => {
+    if (open && student?.id) {
+      const fetchQuizzes = async () => {
+        setQuizzesLoading(true);
+        try {
+          const res = await fetch(`/api/quiz/results/student/${student.id}`);
+          if (!res.ok) throw new Error("Failed to fetch quizzes");
+          const data: StudentQuiz[] = await res.json();
+          setQuizzes(data);
+        } catch (err) {
+          console.error(err);
+          setQuizzes([]);
+        } finally {
+          setQuizzesLoading(false);
+        }
+      };
+      fetchQuizzes();
+    } else {
+      setQuizzes([]);
+    }
+  }, [open, student?.id]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -89,6 +129,67 @@ export default function StudentDetailsDialog({
             </div>
           ) : details ? (
             <>
+              {/* Diagnostic Results */}
+              {details.diagnosticResults && (
+                <Card className="p-5 rounded-2xl">
+                  <h3 className="text-xl font-semibold text-[#4D6A12] mb-4">
+                    Diagnostic Results
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <div className="text-sm text-gray-500">Score</div>
+                        <div className="text-2xl font-bold text-[#4D6A12]">
+                          {details.diagnosticResults.score}%
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-500">Correct</div>
+                        <div className="text-2xl font-bold text-green-600">
+                          {details.diagnosticResults.correct}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-500">Wrong</div>
+                        <div className="text-2xl font-bold text-red-600">
+                          {details.diagnosticResults.wrong}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Total Questions: {details.diagnosticResults.total_questions}
+                      {details.diagnosticResults.completed_at && (
+                        <span className="ml-4">
+                          Completed: {new Date(details.diagnosticResults.completed_at).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Performance by Subject */}
+                    {Object.keys(details.diagnosticResults.performance_by_subject || {}).length > 0 && (
+                      <div className="mt-4">
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                          Performance by Subject
+                        </h4>
+                        <div className="space-y-2">
+                          {Object.entries(details.diagnosticResults.performance_by_subject).map(([subject, data]: [string, any]) => {
+                            const accuracy = data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0;
+                            return (
+                              <div key={subject} className="flex items-center justify-between text-sm">
+                                <span className="font-medium">{subject}</span>
+                                <span className="text-gray-600">
+                                  {data.correct}/{data.total} ({accuracy}%)
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              )}
+
               {/* Strengths & Weaknesses */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Strengths */}
@@ -153,58 +254,56 @@ export default function StudentDetailsDialog({
                     Lesson Tracker
                   </h3>
 
-                  {/* Filters */}
-                  <div className="flex gap-3 mb-4">
-                    <Select>
-                      <SelectTrigger className="w-[140px] rounded-md">
-                        <SelectValue placeholder="Sort by Date" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="date">Sort by Date</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <Select>
-                      <SelectTrigger className="w-[160px] rounded-md">
-                        <SelectValue placeholder="Sort by Subject" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="subject">Sort by Subject</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Table */}
                   <div className="max-h-[260px] overflow-y-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Assignment</TableHead>
-                          <TableHead>Last Attempt</TableHead>
-                          <TableHead>Feedback</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {details.lessonHistory.length === 0 ? (
+                    {quizzesLoading ? (
+                      <div className="text-center py-8 text-gray-500">Loading quizzes…</div>
+                    ) : (
+                      <Table>
+                        <TableHeader>
                           <TableRow>
-                            <TableCell
-                              colSpan={3}
-                              className="text-center text-gray-400 py-8"
-                            >
-                              No lessons yet
-                            </TableCell>
+                            <TableHead>Quiz ID</TableHead>
+                            <TableHead>Completed</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Feedback Summary</TableHead>
                           </TableRow>
-                        ) : (
-                          details.lessonHistory.map((lesson, index) => (
-                            <TableRow key={index}>
-                              <TableCell>{lesson.assignment}</TableCell>
-                              <TableCell>{lesson.lastAttempt}</TableCell>
-                              <TableCell>{lesson.feedback}</TableCell>
+                        </TableHeader>
+                        <TableBody>
+                          {quizzes.length === 0 ? (
+                            <TableRow>
+                              <TableCell
+                                colSpan={4}
+                                className="text-center text-gray-400 py-8"
+                              >
+                                No quizzes yet
+                              </TableCell>
                             </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
+                          ) : (
+                            quizzes.map((quiz) => (
+                              <TableRow key={quiz.id}>
+                                <TableCell className="font-medium text-sm text-gray-600">
+                                  {quiz.id.slice(0, 8)}…
+                                </TableCell>
+                                <TableCell className="text-sm">
+                                  {quiz.end_time 
+                                    ? new Date(quiz.end_time).toLocaleDateString()
+                                    : new Date(quiz.created_at).toLocaleDateString()}
+                                </TableCell>
+                                <TableCell className="text-sm">
+                                  {quiz.submitted ? (
+                                    <span className="text-green-600 font-medium">Submitted</span>
+                                  ) : (
+                                    <span className="text-orange-600 font-medium">In Progress</span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-sm text-gray-600 max-w-[200px]">
+                                  {quiz.quiz_feedback || "—"}
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    )}
                   </div>
                 </CardContent>
               </Card>
