@@ -168,10 +168,19 @@ export default function StudentRoster() {
     // Filter by status
     const matchesStatus = filter === "All" || student.status === filter;
     
-    // Filter by search term
-    const matchesSearch = searchTerm === "" || 
-      student.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.last_name?.toLowerCase().includes(searchTerm.toLowerCase())    
+    // Filter by search term - handles full names with spaces
+    const matchesSearch = searchTerm === "" || (() => {
+      const search = searchTerm.toLowerCase().trim();
+      const firstName = student.first_name?.toLowerCase() || "";
+      const lastName = student.last_name?.toLowerCase() || "";
+      const fullName = `${firstName} ${lastName}`;
+      
+      // Check if search matches full name, first name, or last name
+      return fullName.includes(search) ||
+             firstName.includes(search) ||
+             lastName.includes(search);
+    })();
+    
     return matchesStatus && matchesSearch;
   });
 
@@ -192,7 +201,7 @@ export default function StudentRoster() {
             <Input
               type="text"
               placeholder="Search for students..."
-              className="w-full bg-white rounded-full pl-8"
+              className="w-full bg-white rounded-full pl-8 py-2"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
