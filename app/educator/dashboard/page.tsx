@@ -101,7 +101,7 @@ export default function InstructorDashboard() {
               <AvatarImage src="https://github.com/shadcn.png" />
               <AvatarFallback>IN</AvatarFallback>
             </Avatar>
-            <h1 className="text-xl font-semibold">Hello Mr. Burns!</h1>
+            <h1 className="text-xl font-semibold">Hello {greetingName}!</h1>
           </CardContent>
         </Card>
 
@@ -159,8 +159,8 @@ export default function InstructorDashboard() {
             <CardHeader>
               <CardTitle>Student Proficiency</CardTitle>
             </CardHeader>
-            <CardContent className="h-64 flex items-center justify-center text-gray-400">
-              Chart goes here
+            <CardContent className="p-6">
+              <StudentProficiencyChart/>
             </CardContent>
           </Card>
 
