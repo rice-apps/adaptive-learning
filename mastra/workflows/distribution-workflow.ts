@@ -41,11 +41,11 @@ const generateDistributionStep = createStep({
 
     const learningStyle = typeof studentData.learning_style === 'string'
       ? JSON.parse(studentData.learning_style)
-      : studentData.learning_style;
+      : (studentData.learning_style || {});
 
     const attributes = typeof studentData.attributes === 'string'
       ? JSON.parse(studentData.attributes)
-      : studentData.attributes;
+      : (studentData.attributes || {});
 
     // Get student's past performance
     const { data: pastResults } = await supabase
@@ -53,7 +53,8 @@ const generateDistributionStep = createStep({
       .select(`
         question_id,
         student_answer,
-        Questions!inner(topic, question_details, subject)
+        student_answer_json,
+        Questions!inner(topic, question_details, subject, question_type)
       `)
       .eq('student_id', studentId);
 
@@ -63,12 +64,36 @@ const generateDistributionStep = createStep({
       for (const result of pastResults) {
         const topic = (result as any).Questions.topic;
         const subject = (result as any).Questions.subject;
+        const questionType = (result as any).Questions.question_type;
         const rawDetails = (result as any).Questions.question_details;
         const questionDetails = typeof rawDetails === 'string' 
           ? JSON.parse(rawDetails) 
           : rawDetails;
 
-        const isCorrect = result.student_answer === questionDetails.answer;
+        // Skip extended response items for correctness-based distribution (not correct/incorrect)
+        if (questionType === 'ged_extended_response') continue;
+
+        let isCorrect = false;
+        if (questionType === 'drag_drop') {
+          const correctAnswers = (questionDetails?.qa_pairs || []).map((p: any) => p.answer);
+          let arr: any[] | null = null;
+          if (Array.isArray((result as any).student_answer_json)) arr = (result as any).student_answer_json;
+          if (!arr && typeof (result as any).student_answer === 'string') {
+            try {
+              const parsed = JSON.parse((result as any).student_answer);
+              if (Array.isArray(parsed)) arr = parsed;
+            } catch {
+              // ignore
+            }
+          }
+          if (arr && arr.length === correctAnswers.length) {
+            isCorrect = arr.every((v, i) => v === correctAnswers[i]);
+          } else {
+            isCorrect = false;
+          }
+        } else {
+          isCorrect = String((result as any).student_answer) === String(questionDetails?.answer);
+        }
 
         if (!performanceByTopic[topic]) {
           performanceByTopic[topic] = { correct: 0, total: 0, subject };
@@ -145,11 +170,11 @@ const generateDistributionStep = createStep({
     const prompt = `You are an expert GED quiz designer. Create an intelligent topic distribution for a quiz.
 
 STUDENT PROFILE:
-- Learning Style: ${learningStyle.learnBest}
-- Worried About: ${learningStyle.worriedSubject || 'None'}
-- Challenges: ${learningStyle.hardFactors?.join(', ') || 'None'}
-- Strengths (self-reported): ${attributes['strength-skill']?.join(', ') || 'None identified'}
-- Weaknesses (self-reported): ${attributes['weaknesses-skill']?.join(', ') || 'None identified'}
+- Learning Style: ${learningStyle?.learnBest || 'Not specified'}
+- Worried About: ${learningStyle?.worriedSubject || 'None'}
+- Challenges: ${learningStyle?.hardFactors?.join(', ') || 'None'}
+- Strengths (self-reported): ${attributes?.['strength-skill']?.join(', ') || 'None identified'}
+- Weaknesses (self-reported): ${attributes?.['weaknesses-skill']?.join(', ') || 'None identified'}
 
 PAST PERFORMANCE BY TOPIC:
 ${Object.entries(performanceByTopic).length > 0 
@@ -234,10 +259,9 @@ CRITICAL:
 
     // Select questions based on distribution with duplicate prevention
     const selectedQuestionIds: string[] = [...requiredQuestionIds];
-    const usedQuestionIds = new Set(requiredQuestionIds); // Track used IDs to avoid duplicates
+    const usedQuestionIds = new Set(requiredQuestionIds);
 
     for (const [topic, count] of Object.entries(result.topicDistribution) as [string, number][]) {
-      // Build exclusion list for query
       const exclusionList = Array.from(usedQuestionIds);
       
       let query = supabase
@@ -245,7 +269,6 @@ CRITICAL:
         .select('id')
         .eq('topic', topic);
       
-      // Only add NOT IN clause if we have IDs to exclude
       if (exclusionList.length > 0) {
         query = query.not('id', 'in', `(${exclusionList.join(',')})`);
       }
@@ -262,7 +285,6 @@ CRITICAL:
         continue;
       }
 
-      // Take up to 'count' questions from this topic
       const questionsToAdd = questions.slice(0, count);
       
       if (questionsToAdd.length < count) {
@@ -277,7 +299,6 @@ CRITICAL:
       });
     }
 
-    // Check if we got enough questions
     if (selectedQuestionIds.length < totalQuestions) {
       console.warn(`Only found ${selectedQuestionIds.length} questions out of ${totalQuestions} requested`);
     }
@@ -299,4 +320,4 @@ const distributionWorkflow = createWorkflow({
 
 distributionWorkflow.commit();
 
-export { distributionWorkflow };
+export { distributionWorkflow, generateDistributionStep };
