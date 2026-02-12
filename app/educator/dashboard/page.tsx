@@ -8,6 +8,7 @@ import { BellIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import StudentProficiencyChart from "@/components/StudentProficiencyChart";
 
 export default function InstructorDashboard() {
   const pathname = usePathname();
@@ -115,7 +116,7 @@ export default function InstructorDashboard() {
               <CardTitle>Student Proficiency</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-              <StudentProficiencyChart />
+              <StudentProficiencyChart/>
             </CardContent>
           </Card>
 
