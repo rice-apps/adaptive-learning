@@ -1,48 +1,96 @@
-"use client";
-import { useEffect, useMemo, useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import Navbar from "@/components/ui/navbar";
-import { BellIcon } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import StudentProficiencyChart from "@/components/StudentProficiencyChart";
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import Image from 'next/image';
+import logo from '../../assets/logo.png';
+import { Search, BellIcon } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import EducatorSearchResults from '@/components/educator-search-results';
 
 export default function InstructorDashboard() {
   const pathname = usePathname();
-  const [instructorName, setInstructorName] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
 
+  // Fetch search results when query changes
   useEffect(() => {
-    const loadInstructorName = async () => {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+    const fetchResults = async () => {
+      if (!searchQuery.trim()) {
+        setSearchResults([]);
+        return;
+      }
 
-      if (!user) return;
-
-      const metadata = user.user_metadata ?? {};
-      const nameFromMetadata =
-        [metadata.first_name, metadata.last_name].filter(Boolean).join(" ") ||
-        metadata.full_name ||
-        metadata.name;
-      const fallbackName = user.email?.split("@")[0];
-
-      setInstructorName((nameFromMetadata || fallbackName || "").trim());
+      setSearching(true);
+      try {
+        const response = await fetch(`/api/educator/search?query=${encodeURIComponent(searchQuery)}`);
+        const result = await response.json();
+        setSearchResults(result.data || []);
+      } catch (error) {
+        console.error('Search error:', error);
+        setSearchResults([]);
+      } finally {
+        setSearching(false);
+      }
     };
 
-    loadInstructorName();
-  }, []);
+    // Debounce - wait 300ms after user stops typing
+    const timer = setTimeout(fetchResults, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-  const greetingName = useMemo(() => {
-    return instructorName.length > 0 ? instructorName : "there";
-  }, [instructorName]);
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setSearchQuery('');
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
+      <div className="bg-black w-full sticky top-0 z-50 shadow-sm">
+        <header className="relative w-full py-4 px-8 flex items-center justify-between">
+          <h1 className="text-lg font-semibold z-10">
+            <Image src={logo} alt="My Image" width={120} height={72} />
+          </h1>
+
+          <div className="relative w-full max-w-sm" ref={searchRef}>
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black w-4 h-4 z-10" />
+            <Input
+              type="text"
+              placeholder="Search for lessons, assessments..."
+              className="w-full bg-white rounded-full pl-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <EducatorSearchResults
+              query={searchQuery}
+              results={searchResults}
+              onClose={() => setSearchQuery('')}
+            />
+          </div>
+
+          <div className="flex items-start gap-4 z-10 justify-end">
+            <div className="flex items-center space-x-4">
+              <BellIcon className="text-white h-10 w-10" />
+              <Avatar className="h-14 w-14">
+                <AvatarImage src="https://github.com/shadcn.png" alt="Instructor" />
+              </Avatar>
+            </div>
+          </div>
+        </header>
+      </div>
 
       {/* Main */}
       <main className="max-w-7xl mx-auto p-8 space-y-6">
@@ -62,9 +110,7 @@ export default function InstructorDashboard() {
           <Link href="/educator/dashboard">
             <Button
               className="rounded-md"
-              variant={
-                pathname === "/educator/dashboard" ? "default" : "outline"
-              }
+              variant={pathname === '/educator/dashboard' ? 'default' : 'outline'}
             >
               Cohort Overview
             </Button>
@@ -73,9 +119,7 @@ export default function InstructorDashboard() {
           <Link href="/educator/students">
             <Button
               className="rounded-md"
-              variant={
-                pathname === "/educator/students" ? "default" : "outline"
-              }
+              variant={pathname === '/educator/students' ? 'default' : 'outline'}
             >
               Students
             </Button>
@@ -128,15 +172,11 @@ export default function InstructorDashboard() {
             <CardContent className="space-y-4">
               <div className="border rounded-lg p-3">
                 <p className="font-medium">Quadratic Equations</p>
-                <p className="text-sm text-gray-500">
-                  Math · 8 students affected
-                </p>
+                <p className="text-sm text-gray-500">Math · 8 students affected</p>
               </div>
               <div className="border rounded-lg p-3">
                 <p className="font-medium">Verb Conjugation</p>
-                <p className="text-sm text-gray-500">
-                  English · 6 students affected
-                </p>
+                <p className="text-sm text-gray-500">English · 6 students affected</p>
               </div>
               <Button className="w-full rounded-full">View All</Button>
             </CardContent>
