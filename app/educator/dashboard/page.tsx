@@ -11,10 +11,12 @@ import { Search, BellIcon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import EducatorSearchResults from '@/components/educator-search-results';
+import StudentProficiencyChart from '@/components/StudentProficiencyChart';
 
 export default function InstructorDashboard() {
   const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState('');
+  const greetingName = 'Instructor'; // Replace with dynamic logic if needed
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -101,7 +103,7 @@ export default function InstructorDashboard() {
               <AvatarImage src="https://github.com/shadcn.png" />
               <AvatarFallback>IN</AvatarFallback>
             </Avatar>
-            <h1 className="text-xl font-semibold">Hello {greetingName}!</h1>
+            <h1 className="text-xl font-semibold">Hello {greetingName || 'Instructor'}!</h1>
           </CardContent>
         </Card>
 

@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,12 +22,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BellIcon } from "lucide-react";
+import { BellIcon, Search } from "lucide-react";
 import StudentDetailsDialog from "./StudentDetailsDialog";
 import AssignQuizDialog from "../dashboard/assignQuiz";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { Input } from "@/components/ui/input";
+import logo from "../../assets/logo.png";
 
 export const dynamic = "force-dynamic";
 

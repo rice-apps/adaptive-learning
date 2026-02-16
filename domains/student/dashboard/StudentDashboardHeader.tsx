@@ -2,12 +2,14 @@ import Image from "next/image";
 
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 
-import {BellIcon} from "lucide-react";
+import {BellIcon, LogOutIcon, UserIcon} from "lucide-react";
 import logo from "../../../assets/logo.webp";
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import Link from "next/link"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuSeparator, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 interface StudentDashboardHeaderProps {
   student: string | null;
