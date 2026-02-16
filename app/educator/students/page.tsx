@@ -158,10 +158,19 @@ export default function StudentRoster() {
     // Filter by status
     const matchesStatus = filter === "All" || student.status === filter;
     
-    // Filter by search term
-    const matchesSearch = searchTerm === "" || 
-      student.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.last_name?.toLowerCase().includes(searchTerm.toLowerCase())    
+    // Filter by search term - handles full names with spaces
+    const matchesSearch = searchTerm === "" || (() => {
+      const search = searchTerm.toLowerCase().trim();
+      const firstName = student.first_name?.toLowerCase() || "";
+      const lastName = student.last_name?.toLowerCase() || "";
+      const fullName = `${firstName} ${lastName}`;
+      
+      // Check if search matches full name, first name, or last name
+      return fullName.includes(search) ||
+             firstName.includes(search) ||
+             lastName.includes(search);
+    })();
+    
     return matchesStatus && matchesSearch;
   });
 
@@ -171,7 +180,38 @@ export default function StudentRoster() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
+      <div className="bg-black w-full sticky top-0 z-50 shadow-sm">
+        <header className="relative w-full py-4 px-8 flex items-center justify-between">
+          <h1 className="text-lg font-semibold z-10">
+            <Image src={logo} alt="My Image" width={120} height={72} />
+          </h1>
+
+          <div className="relative w-full max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black w-4 h-4" />
+            <Input
+              type="text"
+              placeholder="Search for students..."
+              className="w-full bg-white rounded-full pl-8 py-2"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <div className="flex items-start gap-4 z-10 justify-end">
+            <div className="flex flex-col items-center justify-end"></div>
+
+            <div className="flex items-center space-x-4">
+              <BellIcon className="text-white h-10 w-10" />
+              <Avatar className="h-14 w-14">
+                <AvatarImage
+                  src="https://github.com/shadcn.png"
+                  alt="Instructor"
+                />
+              </Avatar>
+            </div>
+          </div>
+        </header>
+      </div>
 
       <main className="max-w-7xl mx-auto p-8">
         <div className="flex gap-3">
