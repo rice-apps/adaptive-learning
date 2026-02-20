@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BellIcon, Search } from "lucide-react";
 import logo from "@/assets/logo.webp";
+import NotificationBell from '@/components/notifications/NotificationBell';
+
 
 interface NavbarProps {
   /** Optional display name used to render avatar fallback initial */
@@ -26,7 +28,7 @@ export default function Navbar({ userName }: NavbarProps) {
         </div>
 
         <div className="flex items-center gap-4">
-          <BellIcon className="text-white h-10 w-10" />
+          <NotificationBell />
           <Avatar className="h-14 w-14">
             <AvatarImage src="https://github.com/shadcn.png" />
             <AvatarFallback>{userName?.charAt(0).toUpperCase() ?? "U"}</AvatarFallback>
