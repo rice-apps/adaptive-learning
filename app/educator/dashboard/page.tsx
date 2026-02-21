@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 import logo from '../../assets/logo.png';
 import { Search, BellIcon } from 'lucide-react';
+import NotificationBell from '@/components/notifications/NotificationBell';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import EducatorSearchResults from '@/components/educator-search-results';
@@ -85,7 +86,7 @@ export default function InstructorDashboard() {
 
           <div className="flex items-start gap-4 z-10 justify-end">
             <div className="flex items-center space-x-4">
-              <BellIcon className="text-white h-10 w-10" />
+              <NotificationBell />
               <Avatar className="h-14 w-14">
                 <AvatarImage src="https://github.com/shadcn.png" alt="Instructor" />
               </Avatar>

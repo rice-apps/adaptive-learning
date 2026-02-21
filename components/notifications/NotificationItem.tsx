@@ -55,9 +55,11 @@ export default function NotificationItem({
         </div>
         
         {/* Unread indicator dot */}
-        <div className="ml-3 mt-1">
-          <div className="w-2 h-2 bg-blue-500 rounded-full" />
-        </div>
+        {!notification.is_read && (
+          <div className="ml-3 mt-1">
+            <div className="w-2 h-2 bg-blue-500 rounded-full" />
+          </div>
+        )}
       </div>
     </div>
   );
