@@ -8,34 +8,36 @@ import NotificationDropdown from './NotificationDropdown';
 export default function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, loading, error, refetch } = useNotifications();
 
-//close dropdown if click outside notification drop down
   useEffect(() => {
+    if (!isOpen) return;
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Bell Icon Button */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsOpen((open) => {
+            if (!open) refetch();
+            return !open;
+          });
+        }}
+        className="relative p-2 hover:bg-white/10 rounded-full transition-colors"
         aria-label="Notifications"
       >
-        <BellIcon className="h-9 w-9 text-gray-300" />
+        <BellIcon className="h-9 w-9 text-white" />
         
         {/* Red Badge Count */}
         {unreadCount > 0 && (
@@ -52,6 +54,8 @@ export default function NotificationBell() {
           onMarkAsRead={markAsRead}
           onMarkAllAsRead={markAllAsRead}
           onClose={() => setIsOpen(false)}
+          loading={loading}
+          error={error}
         />
       )}
     </div>
