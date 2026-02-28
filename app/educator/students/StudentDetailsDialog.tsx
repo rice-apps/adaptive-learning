@@ -95,7 +95,7 @@ export default function StudentDetailsDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="h-[80vh] p-0 rounded-xl flex flex-col overflow-hidden"
+        className="h-[80vh] w-[95vw] sm:max-w-[95vw] p-0 rounded-xl flex flex-col overflow-hidden"
         showCloseButton={false}
       >
         <VisuallyHidden>
@@ -122,7 +122,7 @@ export default function StudentDetailsDialog({
           )}
         </div>
 
-        <div className="px-8 py-5 space-y-5 overflow-y-auto">
+        <div className="px-8 py-5 space-y-5 overflow-y-auto min-h-0 flex-1">
           {loading ? (
             <div className="text-center py-16 text-gray-500">
               Loading student details…
@@ -254,17 +254,17 @@ export default function StudentDetailsDialog({
                     Lesson Tracker
                   </h3>
 
-                  <div className="max-h-[260px] overflow-y-auto">
+                  <div className="max-h-[260px] overflow-y-auto overflow-x-hidden">
                     {quizzesLoading ? (
                       <div className="text-center py-8 text-gray-500">Loading quizzes…</div>
                     ) : (
-                      <Table>
+                      <Table className="table-fixed w-full">
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Quiz ID</TableHead>
-                            <TableHead>Completed</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Feedback Summary</TableHead>
+                            <TableHead className="w-20">Quiz ID</TableHead>
+                            <TableHead className="w-28">Completed</TableHead>
+                            <TableHead className="w-24">Status</TableHead>
+                            <TableHead className="min-w-0">Feedback Summary</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -295,7 +295,7 @@ export default function StudentDetailsDialog({
                                     <span className="text-orange-600 font-medium">In Progress</span>
                                   )}
                                 </TableCell>
-                                <TableCell className="text-sm text-gray-600 max-w-[200px]">
+                                <TableCell className="text-sm text-gray-600 whitespace-normal break-words align-top">
                                   {quiz.quiz_feedback || "—"}
                                 </TableCell>
                               </TableRow>
