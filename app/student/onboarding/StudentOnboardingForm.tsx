@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
+import LoadingSpinner from "@/components/ui/loadingSpinner";
 
 export default function StudentOnboardingForm() {
   const router = useRouter();
@@ -55,20 +56,25 @@ export default function StudentOnboardingForm() {
     } catch (error) {
       console.error("Error:", error);
       setError(error instanceof Error ? error.message : "An error occurred");
-    } finally {
-      setLoading(false);
+      setLoading(false); // Only turn off loading if there's an error
     }
+    // Note: Don't set loading to false on success - let the redirect happen with spinner showing
   };
+
+  // Show loading spinner while submitting
+  if (loading) {
+    return <LoadingSpinner message="Creating your profile..." />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <main className="max-w-4xl mx-auto p-8">
+      <main className="max-w-4xl mx-auto p-4 sm:p-6 md:p-8">
         {/* Progress Bar */}
-        <Card className="mb-6">
-          <CardContent className="p-6">
+        <Card className="mb-4 sm:mb-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-xl font-bold">Create your profile</h2>
-              <span className="text-sm text-gray-500">Step {step} of 3</span>
+              <h2 className="text-lg sm:text-xl font-bold">Create your profile</h2>
+              <span className="text-xs sm:text-sm text-gray-500">Step {step} of 3</span>
             </div>
 
             <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -81,18 +87,18 @@ export default function StudentOnboardingForm() {
         </Card>
 
         <Card className="bg-white">
-          <CardHeader className="text-center pb-3">
-            <CardTitle className="text-2xl font-bold">
+          <CardHeader className="text-center pb-3 px-4 sm:px-6">
+            <CardTitle className="text-xl sm:text-2xl font-bold">
               Ready to ace the GED?
             </CardTitle>
-            <CardTitle className="text-sm text-gray-400">
+            <CardTitle className="text-xs sm:text-sm text-gray-400">
               Let's start with the basics.
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 sm:px-6">
             {error && (
-              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
-                <p className="text-sm text-red-600">{error}</p>
+              <div className="mb-4 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-xs sm:text-sm text-red-600">{error}</p>
               </div>
             )}
 
@@ -110,12 +116,13 @@ export default function StudentOnboardingForm() {
               )}
 
               {/* Navigation */}
-              <div className="flex justify-between pt-6">
+              <div className="flex justify-between pt-4 sm:pt-6">
                 <div>
                   {step > 1 && (
                     <Button
                       type="button"
                       variant="outline"
+                      className="text-sm sm:text-base px-4 sm:px-6"
                       onClick={() => setStep(step - 1)}
                     >
                       Back
@@ -126,7 +133,7 @@ export default function StudentOnboardingForm() {
                 {step < 3 ? (
                   <Button
                     type="button"
-                    className="bg-lime-300 text-black rounded-full px-8 disabled:opacity-50"
+                    className="bg-lime-300 text-black rounded-full px-6 sm:px-8 text-sm sm:text-base disabled:opacity-50"
                     disabled={!stepOneValid}
                     onClick={() => setStep(step + 1)}
                   >
@@ -135,7 +142,7 @@ export default function StudentOnboardingForm() {
                 ) : (
                   <Button
                     type="submit"
-                    className="bg-lime-300 text-black rounded-full px-8"
+                    className="bg-lime-300 text-black rounded-full px-6 sm:px-8 text-sm sm:text-base"
                     disabled={loading}
                   >
                     {loading ? "Saving..." : "Done"}
@@ -152,16 +159,16 @@ export default function StudentOnboardingForm() {
 
 function StepOne({ formData, setFormData }: any) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Profile photo */}
-      <div className="flex flex-col items-center gap-3">
-        <Label className="text-base font-semibold">
+      <div className="flex flex-col items-center gap-2 sm:gap-3">
+        <Label className="text-sm sm:text-base font-semibold">
           Profile Photo <span className="text-gray-400">(optional)</span>
         </Label>
 
         <div className="relative">
           {/* Avatar */}
-          <Avatar className="h-32 w-32 bg-gray-200 text-3xl">
+          <Avatar className="h-24 w-24 sm:h-32 sm:w-32 bg-gray-200 text-2xl sm:text-3xl">
             {/* add uploaded image here */}
             {/* <AvatarImage src={photoUrl} /> */}
 
@@ -180,10 +187,14 @@ function StepOne({ formData, setFormData }: any) {
             onClick={() => document.getElementById("photo-upload")?.click()}
             className="
               absolute
-              bottom-1
-              right-1
-              h-10
-              w-10
+              bottom-0
+              right-0
+              sm:bottom-1
+              sm:right-1
+              h-8
+              w-8
+              sm:h-10
+              sm:w-10
               rounded-full
               bg-lime-300
               flex
@@ -197,9 +208,9 @@ function StepOne({ formData, setFormData }: any) {
             <Image
               src="/camera.png"
               alt="upload"
-              width={18}
-              height={18}
-              className="object-contain"
+              width={16}
+              height={16}
+              className="object-contain sm:w-[18px] sm:h-[18px]"
             />
           </button>
 
@@ -219,11 +230,12 @@ function StepOne({ formData, setFormData }: any) {
           />
         </div>
 
-        <p className="text-sm text-gray-400">Help instructors recognize you.</p>
+        <p className="text-xs sm:text-sm text-gray-400">Help instructors recognize you.</p>
       </div>
 
       <Input
         placeholder="First name"
+        className="text-sm sm:text-base"
         value={formData.firstname}
         onChange={(e) =>
           setFormData({ ...formData, firstname: e.target.value })
@@ -233,6 +245,7 @@ function StepOne({ formData, setFormData }: any) {
 
       <Input
         placeholder="Last name"
+        className="text-sm sm:text-base"
         value={formData.lastname}
         onChange={(e) => setFormData({ ...formData, lastname: e.target.value })}
         required
@@ -243,15 +256,15 @@ function StepOne({ formData, setFormData }: any) {
 
 function StepTwo({ formData, setFormData }: any) {
   return (
-    <div className="space-y-6">
-      <h3 className="text-xl font-bold">What are your career interests?</h3>
-      <p className="text-gray-500">
-        Select areas you’re curious about or want to explore.
+    <div className="space-y-4 sm:space-y-6">
+      <h3 className="text-lg sm:text-xl font-bold">What are your career interests?</h3>
+      <p className="text-sm sm:text-base text-gray-500">
+        Select areas you're curious about or want to explore.
       </p>
 
       <Textarea
         placeholder="Tell us more about your interests..."
-        className="min-h-[150px]"
+        className="min-h-[120px] sm:min-h-[150px] text-sm sm:text-base"
         value={formData.career_interests}
         onChange={(e) =>
           setFormData({ ...formData, career_interests: e.target.value })
@@ -263,24 +276,24 @@ function StepTwo({ formData, setFormData }: any) {
 
 function StepThree({ formData, setFormData }: any) {
   return (
-    <div className="space-y-6">
-      <h3 className="text-xl font-bold">What are your goals?</h3>
-      <p className="text-gray-500">
+    <div className="space-y-4 sm:space-y-6">
+      <h3 className="text-lg sm:text-xl font-bold">What are your goals?</h3>
+      <p className="text-sm sm:text-base text-gray-500">
         What do you hope to achieve with Eight Million Stories?
       </p>
 
-      <div className="bg-lime-100 border border-lime-300 rounded-lg p-4 text-sm">
+      <div className="bg-lime-100 border border-lime-300 rounded-lg p-3 sm:p-4 text-xs sm:text-sm">
         <p className="font-medium mb-2">Think about:</p>
-        <ul className="list-disc list-inside">
+        <ul className="list-disc list-inside space-y-1">
           <li>Education milestones</li>
           <li>Skills you want to learn</li>
-          <li>Jobs you’re interested in</li>
+          <li>Jobs you're interested in</li>
         </ul>
       </div>
 
       <Textarea
         placeholder="e.g. I want to earn my GED, improve my writing..."
-        className="min-h-[180px]"
+        className="min-h-[140px] sm:min-h-[180px] text-sm sm:text-base"
         value={formData.goals}
         onChange={(e) => setFormData({ ...formData, goals: e.target.value })}
         required

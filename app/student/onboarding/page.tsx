@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
+import LoadingSpinner from "@/components/ui/loadingSpinner"; // ADD THIS LINE
 
 export default function StudentOnboardingForm() {
   const router = useRouter();
@@ -49,16 +50,20 @@ export default function StudentOnboardingForm() {
         throw new Error(data.error || "Failed to create profile");
       }
 
-      // Redirect to dashboard
+      // Redirect to dashboard - keep loading spinner visible during redirect
       router.push(data.redirectTo || "/student/dashboard");
-      router.refresh(); // Refresh to update any server components
+      router.refresh();
     } catch (error) {
       console.error("Error:", error);
       setError(error instanceof Error ? error.message : "An error occurred");
-    } finally {
-      setLoading(false);
+      setLoading(false); // Only turn off loading on error
     }
   };
+
+  // ADD THIS SECTION - Shows full screen loading spinner when submitting
+  if (loading) {
+    return <LoadingSpinner message="Creating your profile..." />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
