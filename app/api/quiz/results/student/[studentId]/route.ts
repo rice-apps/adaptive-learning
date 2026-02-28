@@ -9,9 +9,9 @@ export async function GET(request: Request, {params}: {params: Promise<{studentI
       return NextResponse.json({error: "Student ID is required"}, {status: 400});
     }
 
-    const results = await studentResultManager.getResultsByStudent(studentId);
+    const quizzes = await studentResultManager.getQuizzesByStudent(studentId);
 
-    return NextResponse.json(results);
+    return NextResponse.json(quizzes);
   } catch (error) {
     return NextResponse.json({error: error instanceof Error ? error.message : "Unknown error"}, {status: 500});
   }

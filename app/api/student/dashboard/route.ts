@@ -1,20 +1,20 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
-const supabaseURL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+function getSupabase() {
+    const supabaseURL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-if (!supabaseURL || !supabaseKEY) {
-    throw new Error('missing Supabase environment variables');
+    if (!supabaseURL || !supabaseKEY) {
+        throw new Error('missing Supabase environment variables');
+    }
+
+    return createClient(supabaseURL, supabaseKEY);
 }
-
-const supabase = createClient (
-    supabaseURL,
-    supabaseKEY
-);
 
 export async function GET(request: Request) {
     try {
+        const supabase = getSupabase();
         const { searchParams } = new URL(request.url);
         const studentId = searchParams.get('studentId');
 

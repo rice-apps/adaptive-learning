@@ -1,3 +1,5 @@
+"use client";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -31,10 +33,6 @@ export default function StudentRoster() {
     { id: 6, name: "Frank Miller", email: "frank@example.com", progress: 55, status: "Active", avatar: null },
     { id: 7, name: "Grace Wilson", email: "grace@example.com", progress: 78, status: "Active", avatar: null },
   ]
-
-  const [students, setStudents] = useState<any[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
-  const [error, setError] = useState<string | null>(null)
   
 
   return (
@@ -85,7 +83,7 @@ export default function StudentRoster() {
                     <TableRow key={student.id} className="hover:bg-gray-50">
                       <TableCell>
                         <Avatar className="h-10 w-10">
-                          <AvatarImage src={student.avatar} alt={student.name} />
+                          <AvatarImage src={student.avatar ?? undefined} alt={student.name} />
                           <AvatarFallback className="bg-gray-300">
                             {student.name.split(' ').map(n => n[0]).join('')}
                           </AvatarFallback>

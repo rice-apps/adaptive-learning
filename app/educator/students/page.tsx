@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,12 +22,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BellIcon } from "lucide-react";
+import { BellIcon, Search } from "lucide-react";
 import StudentDetailsDialog from "./StudentDetailsDialog";
 import AssignQuizDialog from "../dashboard/assignQuiz";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { Input } from "@/components/ui/input";
+import logo from "../../assets/logo.png";
 
 export const dynamic = "force-dynamic";
 
@@ -91,16 +94,8 @@ export default function StudentRoster() {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-
-    const { data: educatorData } = await supabase
-      .from('Educators')
-      .select('id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (educatorData) {
-      setEducatorId(educatorData.id);
-    }
+    // In this project, educator ids are the auth user ids (see FK Educators.id -> user_role.user_id)
+    setEducatorId(user.id);
   };
 
   const openDialogue = async (student: Student) => {
@@ -166,10 +161,19 @@ export default function StudentRoster() {
     // Filter by status
     const matchesStatus = filter === "All" || student.status === filter;
     
-    // Filter by search term
-    const matchesSearch = searchTerm === "" || 
-      student.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.last_name?.toLowerCase().includes(searchTerm.toLowerCase())    
+    // Filter by search term - handles full names with spaces
+    const matchesSearch = searchTerm === "" || (() => {
+      const search = searchTerm.toLowerCase().trim();
+      const firstName = student.first_name?.toLowerCase() || "";
+      const lastName = student.last_name?.toLowerCase() || "";
+      const fullName = `${firstName} ${lastName}`;
+      
+      // Check if search matches full name, first name, or last name
+      return fullName.includes(search) ||
+             firstName.includes(search) ||
+             lastName.includes(search);
+    })();
+    
     return matchesStatus && matchesSearch;
   });
 

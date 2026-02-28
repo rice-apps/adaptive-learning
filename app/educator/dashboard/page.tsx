@@ -1,14 +1,64 @@
-"use client";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import Navbar from "@/components/ui/navbar";
-import { BellIcon } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import Image from 'next/image';
+import logo from '../../assets/logo.png';
+import { Search, BellIcon } from 'lucide-react';
+import NotificationBell from '@/components/notifications/NotificationBell';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import EducatorSearchResults from '@/components/educator-search-results';
+import StudentProficiencyChart from '@/components/StudentProficiencyChart';
 
 export default function InstructorDashboard() {
   const pathname = usePathname();
+  const [searchQuery, setSearchQuery] = useState('');
+  const greetingName = 'Instructor'; // Replace with dynamic logic if needed
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  // Fetch search results when query changes
+  useEffect(() => {
+    const fetchResults = async () => {
+      if (!searchQuery.trim()) {
+        setSearchResults([]);
+        return;
+      }
+
+      setSearching(true);
+      try {
+        const response = await fetch(`/api/educator/search?query=${encodeURIComponent(searchQuery)}`);
+        const result = await response.json();
+        setSearchResults(result.data || []);
+      } catch (error) {
+        console.error('Search error:', error);
+        setSearchResults([]);
+      } finally {
+        setSearching(false);
+      }
+    };
+
+    // Debounce - wait 300ms after user stops typing
+    const timer = setTimeout(fetchResults, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setSearchQuery('');
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">

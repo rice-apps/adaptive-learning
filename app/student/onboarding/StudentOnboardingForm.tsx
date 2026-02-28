@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
 import LoadingSpinner from "@/components/ui/loadingSpinner";
+
+const CAREER_OPTIONS = [
+  "Business",
+  "Healthcare",
+  "Construction",
+  "Hospitality",
+  "Education",
+  "Technology",
+];
 
 export default function StudentOnboardingForm() {
   const router = useRouter();
@@ -23,7 +32,10 @@ export default function StudentOnboardingForm() {
     grade_reading: "",
     grade_math: "",
     current_level: "",
-    career_interests: "",
+    career_interests: {
+      selected: [] as string[],
+      details: "",
+    },
     goals: "",
   });
 
@@ -36,12 +48,18 @@ export default function StudentOnboardingForm() {
     setError(null);
 
     try {
+      // Stringify career_interests before sending
+      const payload = {
+        ...formData,
+        career_interests: JSON.stringify(formData.career_interests),
+      };
+
       const response = await fetch("/api/student/onboarding", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -50,9 +68,8 @@ export default function StudentOnboardingForm() {
         throw new Error(data.error || "Failed to create profile");
       }
 
-      // Redirect to dashboard
       router.push(data.redirectTo || "/student/dashboard");
-      router.refresh(); // Refresh to update any server components
+      router.refresh();
     } catch (error) {
       console.error("Error:", error);
       setError(error instanceof Error ? error.message : "An error occurred");
@@ -181,7 +198,6 @@ function StepOne({ formData, setFormData }: any) {
             </AvatarFallback>
           </Avatar>
 
-          {/* Camera badge */}
           <button
             type="button"
             onClick={() => document.getElementById("photo-upload")?.click()}
@@ -214,7 +230,6 @@ function StepOne({ formData, setFormData }: any) {
             />
           </button>
 
-          {/* File input */}
           <input
             id="photo-upload"
             type="file"
@@ -223,7 +238,6 @@ function StepOne({ formData, setFormData }: any) {
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (file) {
-                // TODO: handle upload later
                 console.log(file);
               }
             }}
@@ -255,21 +269,78 @@ function StepOne({ formData, setFormData }: any) {
 }
 
 function StepTwo({ formData, setFormData }: any) {
+  const toggleCareerOption = (option: string) => {
+    const selected = formData.career_interests.selected;
+    const newSelected = selected.includes(option)
+      ? selected.filter((item: string) => item !== option)
+      : [...selected, option];
+
+    setFormData({
+      ...formData,
+      career_interests: {
+        ...formData.career_interests,
+        selected: newSelected,
+      },
+    });
+  };
+
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <h3 className="text-lg sm:text-xl font-bold">What are your career interests?</h3>
-      <p className="text-sm sm:text-base text-gray-500">
+    <div className="space-y-6">
+      <h3 className="text-xl font-bold">What are your career interests?</h3>
+      <p className="text-gray-500">
         Select areas you're curious about or want to explore.
       </p>
 
-      <Textarea
-        placeholder="Tell us more about your interests..."
-        className="min-h-[120px] sm:min-h-[150px] text-sm sm:text-base"
-        value={formData.career_interests}
-        onChange={(e) =>
-          setFormData({ ...formData, career_interests: e.target.value })
-        }
-      />
+      {/* Quick Select */}
+      <div>
+        <p className="text-sm font-semibold mb-3">
+          Quick Select <span className="text-gray-400 font-normal">(click any that interest you)</span>
+        </p>
+        <div className="flex flex-wrap gap-3">
+          {CAREER_OPTIONS.map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => toggleCareerOption(option)}
+              className={`
+                px-6 py-3 rounded-full font-medium transition-all
+                ${
+                  formData.career_interests.selected.includes(option)
+                    ? "bg-lime-300 text-black"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }
+              `}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tell us more */}
+      <div>
+        <Label className="text-sm font-semibold mb-2 block">
+          Tell us more <span className="text-red-500">*</span>
+        </Label>
+        <Textarea
+          placeholder="e.g., I'm interested in becoming a nurse, working with computers, etc."
+          className="min-h-[150px]"
+          maxLength={500}
+          value={formData.career_interests.details}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              career_interests: {
+                ...formData.career_interests,
+                details: e.target.value,
+              },
+            })
+          }
+        />
+        <p className="text-xs text-gray-400 text-right mt-1">
+          {formData.career_interests.details.length}/500
+        </p>
+      </div>
     </div>
   );
 }

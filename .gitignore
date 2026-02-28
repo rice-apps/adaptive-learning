@@ -44,3 +44,6 @@ next-env.d.ts
 .mastra
 
 /scripts
+
+# personal notes / local docs
+/personal-docs/

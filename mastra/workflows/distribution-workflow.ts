@@ -53,7 +53,8 @@ const generateDistributionStep = createStep({
       .select(`
         question_id,
         student_answer,
-        Questions!inner(topic, question_details, subject)
+        student_answer_json,
+        Questions!inner(topic, question_details, subject, question_type)
       `)
       .eq('student_id', studentId);
 
@@ -63,12 +64,36 @@ const generateDistributionStep = createStep({
       for (const result of pastResults) {
         const topic = (result as any).Questions.topic;
         const subject = (result as any).Questions.subject;
+        const questionType = (result as any).Questions.question_type;
         const rawDetails = (result as any).Questions.question_details;
         const questionDetails = typeof rawDetails === 'string' 
           ? JSON.parse(rawDetails) 
           : rawDetails;
 
-        const isCorrect = result.student_answer === questionDetails.answer;
+        // Skip extended response items for correctness-based distribution (not correct/incorrect)
+        if (questionType === 'ged_extended_response') continue;
+
+        let isCorrect = false;
+        if (questionType === 'drag_drop') {
+          const correctAnswers = (questionDetails?.qa_pairs || []).map((p: any) => p.answer);
+          let arr: any[] | null = null;
+          if (Array.isArray((result as any).student_answer_json)) arr = (result as any).student_answer_json;
+          if (!arr && typeof (result as any).student_answer === 'string') {
+            try {
+              const parsed = JSON.parse((result as any).student_answer);
+              if (Array.isArray(parsed)) arr = parsed;
+            } catch {
+              // ignore
+            }
+          }
+          if (arr && arr.length === correctAnswers.length) {
+            isCorrect = arr.every((v, i) => v === correctAnswers[i]);
+          } else {
+            isCorrect = false;
+          }
+        } else {
+          isCorrect = String((result as any).student_answer) === String(questionDetails?.answer);
+        }
 
         if (!performanceByTopic[topic]) {
           performanceByTopic[topic] = { correct: 0, total: 0, subject };

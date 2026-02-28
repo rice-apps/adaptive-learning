@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 // hacky workaround for mvp, fix later
-const EDUCATOR_ID = "98509cc4-36bf-4df0-b4b8-83ddd33eae74";
+const EDUCATOR_ID = "08f54ab0-676c-4967-932f-568a36df6846";
 
 type QuestionType = "free_response" | "mcq" | "drag_drop";
 
