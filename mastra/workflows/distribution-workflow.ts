@@ -247,21 +247,56 @@ CRITICAL:
       throw new Error('AI response missing required fields');
     }
 
-    // Validate that total questions match
-    const totalFromDistribution = Object.values(result.topicDistribution).reduce(
+    // Normalize distribution so it sums exactly to totalQuestions
+    let totalFromDistribution = Object.values(result.topicDistribution).reduce(
       (sum: number, count: any) => sum + Number(count), 
       0
     );
-
-    if (totalFromDistribution !== totalQuestions) {
-      console.warn(`Warning: AI generated ${totalFromDistribution} questions instead of ${totalQuestions}`);
+    if (totalFromDistribution !== totalQuestions && totalFromDistribution > 0) {
+      const entries = Object.entries(result.topicDistribution) as [string, number][];
+      const diff = totalQuestions - totalFromDistribution;
+      entries.sort((a, b) => b[1] - a[1]); // largest first
+      for (let i = 0; i < Math.abs(diff); i++) {
+        const idx = i % entries.length;
+        const delta = diff > 0 ? 1 : -1;
+        entries[idx][1] = Math.max(0, entries[idx][1] + delta);
+      }
+      result.topicDistribution = Object.fromEntries(entries);
     }
 
-    // Select questions based on distribution with duplicate prevention
+    // Build map of valid topics (from DB) for fuzzy matching and backfill
+    const allDbTopics = [...new Set(allQuestions.map((q: { topic: string }) => q.topic).filter(Boolean))] as string[];
+    const validTopics = relevantTopics.length > 0
+      ? relevantTopics.filter((t) => allDbTopics.includes(t))
+      : allDbTopics;
+    const resolveTopic = (aiTopic: string): string | null => {
+      const t = String(aiTopic).trim();
+      if (allDbTopics.includes(t)) return t;
+      const lower = t.toLowerCase();
+      const match = allDbTopics.find((v) => v.toLowerCase() === lower);
+      if (match) return match;
+      return allDbTopics.find((v) => v.toLowerCase().includes(lower) || lower.includes(v.toLowerCase())) ?? null;
+    };
+
+    // Fisher-Yates shuffle for random selection
+    const shuffle = <T>(arr: T[]): T[] => {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    };
+
     const selectedQuestionIds: string[] = [...requiredQuestionIds];
     const usedQuestionIds = new Set(requiredQuestionIds);
 
-    for (const [topic, count] of Object.entries(result.topicDistribution) as [string, number][]) {
+    for (const [aiTopic, count] of Object.entries(result.topicDistribution) as [string, number][]) {
+      const topic = resolveTopic(aiTopic);
+      if (!topic) {
+        console.warn(`Topic "${aiTopic}" not found in DB, skipping`);
+        continue;
+      }
       const exclusionList = Array.from(usedQuestionIds);
       
       let query = supabase
@@ -285,7 +320,7 @@ CRITICAL:
         continue;
       }
 
-      const questionsToAdd = questions.slice(0, count);
+      const questionsToAdd = shuffle(questions).slice(0, count);
       
       if (questionsToAdd.length < count) {
         console.warn(`Topic "${topic}" requested ${count} questions but only ${questionsToAdd.length} available`);
@@ -297,6 +332,30 @@ CRITICAL:
           usedQuestionIds.add(q.id);
         }
       });
+    }
+
+    // Backfill if we're short (e.g. topics had fewer questions than requested)
+    let needed = totalQuestions - selectedQuestionIds.length;
+    if (needed > 0 && validTopics.length > 0) {
+      let query = supabase
+        .from('Questions')
+        .select('id')
+        .in('topic', validTopics);
+      if (usedQuestionIds.size > 0) {
+        query = query.not('id', 'in', `(${Array.from(usedQuestionIds).join(',')})`);
+      }
+      const { data: extraQuestions } = await query;
+      if (extraQuestions && extraQuestions.length > 0) {
+        const shuffled = shuffle(extraQuestions);
+        for (const q of shuffled) {
+          if (needed <= 0) break;
+          if (!usedQuestionIds.has(q.id)) {
+            selectedQuestionIds.push(q.id);
+            usedQuestionIds.add(q.id);
+            needed--;
+          }
+        }
+      }
     }
 
     if (selectedQuestionIds.length < totalQuestions) {
