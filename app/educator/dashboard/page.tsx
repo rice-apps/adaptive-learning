@@ -8,6 +8,8 @@ import { BellIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import StudentProficiencyChart from "@/components/StudentProficiencyChart";
+
 
 export default function InstructorDashboard() {
   const pathname = usePathname();
