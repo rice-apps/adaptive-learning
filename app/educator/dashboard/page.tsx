@@ -200,23 +200,25 @@ export default function InstructorDashboard() {
               <CardTitle>Recent Assessment Results</CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent>
             {loading ? (
               <div className="text-center text-gray-500 py-4">Loading...</div>
             ) : error ? (
               <div className="text-center text-red-500 py-4">{error}</div>
             ) : dashboardData?.recentAssessments && dashboardData.recentAssessments.length > 0 ? (
-              dashboardData.recentAssessments.slice(0, 2).map((assessment, index) => (
-                <div key={index} className="flex justify-between">
-                  <div>
-                    <p className="font-medium">{assessment.studentName}</p>
-                    <p className="text-sm text-gray-500">{assessment.quizName}</p>
+              <div className="max-h-[220px] overflow-y-auto space-y-4 pr-1">
+                {dashboardData.recentAssessments.map((assessment, index) => (
+                  <div key={index} className="flex justify-between">
+                    <div>
+                      <p className="font-medium">{assessment.studentName}</p>
+                      <p className="text-sm text-gray-500">{assessment.quizName}</p>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {assessment.score}% · {assessment.timeAgo}
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-600">
-                    {assessment.score}% · {assessment.timeAgo}
-                  </div>
-                </div>
-              ))
+                ))}
+              </div>
             ) : (
               <div className="text-center text-gray-500 py-4">
                 No recent assessments
