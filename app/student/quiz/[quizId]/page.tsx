@@ -283,63 +283,79 @@ export default function TakeQuizPage() {
 
   const handleNext = async (opts?: { force?: boolean; reason?: "timeout" | "user" }) => {
     if (!currentQ) return;
-
+  
     const answer = answers[currentQ.id];
     const questionDetails = parseDetails(currentQ);
     const force = Boolean(opts?.force);
     if (!force && !validateAnswer(currentQ, questionDetails, answer)) return;
-
+  
     setIsSubmitting(true);
-
+  
     try {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
-
+  
       if (!user) {
         toast.error('Please log in to continue');
         setIsSubmitting(false);
         return;
       }
-
+  
       const correct = computeCorrectness(currentQ, questionDetails, answer);
       setIsCorrect(correct);
-
+  
       const insertPayload: Record<string, any> = {
         quiz_id: quizId,
         question_id: currentQ.id,
         student_id: user.id,
       };
-
+  
       if (currentQ.question_type === "ged_extended_response") {
         const essay = typeof answer === "object" && answer ? String(answer.essay || "") : "";
-        insertPayload.student_answer = essay; // keep for simple display
+        insertPayload.student_answer = essay;
         insertPayload.student_answer_json = { essay };
       } else if (typeof answer === "string") {
         insertPayload.student_answer = answer;
       } else {
-        // arrays / objects (e.g., drag_drop)
         insertPayload.student_answer = JSON.stringify(answer);
         insertPayload.student_answer_json = answer;
       }
-
+  
       const { data: resultData, error: insertError } = await supabase
         .from('Results')
         .insert(insertPayload)
         .select()
         .single();
-
+  
       if (insertError || !resultData) {
         console.error('Error saving result:', insertError);
         toast.error(`Failed to save answer: ${insertError?.message || 'Unknown error'}`);
         setIsSubmitting(false);
         return;
       }
-
+  
+      // Auto-score MCQ and drag-drop questions
+      if (currentQ.question_type === 'mcq' || currentQ.question_type === 'drag_drop') {
+        try {
+          await fetch('/api/quiz/score-question', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              resultId: resultData.id,
+              questionId: currentQ.id,
+              studentAnswer: answer,
+            }),
+          });
+        } catch (error) {
+          console.error('Error scoring question:', error);
+        }
+      }
+  
       const feedbackInput =
         currentQ.question_type === "ged_extended_response"
           ? { ...(insertPayload.student_answer_json || {}), essay: insertPayload.student_answer }
           : answer;
-
+  
       const feedback = await generateFeedback(resultData.id, currentQ.id, user.id, feedbackInput);
       
       if (feedback) {
@@ -349,7 +365,7 @@ export default function TakeQuizPage() {
         toast.error('Could not generate feedback, but answer was saved');
         proceedToNext();
       }
-
+  
     } catch (error) {
       console.error('Error:', error);
       toast.error('An error occurred');
@@ -415,23 +431,30 @@ export default function TakeQuizPage() {
         })
         .eq("id", quizId);
       
-        fetch('/api/quiz/generate-from-feedback', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ quizId }),
-        });
-
+      // Calculate and update the quiz score
+      await fetch('/api/quiz/calculate-score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quizId }),
+      });
+  
+      fetch('/api/quiz/generate-from-feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quizId }),
+      });
+  
       // Generate the quiz summary from all the per-question feedback
       const summaryRes = await fetch('/api/quiz/generate-summary', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ quizId }),
       });
-
+  
       if (!summaryRes.ok) {
         console.error('Summary generation failed:', await summaryRes.json());
       }
-
+  
       toast.success("Quiz submitted successfully!");
       router.push("/student/dashboard");
     } catch (error) {
