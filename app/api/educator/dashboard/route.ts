@@ -28,10 +28,8 @@ interface RecentQuiz {
   id: string;
   score: number;
   created_at: string;
+  end_time: string | null;
   student_id: string;
-  Students: {
-    first_name: string;
-  } | null;
 }
 
 export async function GET() {
@@ -167,6 +165,7 @@ export async function GET() {
     }
 
     // Fetch recent quizzes for "Recent Assessment Results"
+    // Only include submitted quizzes (have a score), ordered by completion time
     const { data: recentQuizzes, error: recentError } = await supabase
       .from("Quizzes")
       .select(
@@ -174,11 +173,13 @@ export async function GET() {
         id,
         score,
         created_at,
+        end_time,
         student_id
       `
       )
       .not("score", "is", null)
-      .order("created_at", { ascending: false })
+      .not("end_time", "is", null)
+      .order("end_time", { ascending: false })
       .limit(10);
 
     const typedRecentQuizzes = recentQuizzes as RecentQuiz[] | null;
@@ -187,16 +188,21 @@ export async function GET() {
       console.error("Error fetching recent quizzes:", recentError);
     }
 
-    // Format recent assessments
+    // Type assertion for students (needed for lookup before formatting)
+    const typedStudents = students as Student[] | null;
+
+    // Build student ID -> name map for recent assessments lookup
+    const studentNameMap = new Map(
+      (typedStudents || []).map((s) => [s.id, s.first_name])
+    );
+
+    // Format recent assessments using actual student data
     const formattedRecent = typedRecentQuizzes?.map((quiz) => ({
-      studentName: quiz.Students?.first_name || "Unknown Student",
+      studentName: studentNameMap.get(quiz.student_id) || "Unknown Student",
       quizName: "Quiz",
       score: quiz.score,
-      timeAgo: formatTimeAgo(quiz.created_at),
+      timeAgo: formatTimeAgo(quiz.end_time || quiz.created_at),
     })) || [];
-
-    // Type assertion for students
-    const typedStudents = students as Student[] | null;
 
     // Format students
     const formattedStudents = (typedStudents || []).map((s) => ({
