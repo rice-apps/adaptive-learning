@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 interface Quiz {
   id: string;
+  name?: string | null;
   subject: string;
   questions: string[];
 }
@@ -43,7 +44,7 @@ export default function RecommendedQuizzes({ assignedQuizzes }: RecommendedQuizz
                 <div className="flex items-end justify-between gap-4">
                   <div>
                     <h3 className="font-bold text-lg text-gray-900 leading-tight">
-                      Quiz Assignment
+                      {quiz.name?.trim() || 'Quiz Assignment'}
                     </h3>
                     <p className="text-gray-400 text-xs mt-1.5 font-medium">
                       {quiz.questions?.length || 0} QUESTIONS
