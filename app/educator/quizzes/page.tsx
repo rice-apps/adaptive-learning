@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Plus, Pencil, Trash2, Send, BookOpen, FileQuestion, MoreHorizontal, Eye } from 'lucide-react';
+import { Search, Plus, Pencil, Trash2, Send, BookOpen, FileQuestion, MoreHorizontal, Eye, Copy } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -178,6 +178,38 @@ export default function QuizzesPage() {
   const handleEditTemplate = (t: QuizTemplate) => {
     setEditTemplate(t);
     setBuilderOpen(true);
+  };
+
+  const handleDuplicateTemplate = async (t: QuizTemplate) => {
+    if (!t.questions?.length) return;
+    try {
+      const res = await fetch('/api/educator/quiz-templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `Copy of ${t.name}`,
+          questions: t.questions,
+        }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || 'Failed to duplicate');
+      }
+      const { template } = await res.json();
+      fetchTemplates();
+      setEditTemplate({
+        id: template.id,
+        name: template.name,
+        questions: template.questions || [],
+        question_count: template.questions?.length ?? 0,
+        subjects: t.subjects,
+        topics: t.topics,
+        created_at: template.created_at ?? new Date().toISOString(),
+      });
+      setBuilderOpen(true);
+    } catch {
+      // silent – could add toast
+    }
   };
 
   const handleBuilderClose = () => {
@@ -359,6 +391,10 @@ export default function QuizzesPage() {
                               <DropdownMenuItem onClick={() => setPreviewTarget(t)}>
                                 <Eye className="h-4 w-4 mr-2" />
                                 Preview
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleDuplicateTemplate(t)}>
+                                <Copy className="h-4 w-4 mr-2" />
+                                Duplicate
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleEditTemplate(t)}>
                                 <Pencil className="h-4 w-4 mr-2" />
