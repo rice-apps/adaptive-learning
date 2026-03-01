@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Plus, Pencil, Trash2, Send, BookOpen, FileQuestion, MoreHorizontal, Eye, Copy } from 'lucide-react';
+import { Search, Plus, Pencil, Trash2, Send, BookOpen, FileQuestion, MoreHorizontal, Eye, Copy, FileUp, Sparkles } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,6 +41,7 @@ import AddQuestionModal, { type QuestionForEdit } from './AddQuestionModal';
 import QuizBuilderModal from './QuizBuilderModal';
 import AssignTemplateModal from './AssignTemplateModal';
 import QuizPreviewModal from './QuizPreviewModal';
+import ImportQuestionsModal from './ImportQuestionsModal';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -125,6 +126,7 @@ export default function QuizzesPage() {
   const [editTemplate, setEditTemplate] = useState<QuizTemplate | null>(null);
   const [assignTarget, setAssignTarget] = useState<QuizTemplate | null>(null);
   const [previewTarget, setPreviewTarget] = useState<QuizTemplate | null>(null);
+  const [importModalOpen, setImportModalOpen] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -424,11 +426,26 @@ export default function QuizzesPage() {
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <CardTitle>Question Bank</CardTitle>
-                  <Button onClick={() => setAddQuestionOpen(true)} className="gap-1.5">
-                    <Plus className="h-4 w-4" />
-                    Add Question
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={() => setImportModalOpen(true)}
+                      variant="outline"
+                      className="gap-1.5"
+                      title="Upload file or paste text and let AI parse questions"
+                    >
+                      <FileUp className="h-4 w-4" />
+                      <Sparkles className="h-3.5 w-3.5" />
+                      Upload File
+                    </Button>
+                    <Button onClick={() => setAddQuestionOpen(true)} className="gap-1.5">
+                      <Plus className="h-4 w-4" />
+                      Add Question
+                    </Button>
+                  </div>
                 </div>
+                <p className="text-xs text-gray-500">
+                  Tip: Upload a worksheet or exam, review AI-parsed questions, then save only the ones you want.
+                </p>
 
                 {/* Filters */}
                 <div className="flex flex-wrap gap-2 mt-3">
@@ -573,6 +590,15 @@ export default function QuizzesPage() {
         onClose={() => { setAddQuestionOpen(false); setEditQuestion(null); }}
         onSaved={() => { setAddQuestionOpen(false); setEditQuestion(null); fetchQuestions(); }}
         editQuestion={editQuestion}
+      />
+
+      <ImportQuestionsModal
+        isOpen={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        onSaved={() => {
+          fetchQuestions();
+          fetchTemplates();
+        }}
       />
 
       <QuizBuilderModal
