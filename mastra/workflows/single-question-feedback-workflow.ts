@@ -97,8 +97,8 @@ export const generateSingleQuestionFeedback = createStep({
       // Check if subject is RLA or Social Studies
       const isRLAOrSocialStudies = question.subject === 'RLA' || question.subject === 'Social Studies';
 
-      console.log('📚 Question subject:', question.subject);
-      console.log('🤖 Will use AI?', isRLAOrSocialStudies && isGedExtendedResponse);
+      console.log('Question subject:', question.subject);
+      console.log('Will use AI?', isRLAOrSocialStudies && isGedExtendedResponse);
 
       // Compute correctness for non-free-response questions
       const computeCorrectness = () => {
@@ -249,7 +249,7 @@ KEY EVALUATION CRITERIA
 
 RESPOND WITH ONLY A SINGLE NUMBER FROM 0 TO 10. NOTHING ELSE.`;
 
-        console.log('🎯 Requesting score from AI with detailed rubric...');
+        console.log(' Requesting score from AI with detailed rubric...');
         const scoreResponse = await agent.stream([{ role: 'user', content: scorePrompt }]);
         
         let scoreText = '';
@@ -257,16 +257,16 @@ RESPOND WITH ONLY A SINGLE NUMBER FROM 0 TO 10. NOTHING ELSE.`;
           scoreText += chunk;
         }
         
-        console.log('📊 AI score response:', scoreText);
+        console.log('AI score response:', scoreText);
         
         // Extract number from response
         const numberMatch = scoreText.match(/(\d+(?:\.\d+)?)/);
         if (numberMatch) {
           questionScore = Math.min(10, Math.max(0, parseFloat(numberMatch[1])));
-          console.log('✅ Extracted score:', questionScore);
+          console.log('Extracted score:', questionScore);
         } else {
           // Enhanced fallback scoring
-          console.log('⚠️ AI did not return a number, using fallback scoring');
+          console.log('AI did not return a number, using fallback scoring');
           const wordCount = essay.split(/\s+/).filter(w => w.length > 0).length;
           const sentenceCount = essay.split(/[.!?]+/).filter(s => s.trim().length > 0).length;
           
@@ -343,18 +343,18 @@ Provide feedback with:
 
 Use the "${learningStyle.learnBest}" learning approach. Be encouraging but honest.`;
 
-        console.log('💬 Requesting feedback from AI...');
+        console.log('Requesting feedback from AI...');
         const feedbackResponse = await agent.stream([{ role: 'user', content: feedbackPrompt }]);
         
         for await (const chunk of feedbackResponse.textStream) {
           feedbackText += chunk;
         }
         
-        console.log('✅ Feedback generated, length:', feedbackText.length);
+        console.log('Feedback generated, length:', feedbackText.length);
 
       } else if (isGedExtendedResponse && !isRLAOrSocialStudies) {
         // Free response for Math/Science - simple length-based scoring
-        console.log('📐 Math/Science free response - using simple scoring');
+        console.log('Math/Science free response - using simple scoring');
         const essay = String(studentAnswer || '');
         const wordCount = essay.split(/\s+/).filter(w => w.length > 0).length;
         
@@ -369,7 +369,7 @@ Use the "${learningStyle.learnBest}" learning approach. Be encouraging but hones
           questionScore = 9;
         }
         
-        console.log(`📏 Simple score: ${questionScore}/10 (${wordCount} words)`);
+        console.log(`Simple score: ${questionScore}/10 (${wordCount} words)`);
         
         feedbackText = `Good effort on your response! For ${question.subject} questions, focus on clearly explaining your reasoning and showing your work step-by-step.`;
 
@@ -424,7 +424,7 @@ Use the "${learningStyle.learnBest}" learning approach.`;
         updateData.question_score = questionScore;
       }
 
-      console.log('💾 Saving to database:', {
+      console.log('Saving to database:', {
         resultId,
         hasScore: questionScore !== null,
         score: questionScore,
@@ -437,7 +437,7 @@ Use the "${learningStyle.learnBest}" learning approach.`;
         .eq('id', resultId);
 
       if (updateError) {
-        console.error('❌ Database update error:', updateError);
+        console.error('Database update error:', updateError);
         return {
           resultId,
           feedbackGenerated: false,
@@ -446,7 +446,7 @@ Use the "${learningStyle.learnBest}" learning approach.`;
         };
       }
 
-      console.log('✅ Successfully saved feedback and score to database');
+      console.log('Successfully saved feedback and score to database');
 
       return {
         resultId,
@@ -455,7 +455,7 @@ Use the "${learningStyle.learnBest}" learning approach.`;
       };
 
     } catch (error) {
-      console.error('❌ Error generating feedback:', error);
+      console.error('Error generating feedback:', error);
       return {
         resultId,
         feedbackGenerated: false,

@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('📊 Calculating score for quiz:', quizId);
+    console.log('Calculating score for quiz:', quizId);
 
     // Get all results for this quiz
     const { data: results, error: resultsError } = await supabase
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`📝 Found ${results.length} results`);
+    console.log(`Found ${results.length} results`);
 
     // Sum up all question scores (handle null scores as 0)
     const totalScore = results.reduce((sum, result) => {
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       return sum + score;
     }, 0);
 
-    console.log(`✅ Total score: ${totalScore}`);
+    console.log(`Total score: ${totalScore}`);
 
     // Calculate percentage: (totalScore / (10 * numberOfQuestions)) * 100
     const numberOfQuestions = results.length;
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     const percentageScore = (totalScore / maxPossibleScore) * 100;
     const finalScore = Math.round(percentageScore);
 
-    console.log(`🎯 Final score: ${finalScore}% (${totalScore}/${maxPossibleScore})`);
+    console.log(`Final score: ${finalScore}% (${totalScore}/${maxPossibleScore})`);
 
     // Update the quiz with the calculated score
     const { error: updateError } = await supabase
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('✅ Quiz score updated successfully');
+    console.log('Quiz score updated successfully');
 
     return NextResponse.json({
       success: true,
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('❌ Error calculating quiz score:', error);
+    console.error('Error calculating quiz score:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to calculate quiz score' },
       { status: 500 }
