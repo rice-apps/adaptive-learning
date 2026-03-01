@@ -11,6 +11,58 @@ function getServiceSupabase() {
   });
 }
 
+// GET /api/educator/quiz-templates/[id]
+// Returns template with full question data (for preview)
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    const serviceSupabase = getServiceSupabase();
+
+    const { data: template, error: templateError } = await serviceSupabase
+      .from("Quizzes")
+      .select("id, name, questions, educator_id, is_template")
+      .eq("id", id)
+      .eq("is_template", true)
+      .single();
+
+    if (templateError || !template) {
+      return NextResponse.json({ error: "Template not found" }, { status: 404 });
+    }
+
+    if (template.educator_id !== user.id) {
+      return NextResponse.json({ error: "Not authorized" }, { status: 403 });
+    }
+
+    let questions: any[] = [];
+    if (template.questions?.length > 0) {
+      const { data: qs } = await serviceSupabase
+        .from("Questions")
+        .select("*")
+        .in("id", template.questions);
+      questions = (template.questions as string[]).map(
+        (qid: string) => qs?.find((q: any) => q.id === qid)
+      ).filter(Boolean);
+    }
+
+    return NextResponse.json({ template, questions });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Unknown error" },
+      { status: 500 }
+    );
+  }
+}
+
 // PATCH /api/educator/quiz-templates/[id]
 // Update a template's name and/or questions
 export async function PATCH(

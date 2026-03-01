@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Plus, Pencil, Trash2, Send, BookOpen, FileQuestion, MoreHorizontal } from 'lucide-react';
+import { Search, Plus, Pencil, Trash2, Send, BookOpen, FileQuestion, MoreHorizontal, Eye } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,6 +40,7 @@ import NotificationBell from '@/components/notifications/NotificationBell';
 import AddQuestionModal, { type QuestionForEdit } from './AddQuestionModal';
 import QuizBuilderModal from './QuizBuilderModal';
 import AssignTemplateModal from './AssignTemplateModal';
+import QuizPreviewModal from './QuizPreviewModal';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -123,6 +124,7 @@ export default function QuizzesPage() {
   const [builderOpen, setBuilderOpen] = useState(false);
   const [editTemplate, setEditTemplate] = useState<QuizTemplate | null>(null);
   const [assignTarget, setAssignTarget] = useState<QuizTemplate | null>(null);
+  const [previewTarget, setPreviewTarget] = useState<QuizTemplate | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -354,6 +356,10 @@ export default function QuizzesPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => setPreviewTarget(t)}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                Preview
+                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleEditTemplate(t)}>
                                 <Pencil className="h-4 w-4 mr-2" />
                                 Edit
@@ -545,6 +551,12 @@ export default function QuizzesPage() {
         onClose={() => setAssignTarget(null)}
         template={assignTarget}
         educatorId={educatorId}
+      />
+
+      <QuizPreviewModal
+        isOpen={!!previewTarget}
+        onClose={() => setPreviewTarget(null)}
+        template={previewTarget}
       />
 
       {/* Delete quiz template confirmation */}
