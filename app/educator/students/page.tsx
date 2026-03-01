@@ -239,6 +239,17 @@ export default function StudentRoster() {
               Students
             </Button>
           </Link>
+
+          <Link href="/educator/quizzes">
+            <Button
+              className="rounded-md"
+              variant={
+                pathname === "/educator/quizzes" ? "default" : "outline"
+              }
+            >
+              Quizzes
+            </Button>
+          </Link>
         </div>
 
         <Card className="shadow-sm mt-8 rounded-lg border border-gray-200 py-2 gap-1">

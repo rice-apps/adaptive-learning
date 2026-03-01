@@ -45,6 +45,7 @@ interface StudentDetails {
 
 interface StudentQuiz {
   id: string;
+  name: string | null;
   created_at: string;
   student_id: string | null;
   quiz_feedback: string | null;
@@ -261,7 +262,8 @@ export default function StudentDetailsDialog({
                       <Table className="table-fixed w-full">
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="w-20">Quiz ID</TableHead>
+                            <TableHead className="min-w-[140px]">Quiz Name</TableHead>
+                            <TableHead className="w-28">Assigned</TableHead>
                             <TableHead className="w-28">Completed</TableHead>
                             <TableHead className="w-24">Status</TableHead>
                             <TableHead className="min-w-0">Feedback Summary</TableHead>
@@ -271,28 +273,33 @@ export default function StudentDetailsDialog({
                           {quizzes.length === 0 ? (
                             <TableRow>
                               <TableCell
-                                colSpan={4}
+                                colSpan={5}
                                 className="text-center text-gray-400 py-8"
                               >
-                                No quizzes yet
+                                No quizzes assigned yet
                               </TableCell>
                             </TableRow>
                           ) : (
                             quizzes.map((quiz) => (
                               <TableRow key={quiz.id}>
-                                <TableCell className="font-medium text-sm text-gray-600">
-                                  {quiz.id.slice(0, 8)}…
+                                <TableCell className="font-medium text-sm text-gray-800">
+                                  {quiz.name || (
+                                    <span className="text-gray-400 italic">Unnamed quiz</span>
+                                  )}
                                 </TableCell>
-                                <TableCell className="text-sm">
-                                  {quiz.end_time 
+                                <TableCell className="text-sm text-gray-500">
+                                  {new Date(quiz.created_at).toLocaleDateString()}
+                                </TableCell>
+                                <TableCell className="text-sm text-gray-500">
+                                  {quiz.submitted && quiz.end_time
                                     ? new Date(quiz.end_time).toLocaleDateString()
-                                    : new Date(quiz.created_at).toLocaleDateString()}
+                                    : "—"}
                                 </TableCell>
                                 <TableCell className="text-sm">
                                   {quiz.submitted ? (
                                     <span className="text-green-600 font-medium">Submitted</span>
                                   ) : (
-                                    <span className="text-orange-600 font-medium">In Progress</span>
+                                    <span className="text-orange-500 font-medium">In Progress</span>
                                   )}
                                 </TableCell>
                                 <TableCell className="text-sm text-gray-600 whitespace-normal break-words align-top">

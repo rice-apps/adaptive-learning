@@ -22,8 +22,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 
 interface Quiz {
   id: string;
+  name?: string;
   created_at: string;
   questions: string[];
+  question_count?: number;
+  subjects?: string[];
 }
 
 interface AssignQuizDialogProps {
@@ -67,22 +70,25 @@ export default function AssignQuizDialog({
     setError('');
     
     try {
-      const response = await fetch(`/api/quiz?educatorId=${educatorId}&includeTemplates=true`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch quizzes');
+      // First, try the named quiz templates endpoint
+      const templatesRes = await fetch('/api/educator/quiz-templates');
+      if (templatesRes.ok) {
+        const templatesData = await templatesRes.json();
+        if (Array.isArray(templatesData.templates) && templatesData.templates.length > 0) {
+          setQuizzes(templatesData.templates);
+          return;
+        }
       }
-      
-      const data = await response.json();
 
-      
+      // Fallback: fetch all quizzes by this educator and dedupe
+      const response = await fetch(`/api/quiz?educatorId=${educatorId}&includeTemplates=true`);
+      if (!response.ok) throw new Error('Failed to fetch quizzes');
+      const data = await response.json();
       if (Array.isArray(data)) {
-        // Dedupe by questions signature so "template-like" quizzes appear once
         const bySig = new Map<string, Quiz>();
         for (const q of data as Quiz[]) {
           const sig = Array.isArray(q.questions) ? q.questions.join(",") : "";
           const prev = bySig.get(sig);
-          // keep most recent as representative
           if (!prev || new Date(q.created_at).getTime() > new Date(prev.created_at).getTime()) {
             bySig.set(sig, q);
           }
@@ -307,7 +313,9 @@ export default function AssignQuizDialog({
                     ) : (
                       quizzes.map((quiz) => (
                         <SelectItem key={quiz.id} value={quiz.id}>
-                          Quiz from {new Date(quiz.created_at).toLocaleDateString()} ({quiz.questions?.length || 0} questions)
+                          {quiz.name
+                            ? `${quiz.name} (${quiz.question_count ?? quiz.questions?.length ?? 0} questions)`
+                            : `Quiz from ${new Date(quiz.created_at).toLocaleDateString()} (${quiz.questions?.length ?? 0} questions)`}
                         </SelectItem>
                       ))
                     )}
