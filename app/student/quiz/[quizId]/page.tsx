@@ -335,8 +335,13 @@ export default function TakeQuizPage() {
       }
   
       // Auto-score MCQ and drag-drop questions
-      if (currentQ.question_type === 'mcq' || currentQ.question_type === 'drag_drop') {
+      if (
+        currentQ.question_type === 'mcq' || 
+        currentQ.question_type === 'drag_drop' ||
+        (currentQ.question_type === 'free_response' && (currentQ.subject === 'Math' || currentQ.subject === 'Science'))
+      ) {
         try {
+          console.log('🎯 Calling score-question API for:', currentQ.question_type, currentQ.subject);
           await fetch('/api/quiz/score-question', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
