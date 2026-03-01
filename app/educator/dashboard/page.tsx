@@ -191,6 +191,15 @@ export default function InstructorDashboard() {
               Students
             </Button>
           </Link>
+
+          <Link href="/educator/quizzes">
+            <Button
+              className="rounded-md"
+              variant={pathname === '/educator/quizzes' ? 'default' : 'outline'}
+            >
+              Quizzes
+            </Button>
+          </Link>
         </div>
 
         <Card>
