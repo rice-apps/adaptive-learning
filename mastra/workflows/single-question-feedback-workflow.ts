@@ -92,17 +92,21 @@ export const generateSingleQuestionFeedback = createStep({
         ? JSON.parse(question.question_details)
         : question.question_details;
 
-      const isGedExtendedResponse = question.question_type === 'ged_extended_response' || question.question_type === 'free_response';
+      // Check if it's a free response question
+      const isFreeResponse = question.question_type === 'free_response';
+      const isGedExtendedResponse = question.question_type === 'ged_extended_response';
       
       // Check if subject is RLA or Social Studies
       const isRLAOrSocialStudies = question.subject === 'RLA' || question.subject === 'Social Studies';
+      const isMathOrScience = question.subject === 'Math' || question.subject === 'Science';
 
-      console.log('Question subject:', question.subject);
-      console.log('Will use AI?', isRLAOrSocialStudies && isGedExtendedResponse);
+      console.log('📚 Question subject:', question.subject);
+      console.log('📝 Question type:', question.question_type);
+      console.log('🤖 Will use AI?', (isGedExtendedResponse || isFreeResponse) && isRLAOrSocialStudies);
 
       // Compute correctness for non-free-response questions
       const computeCorrectness = () => {
-        if (isGedExtendedResponse) return null;
+        if (isFreeResponse || isGedExtendedResponse) return null;
         if (question.question_type === 'drag_drop') {
           const correctAnswers = (questionDetails?.qa_pairs || []).map((p: any) => p.answer);
           let arr: any[] | null = null;
@@ -136,8 +140,8 @@ export const generateSingleQuestionFeedback = createStep({
       let questionScore: number | null = null;
       let feedbackText = '';
 
-      // Only use AI for free response questions in RLA or Social Studies
-      if (isGedExtendedResponse && isRLAOrSocialStudies) {
+      // Only use AI for GED extended response OR free response in RLA/Social Studies
+      if ((isGedExtendedResponse || isFreeResponse) && isRLAOrSocialStudies) {
         const essay = String(studentAnswer || '');
         const stimulusDocumentId = questionDetails?.stimulus_document_id;
         let stimulusBlock = '';
@@ -172,7 +176,7 @@ export const generateSingleQuestionFeedback = createStep({
         // FIRST AI CALL - GET SCORE WITH DETAILED RUBRIC
         const scorePrompt = `You are a strict but fair GED ${question.subject} grader. Grade this extended response essay from 0-10 using the rubric below.
 
-PROMPT: ${questionDetails?.prompt || 'Extended response prompt'}
+PROMPT: ${questionDetails?.prompt || questionDetails?.question || 'Extended response prompt'}
 ${stimulusBlock}
 
 STUDENT ESSAY:
@@ -249,7 +253,7 @@ KEY EVALUATION CRITERIA
 
 RESPOND WITH ONLY A SINGLE NUMBER FROM 0 TO 10. NOTHING ELSE.`;
 
-        console.log(' Requesting score from AI with detailed rubric...');
+        console.log('🎯 Requesting score from AI with detailed rubric...');
         const scoreResponse = await agent.stream([{ role: 'user', content: scorePrompt }]);
         
         let scoreText = '';
@@ -257,16 +261,16 @@ RESPOND WITH ONLY A SINGLE NUMBER FROM 0 TO 10. NOTHING ELSE.`;
           scoreText += chunk;
         }
         
-        console.log('AI score response:', scoreText);
+        console.log('📊 AI score response:', scoreText);
         
         // Extract number from response
         const numberMatch = scoreText.match(/(\d+(?:\.\d+)?)/);
         if (numberMatch) {
           questionScore = Math.min(10, Math.max(0, parseFloat(numberMatch[1])));
-          console.log('Extracted score:', questionScore);
+          console.log('✅ Extracted score:', questionScore);
         } else {
           // Enhanced fallback scoring
-          console.log('AI did not return a number, using fallback scoring');
+          console.log('⚠️ AI did not return a number, using fallback scoring');
           const wordCount = essay.split(/\s+/).filter(w => w.length > 0).length;
           const sentenceCount = essay.split(/[.!?]+/).filter(s => s.trim().length > 0).length;
           
@@ -324,7 +328,7 @@ ${learningStyle.hardFactors ? `- Challenges: ${learningStyle.hardFactors.join(',
 QUESTION CONTEXT:
 Subject: ${question.subject}
 Topic: ${question.topic}
-Prompt: ${questionDetails?.prompt || 'Extended response prompt'}
+Prompt: ${questionDetails?.prompt || questionDetails?.question || 'Extended response prompt'}
 ${stimulusBlock}
 
 STUDENT ESSAY:
@@ -343,35 +347,21 @@ Provide feedback with:
 
 Use the "${learningStyle.learnBest}" learning approach. Be encouraging but honest.`;
 
-        console.log('Requesting feedback from AI...');
+        console.log('💬 Requesting feedback from AI...');
         const feedbackResponse = await agent.stream([{ role: 'user', content: feedbackPrompt }]);
         
         for await (const chunk of feedbackResponse.textStream) {
           feedbackText += chunk;
         }
         
-        console.log('Feedback generated, length:', feedbackText.length);
+        console.log('✅ Feedback generated, length:', feedbackText.length);
 
-      } else if (isGedExtendedResponse && !isRLAOrSocialStudies) {
-        // Free response for Math/Science - simple length-based scoring
-        console.log('Math/Science free response - using simple scoring');
-        const essay = String(studentAnswer || '');
-        const wordCount = essay.split(/\s+/).filter(w => w.length > 0).length;
+      } else if ((isFreeResponse || isGedExtendedResponse) && isMathOrScience) {
+        // Math/Science free response - DO NOT SCORE, just provide simple feedback
+        console.log('📐 Math/Science free response - skipping AI scoring (will be scored by score-question API)');
         
-        // Simple scoring based on length and effort
-        if (wordCount < 20) {
-          questionScore = 3;
-        } else if (wordCount < 50) {
-          questionScore = 5;
-        } else if (wordCount < 100) {
-          questionScore = 7;
-        } else {
-          questionScore = 9;
-        }
-        
-        console.log(`Simple score: ${questionScore}/10 (${wordCount} words)`);
-        
-        feedbackText = `Good effort on your response! For ${question.subject} questions, focus on clearly explaining your reasoning and showing your work step-by-step.`;
+        // DO NOT SET questionScore - leave it null so score-question API handles it
+        feedbackText = `Great work on showing your reasoning! Remember to double-check your calculations and make sure your final answer matches the question being asked.`;
 
       } else {
         // Non-free-response question - regular feedback
@@ -418,13 +408,13 @@ Use the "${learningStyle.learnBest}" learning approach.`;
         }
       }
 
-      // Update result with feedback and score
+      // Update result with feedback and score (score will be null for Math/Science free response)
       const updateData: any = { feedback: feedbackText };
       if (questionScore !== null) {
         updateData.question_score = questionScore;
       }
 
-      console.log('Saving to database:', {
+      console.log('💾 Saving to database:', {
         resultId,
         hasScore: questionScore !== null,
         score: questionScore,
@@ -437,7 +427,7 @@ Use the "${learningStyle.learnBest}" learning approach.`;
         .eq('id', resultId);
 
       if (updateError) {
-        console.error('Database update error:', updateError);
+        console.error('❌ Database update error:', updateError);
         return {
           resultId,
           feedbackGenerated: false,
@@ -446,7 +436,7 @@ Use the "${learningStyle.learnBest}" learning approach.`;
         };
       }
 
-      console.log('Successfully saved feedback and score to database');
+      console.log('✅ Successfully saved feedback and score to database');
 
       return {
         resultId,
@@ -455,7 +445,7 @@ Use the "${learningStyle.learnBest}" learning approach.`;
       };
 
     } catch (error) {
-      console.error('Error generating feedback:', error);
+      console.error('❌ Error generating feedback:', error);
       return {
         resultId,
         feedbackGenerated: false,
