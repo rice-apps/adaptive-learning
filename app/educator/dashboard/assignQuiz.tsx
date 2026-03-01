@@ -53,6 +53,7 @@ export default function AssignQuizDialog({
   const [fetchingQuizzes, setFetchingQuizzes] = useState(false);
 
   // AI generation states
+  const [aiQuizName, setAiQuizName] = useState('');
   const [aiTotalQuestions, setAiTotalQuestions] = useState(10);
   const [aiFocusAreas, setAiFocusAreas] = useState<string[]>([]);
   const [aiGenerating, setAiGenerating] = useState(false);
@@ -141,6 +142,10 @@ export default function AssignQuizDialog({
   };
 
   const handleGenerateAI = async () => {
+    if (!aiQuizName?.trim()) {
+      setError('Please give the quiz a name');
+      return;
+    }
     if (aiTotalQuestions === 0) {
       setError('Please specify number of questions');
       return;
@@ -156,6 +161,7 @@ export default function AssignQuizDialog({
         body: JSON.stringify({
           studentId,
           educatorId,
+          name: aiQuizName.trim(),
           totalQuestions: aiTotalQuestions,
           focusAreas: aiFocusAreas.length > 0 ? aiFocusAreas : undefined,
         }),
@@ -206,6 +212,7 @@ export default function AssignQuizDialog({
   const resetForm = () => {
     setSelectedQuizId('');
     setDueDate('');
+    setAiQuizName('');
     setAiTotalQuestions(10);
     setAiFocusAreas([]);
     setError('');
@@ -236,6 +243,16 @@ export default function AssignQuizDialog({
             {/* AI-Generated Quiz Tab */}
             <TabsContent value="ai" className="space-y-4 mt-4">
               
+              <div className="space-y-2">
+                <Label>Quiz Name</Label>
+                <Input
+                  type="text"
+                  placeholder="e.g. Week 3 Math Practice"
+                  value={aiQuizName}
+                  onChange={(e) => setAiQuizName(e.target.value)}
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label>Number of Questions</Label>
                 <Input
@@ -282,7 +299,7 @@ export default function AssignQuizDialog({
 
               <Button
                 onClick={handleGenerateAI}
-                disabled={aiGenerating || aiTotalQuestions === 0}
+                disabled={aiGenerating || !aiQuizName?.trim() || aiTotalQuestions === 0}
                 className="w-full"
               >
                 {aiGenerating ? 'AI Generating...' : `Generate Smart Quiz (${aiTotalQuestions} questions)`}

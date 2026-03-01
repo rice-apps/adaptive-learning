@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     // Fetch source quiz as a "template"
     const { data: sourceQuiz, error: sourceErr } = await supabase
       .from("Quizzes")
-      .select("id, questions, educator_id")
+      .select("id, name, questions, educator_id")
       .eq("id", quizId)
       .single();
 
@@ -50,17 +50,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Create new quiz row for student assignment
+    const insertData: Record<string, unknown> = {
+      questions: sourceQuiz.questions,
+      educator_id: educatorId,
+      student_id: studentId,
+      submitted: null,
+      start_time: null,
+      end_time: null,
+      time_spent: null,
+    };
+    if (sourceQuiz.name?.trim()) {
+      insertData.name = sourceQuiz.name.trim();
+    }
     const { data: newQuiz, error: insertErr } = await supabase
       .from("Quizzes")
-      .insert({
-        questions: sourceQuiz.questions,
-        educator_id: educatorId,
-        student_id: studentId,
-        submitted: null,
-        start_time: null,
-        end_time: null,
-        time_spent: null,
-      })
+      .insert(insertData)
       .select("id, created_at, questions, educator_id, student_id")
       .single();
 
@@ -104,7 +108,7 @@ export async function GET(request: NextRequest) {
 
     const { data: quizzes, error: qErr } = await supabase
       .from("Quizzes")
-      .select("id, questions, created_at, submitted")
+      .select("id, name, questions, created_at, submitted")
       .eq("student_id", studentId)
       .is("submitted", null)
       .order("created_at", { ascending: false });
@@ -129,6 +133,7 @@ export async function GET(request: NextRequest) {
 
     const shaped = (quizzes || []).map((q: any) => ({
       id: q.id,
+      name: q.name ?? null,
       questions: q.questions || [],
       created_at: q.created_at,
       due_date: dueByQuizId[q.id] ?? null,
