@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Plus, Pencil, Trash2, Send, BookOpen, FileQuestion, MoreHorizontal, Eye, Copy, FileUp, Sparkles } from 'lucide-react';
+import { Search, Plus, Pencil, Trash2, Send, BookOpen, FileQuestion, MoreHorizontal, Eye, Copy, FileUp, Sparkles, BarChart3 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,6 +41,7 @@ import AddQuestionModal, { type QuestionForEdit } from './AddQuestionModal';
 import QuizBuilderModal from './QuizBuilderModal';
 import AssignTemplateModal from './AssignTemplateModal';
 import QuizPreviewModal from './QuizPreviewModal';
+import QuizAnalyticsModal from './QuizAnalyticsModal';
 import ImportQuestionsModal from './ImportQuestionsModal';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -126,6 +127,7 @@ export default function QuizzesPage() {
   const [editTemplate, setEditTemplate] = useState<QuizTemplate | null>(null);
   const [assignTarget, setAssignTarget] = useState<QuizTemplate | null>(null);
   const [previewTarget, setPreviewTarget] = useState<QuizTemplate | null>(null);
+  const [analyticsTarget, setAnalyticsTarget] = useState<QuizTemplate | null>(null);
   const [importModalOpen, setImportModalOpen] = useState(false);
 
   useEffect(() => {
@@ -394,6 +396,10 @@ export default function QuizzesPage() {
                                 <Eye className="h-4 w-4 mr-2" />
                                 Preview
                               </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setAnalyticsTarget(t)}>
+                                <BarChart3 className="h-4 w-4 mr-2" />
+                                See Results
+                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleDuplicateTemplate(t)}>
                                 <Copy className="h-4 w-4 mr-2" />
                                 Duplicate
@@ -619,6 +625,12 @@ export default function QuizzesPage() {
         isOpen={!!previewTarget}
         onClose={() => setPreviewTarget(null)}
         template={previewTarget}
+      />
+
+      <QuizAnalyticsModal
+        isOpen={!!analyticsTarget}
+        onClose={() => setAnalyticsTarget(null)}
+        template={analyticsTarget}
       />
 
       {/* Delete quiz template confirmation */}
