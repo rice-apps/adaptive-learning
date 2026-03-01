@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { resultId, questionId, studentId, studentAnswer } = body;
 
-    console.log('📝 Generating feedback for:', { resultId, questionId, studentId });
+    console.log('Generating feedback for:', { resultId, questionId, studentId });
 
     // Import the workflow and mastra
     const { singleQuestionFeedbackWorkflow } = await import('@/mastra/workflows/single-question-feedback-workflow');
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
         .eq('id', resultId)
         .single();
 
-      console.log('✅ Returning feedback with score:', resultWithFeedback?.question_score);
+      console.log('Returning feedback with score:', resultWithFeedback?.question_score);
 
       return NextResponse.json({
         success: true,
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    console.error('❌ Feedback generation failed:', result.error);
+    console.error('Feedback generation failed:', result.error);
 
     return NextResponse.json({
       success: false,
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('❌ API Error generating feedback:', error);
+    console.error('API Error generating feedback:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to generate feedback' },
       { status: 500 }

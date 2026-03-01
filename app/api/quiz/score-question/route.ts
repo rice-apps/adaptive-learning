@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { resultId, questionId, studentAnswer } = body;
 
-    console.log('🎯 Scoring question:', { resultId, questionId });
+    console.log('Scoring question:', { resultId, questionId });
 
     // Fetch the question
     const { data: question, error: questionError } = await supabase
@@ -35,8 +35,8 @@ export async function POST(request: NextRequest) {
 
     let score: number | null = null;
 
-    console.log('📋 Question type:', questionType);
-    console.log('📚 Subject:', subject);
+    console.log('Question type:', questionType);
+    console.log('Subject:', subject);
 
     // Score MCQ questions
     if (questionType === 'mcq' || questionType === 'multiple_choice') {
@@ -44,19 +44,19 @@ export async function POST(request: NextRequest) {
       const studentAnswerStr = String(studentAnswer).trim();
       const correctAnswerStr = String(correctAnswer).trim();
 
-      console.log('🔍 MCQ - Student answer:', studentAnswerStr);
-      console.log('🔍 MCQ - Correct answer:', correctAnswerStr);
+      console.log('MCQ - Student answer:', studentAnswerStr);
+      console.log('MCQ - Correct answer:', correctAnswerStr);
 
       score = studentAnswerStr === correctAnswerStr ? 10 : 0;
-      console.log('✅ MCQ Score:', score);
+      console.log('MCQ Score:', score);
     }
 
     // Score drag-and-drop questions
     else if (questionType === 'drag_drop') {
       const correctAnswers = (questionDetails.qa_pairs || []).map((pair: any) => pair.answer);
       
-      console.log('🔍 Drag-Drop - Correct answers:', correctAnswers);
-      console.log('🔍 Drag-Drop - Student answer:', studentAnswer);
+      console.log('Drag-Drop - Correct answers:', correctAnswers);
+      console.log('Drag-Drop - Student answer:', studentAnswer);
 
       // Parse student answer if it's a string
       let studentAnswersArray: string[] = [];
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      console.log('🔍 Drag-Drop - Parsed student answers:', studentAnswersArray);
+      console.log('Drag-Drop - Parsed student answers:', studentAnswersArray);
 
       // Check if arrays match exactly
       const isCorrect = 
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
         );
 
       score = isCorrect ? 10 : 0;
-      console.log('✅ Drag-Drop Score:', score);
+      console.log('Drag-Drop Score:', score);
     }
 
     // Score free response for Math or Science
@@ -93,16 +93,16 @@ export async function POST(request: NextRequest) {
       const studentAnswerStr = String(studentAnswer).trim();
       const correctAnswerStr = String(correctAnswer).trim();
 
-      console.log('🔍 Free Response (Math/Science) - Student answer:', studentAnswerStr);
-      console.log('🔍 Free Response (Math/Science) - Correct answer:', correctAnswerStr);
+      console.log('Free Response (Math/Science) - Student answer:', studentAnswerStr);
+      console.log('Free Response (Math/Science) - Correct answer:', correctAnswerStr);
 
       score = studentAnswerStr === correctAnswerStr ? 10 : 0;
-      console.log('✅ Free Response Score:', score);
+      console.log('Free Response Score:', score);
     }
 
     // For other question types (RLA/Social Studies free response, ged_extended_response, etc.)
     else {
-      console.log('ℹ️ Question type does not need automatic scoring:', questionType, subject);
+      console.log('ℹQuestion type does not need automatic scoring:', questionType, subject);
       return NextResponse.json({
         success: true,
         score: null,
@@ -117,14 +117,14 @@ export async function POST(request: NextRequest) {
       .eq('id', resultId);
 
     if (updateError) {
-      console.error('❌ Failed to update score:', updateError);
+      console.error('Failed to update score:', updateError);
       return NextResponse.json(
         { success: false, error: 'Failed to save score' },
         { status: 500 }
       );
     }
 
-    console.log('✅ Score saved successfully:', score);
+    console.log('Score saved successfully:', score);
 
     return NextResponse.json({
       success: true,
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('❌ Error scoring question:', error);
+    console.error('Error scoring question:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to score question' },
       { status: 500 }
