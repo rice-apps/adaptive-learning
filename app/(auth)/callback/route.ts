@@ -1,10 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
+import { getSiteOrigin } from '@/lib/url/getSiteOrigin'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
-  const origin = requestUrl.origin
+  const origin = getSiteOrigin(request)
 
   if (code) {
     const supabase = await createClient()
@@ -25,20 +26,20 @@ export async function GET(request: Request) {
         const redirectPath = existingRole.role === 'student' 
           ? '/student/dashboard' 
           : '/educator/dashboard'
-        return NextResponse.redirect(`${origin}${redirectPath}`)
+        return NextResponse.redirect(new URL(redirectPath, origin))
       }
       
       // Check role from metadata and route to onboarding
       const role = user.user_metadata?.role
       
       if (role === 'student') {
-        return NextResponse.redirect(`${origin}/student/onboarding`)
+        return NextResponse.redirect(new URL('/student/onboarding', origin))
       } else if (role === 'educator') {
-        return NextResponse.redirect(`${origin}/educator/onboarding`)
+        return NextResponse.redirect(new URL('/educator/onboarding', origin))
       }
     }
   }
 
   // If no code or error, redirect to home
-  return NextResponse.redirect(`${origin}/`)
+  return NextResponse.redirect(new URL('/', origin))
 }
