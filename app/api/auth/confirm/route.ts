@@ -1,5 +1,6 @@
 import {UserRole} from "@/domains/auth/types";
 import {createClient} from "@/lib/supabase/server";
+import {getSiteOrigin} from "@/lib/url/getSiteOrigin";
 import {NextResponse} from "next/server";
 
 export async function GET(request: Request) {
@@ -7,7 +8,7 @@ export async function GET(request: Request) {
   const token_hash = requestUrl.searchParams.get("token_hash");
   const type = requestUrl.searchParams.get("type");
   const next = requestUrl.searchParams.get("next") || "/";
-  const origin = requestUrl.origin;
+  const origin = getSiteOrigin(request);
 
   if (token_hash && type) {
     const supabase = await createClient();
@@ -30,24 +31,24 @@ export async function GET(request: Request) {
         if (existingRole) {
           // User already onboarded, redirect to their dashboard
           const dashboardPath = existingRole.role === "student" ? "/student/dashboard" : "/educator/dashboard";
-          return NextResponse.redirect(`${origin}${dashboardPath}`);
+          return NextResponse.redirect(new URL(dashboardPath, origin));
         }
 
         // User has NOT completed onboarding, check their role from metadata
         const role: UserRole = user.user_metadata?.role;
 
         if (role === "student") {
-          return NextResponse.redirect(`${origin}/student/onboarding`);
+          return NextResponse.redirect(new URL("/student/onboarding", origin));
         } else if (role === "instructor") {
-          return NextResponse.redirect(`${origin}/educator/onboarding`);
+          return NextResponse.redirect(new URL("/educator/onboarding", origin));
         }
       }
 
-      // Default redirect if no role found
-      return NextResponse.redirect(`${next}`);
+      // Default redirect if no role found (handles both relative and absolute next)
+      return NextResponse.redirect(new URL(next, origin));
     }
   }
 
   // If error or no token, redirect to error page
-  return NextResponse.redirect(`${origin}/auth/auth-error`);
+  return NextResponse.redirect(new URL("/auth/auth-error", origin));
 }
