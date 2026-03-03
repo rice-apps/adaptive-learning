@@ -7,7 +7,6 @@ export async function GET(request: Request) {
   const token_hash = requestUrl.searchParams.get("token_hash");
   const type = requestUrl.searchParams.get("type");
   const next = requestUrl.searchParams.get("next") || "/";
-  const origin = requestUrl.origin;
 
   if (token_hash && type) {
     const supabase = await createClient();
@@ -30,24 +29,27 @@ export async function GET(request: Request) {
         if (existingRole) {
           // User already onboarded, redirect to their dashboard
           const dashboardPath = existingRole.role === "student" ? "/student/dashboard" : "/educator/dashboard";
-          return NextResponse.redirect(`${origin}${dashboardPath}`);
+          return NextResponse.redirect(new URL(dashboardPath, request.url));
         }
 
         // User has NOT completed onboarding, check their role from metadata
         const role: UserRole = user.user_metadata?.role;
 
         if (role === "student") {
-          return NextResponse.redirect(`${origin}/student/onboarding`);
+          return NextResponse.redirect(new URL("/student/onboarding", request.url));
         } else if (role === "instructor") {
-          return NextResponse.redirect(`${origin}/educator/onboarding`);
+          return NextResponse.redirect(new URL("/educator/onboarding", request.url));
         }
       }
 
-      // Default redirect if no role found
-      return NextResponse.redirect(`${next}`);
+      // Default redirect if no role found (resolve next relative to request)
+      // Sanitize next to prevent open redirect - only allow internal paths
+      const safeNext =
+        next.startsWith("/") && !next.startsWith("//") ? next : "/";
+      return NextResponse.redirect(new URL(safeNext, request.url));
     }
   }
 
   // If error or no token, redirect to error page
-  return NextResponse.redirect(`${origin}/auth/auth-error`);
+  return NextResponse.redirect(new URL("/auth/auth-error", request.url));
 }
