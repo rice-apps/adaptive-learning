@@ -87,6 +87,36 @@ export async function updateSession(request: NextRequest) {
     }
     // If there's an error, continue without redirecting to avoid blocking
     // legitimate requests due to temporary database issues
+
+    // Protect educator routes - ensure only educators can access /educator/*
+    if (request.nextUrl.pathname.startsWith("/educator")) {
+      const { data: educator } = await supabase
+        .from("Educators")
+        .select("id")
+        .eq("id", user.sub)
+        .maybeSingle();
+
+      if (!educator) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/student/dashboard";
+        return NextResponse.redirect(url);
+      }
+    }
+
+    // Protect student routes - ensure only students can access /student/*
+    if (request.nextUrl.pathname.startsWith("/student") && !onboardingRoutes.includes(request.nextUrl.pathname)) {
+      const { data: student } = await supabase
+        .from("Students")
+        .select("id")
+        .eq("id", user.sub)
+        .maybeSingle();
+
+      if (!student) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/educator/dashboard";
+        return NextResponse.redirect(url);
+      }
+    }
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.
