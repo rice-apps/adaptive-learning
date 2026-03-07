@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import LoadingSpinner from "@/components/ui/loadingSpinner";
 
 export default function StudentProfileClient() {
   const [formData, setFormData] = useState<{
@@ -91,7 +92,7 @@ export default function StudentProfileClient() {
   };
 
   // Show loading or error before rendering the form
-  if (!formData) return <div>Loading profile...</div>;
+  if (!formData) return <LoadingSpinner message="Loading profile..." />;
   if (error) return <div className="text-red-500">{error}</div>;
 
   return (

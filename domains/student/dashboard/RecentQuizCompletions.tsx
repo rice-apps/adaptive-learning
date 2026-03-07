@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import QuizCompletionCard from "@/components/quiz-completion";
+import QuizCompletionCard from "@/components/QuizCompletion";
 
 interface RecentQuizCompletionsProps {
   // defaulting to empty array to prevent crash

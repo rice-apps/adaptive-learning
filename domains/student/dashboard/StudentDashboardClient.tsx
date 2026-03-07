@@ -14,8 +14,9 @@ interface Props {
 }
 
 export default function StudentDashboardClient({
-  student,
+  studentName,
   completedQuizzes,
+  assignedQuizzes,
   hasCompletedDiagnostic,
 }: Props) {
   return (
@@ -24,7 +25,7 @@ export default function StudentDashboardClient({
 
       <main className="max-w-6xl mx-auto p-4 sm:p-6 md:p-8">
         {/* Greeting / Progress */}
-        <GreetingCard student={student} />
+        <GreetingCard student={studentName} />
 
         {/* LOGIC: Only show this card if diagnostic is NOT complete */}
         {!hasCompletedDiagnostic && <PromptDiagnosticCard />}
