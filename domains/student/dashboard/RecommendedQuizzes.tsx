@@ -3,11 +3,14 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { Calendar } from "lucide-react";
 
 interface Quiz {
   id: string;
+  name?: string | null;
   subject: string;
   questions: string[];
+  due_date?: string | null;
 }
 
 interface RecommendedQuizzesProps {
@@ -43,11 +46,21 @@ export default function RecommendedQuizzes({ assignedQuizzes }: RecommendedQuizz
                 <div className="flex items-end justify-between gap-4">
                   <div>
                     <h3 className="font-bold text-lg text-gray-900 leading-tight">
-                      Quiz Assignment
+                      {quiz.name?.trim() || 'Quiz Assignment'}
                     </h3>
                     <p className="text-gray-400 text-xs mt-1.5 font-medium">
                       {quiz.questions?.length || 0} QUESTIONS
                     </p>
+                    {quiz.due_date && (
+                      <p className="flex items-center gap-1.5 text-gray-500 text-xs mt-2">
+                        <Calendar className="h-3.5 w-3.5" />
+                        Due: {new Date(quiz.due_date).toLocaleDateString(undefined, {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </p>
+                    )}
                   </div>
                   
                   <Button 

@@ -1,0 +1,9 @@
+feat(educator): add Quiz Analytics per template (Feature 4)
+
+- Add GET /api/educator/quiz-templates/[id]/analytics API route
+  - Aggregates Results for quizzes with matching questions (assigned from template)
+  - Returns: avg score %, avg time spent, per-question breakdown, worst-performing question
+  - Supports MCQ, free response, drag & drop correctness; essays excluded from score
+- Add QuizAnalyticsModal with summary cards, worst-question callout, per-question table
+- Add "See Results" to quiz template row dropdown
+- Update quiz-management-plan: mark Feature 4 complete

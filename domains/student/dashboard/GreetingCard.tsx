@@ -2,9 +2,10 @@ import { Card, CardContent } from "@/components/ui/card";
 
 interface GreetingCardProps {
   student: string | null;
+  courseProgress?: number;
 }
 
-export default function GreetingCard({ student }: GreetingCardProps) {
+export default function GreetingCard({ student, courseProgress = 0 }: GreetingCardProps) {
   return (
     <Card className="border border-gray-100 shadow-sm rounded-2xl bg-white overflow-hidden">
       <CardContent className="p-8 flex items-center gap-8">
@@ -29,13 +30,16 @@ export default function GreetingCard({ student }: GreetingCardProps) {
                 Course Progress
               </span>
               <span className="text-xs font-bold text-gray-900">
-                33%
+                {Math.round(courseProgress)}%
               </span>
             </div>
             
             {/* The Green Progress Bar */}
             <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full bg-lime-500 w-1/3 rounded-full" />
+              <div 
+                className="h-full bg-lime-500 rounded-full transition-all" 
+                style={{ width: `${Math.min(100, Math.max(0, courseProgress))}%` }} 
+              />
             </div>
           </div>
         </div>

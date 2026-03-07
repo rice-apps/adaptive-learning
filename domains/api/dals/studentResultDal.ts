@@ -2,6 +2,7 @@ import {createClient} from "@/lib/supabase/server";
 
 export interface StudentQuiz {
   id: string;
+  name: string | null;
   created_at: string;
   student_id: string | null;
   quiz_feedback: string | null;
@@ -14,8 +15,9 @@ async function getQuizzesByStudentId(studentId: string): Promise<StudentQuiz[]> 
 
   const {data, error} = await supabase
     .from("Quizzes")
-    .select("id, created_at, student_id, quiz_feedback, submitted, end_time")
+    .select("id, name, created_at, student_id, quiz_feedback, submitted, end_time")
     .eq("student_id", studentId)
+    .eq("is_template", false)
     .order("created_at", {ascending: false});
 
   if (error) {

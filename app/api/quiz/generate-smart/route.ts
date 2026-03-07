@@ -5,15 +5,21 @@ import { mastra } from "@/mastra";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { studentId, educatorId, totalQuestions, focusAreas } = body;
+    const { studentId, educatorId, name, totalQuestions, focusAreas } = body;
 
     console.log("--- [Generate Smart] Request Received ---");
-    console.log("Inputs:", { studentId, educatorId, totalQuestions, focusAreas });
+    console.log("Inputs:", { studentId, educatorId, name, totalQuestions, focusAreas });
 
     // 1. Validate required fields
     if (!studentId || !totalQuestions) {
       return NextResponse.json(
         { error: "studentId and totalQuestions are required" },
+        { status: 400 }
+      );
+    }
+    if (!name || !name.trim()) {
+      return NextResponse.json(
+        { error: "Quiz name is required" },
         { status: 400 }
       );
     }
@@ -78,6 +84,7 @@ export async function POST(request: NextRequest) {
     const { data: quiz, error: quizError } = await supabase
       .from('Quizzes')
       .insert({
+        name: name.trim(),
         questions: finalOutput.selectedQuestionIds,
         educator_id: finalEducatorId,
         student_id: studentId,
