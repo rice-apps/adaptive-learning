@@ -395,14 +395,14 @@ export default function LearningStyleQuiz() {
     const value = getCurrentQuestionValue(question.id);
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Question Box */}
-        <div className="bg-gray-100 rounded-lg p-6 min-h-[200px] flex items-center">
+        <div className="bg-gray-100 rounded-lg p-4 sm:p-6 min-h-[150px] sm:min-h-[200px] flex items-center">
           <div className="w-full">
-            <p className="text-gray-400 text-sm mb-2">Question</p>
-            <p className="text-xl font-semibold">{question.label}</p>
+            <p className="text-gray-400 text-xs sm:text-sm mb-1 sm:mb-2">Question</p>
+            <p className="text-base sm:text-xl font-semibold">{question.label}</p>
             {question.instructions && (
-              <p className="text-sm text-gray-600 mt-3">
+              <p className="text-xs sm:text-sm text-gray-600 mt-2 sm:mt-3">
                 {question.instructions}
               </p>
             )}
@@ -410,7 +410,7 @@ export default function LearningStyleQuiz() {
         </div>
 
         {/* Answer Options */}
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3">
           {question.type === "text" && (
             <Input
               type="text"
@@ -419,17 +419,17 @@ export default function LearningStyleQuiz() {
               onChange={(e) =>
                 setCurrentQuestionValue(question.id, e.target.value)
               }
-              className="w-full"
+              className="w-full text-sm sm:text-base"
               autoFocus
             />
           )}
 
           {question.type === "select" && question.options && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
               {question.options.map((option) => (
                 <label
                   key={option}
-                  className="flex items-start gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                  className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
                 >
                   <input
                     type="radio"
@@ -439,10 +439,10 @@ export default function LearningStyleQuiz() {
                     onChange={(e) =>
                       setCurrentQuestionValue(question.id, e.target.value)
                     }
-                    className="mt-1 w-4 h-4"
+                    className="mt-0.5 sm:mt-1 w-4 h-4 shrink-0"
                   />
-                  <div className="flex-1">
-                    <span className="font-semibold block text-gray-900">
+                  <div className="flex-1 min-w-0">
+                    <span className="font-semibold block text-gray-900 text-sm sm:text-base">
                       {option}
                     </span>
                   </div>
@@ -452,14 +452,14 @@ export default function LearningStyleQuiz() {
           )}
 
           {question.type === "multi-select" && question.options && (
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {question.options.map((option) => {
                 const isChecked =
                   Array.isArray(value) && value.includes(option);
                 return (
                   <label
                     key={option}
-                    className="flex items-start gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                    className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
                   >
                     <input
                       type="checkbox"
@@ -469,20 +469,20 @@ export default function LearningStyleQuiz() {
                           handleAppFeatureChange(option, e.target.checked);
                         }
                       }}
-                      className="mt-1 w-4 h-4"
+                      className="mt-0.5 sm:mt-1 w-4 h-4 shrink-0"
                     />
-                    <div className="flex-1">
-                      <span className="font-semibold block text-gray-900">
+                    <div className="flex-1 min-w-0">
+                      <span className="font-semibold block text-gray-900 text-sm sm:text-base">
                         {option}
                       </span>
-                      <span className="text-sm text-gray-500 block mt-1">
+                      <span className="text-xs sm:text-sm text-gray-500 block mt-0.5 sm:mt-1">
                         specifics
                       </span>
                     </div>
                   </label>
                 );
               })}
-              <p className="text-sm text-gray-500 mt-3">
+              <p className="text-xs sm:text-sm text-gray-500 mt-2 sm:mt-3">
                 Selected: {Array.isArray(value) ? value.length : 0}/
                 {question.maxSelections}
               </p>
@@ -490,14 +490,14 @@ export default function LearningStyleQuiz() {
           )}
 
           {question.type === "multi-select-other" && question.options && (
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {question.options.map((option) => {
                 const isChecked =
                   Array.isArray(value) && value.includes(option);
                 return (
                   <label
                     key={option}
-                    className="flex items-start gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                    className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
                   >
                     <input
                       type="checkbox"
@@ -505,30 +505,30 @@ export default function LearningStyleQuiz() {
                       onChange={(e) =>
                         handleHardFactorChange(option, e.target.checked)
                       }
-                      className="mt-1 w-4 h-4"
+                      className="mt-0.5 sm:mt-1 w-4 h-4 shrink-0"
                     />
-                    <div className="flex-1">
-                      <span className="font-semibold block text-gray-900">
+                    <div className="flex-1 min-w-0">
+                      <span className="font-semibold block text-gray-900 text-sm sm:text-base">
                         {option}
                       </span>
-                      <span className="text-sm text-gray-500 block mt-1">
+                      <span className="text-xs sm:text-sm text-gray-500 block mt-0.5 sm:mt-1">
                         specifics
                       </span>
                     </div>
                   </label>
                 );
               })}
-              <label className="flex items-start gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
+              <label className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
                 <input
                   type="checkbox"
                   checked={Array.isArray(value) && value.includes("Other")}
                   onChange={(e) =>
                     handleHardFactorChange("Other", e.target.checked)
                   }
-                  className="mt-1 w-4 h-4"
+                  className="mt-0.5 sm:mt-1 w-4 h-4 shrink-0"
                 />
-                <div className="flex-1">
-                  <span className="font-semibold block text-gray-900 mb-2">
+                <div className="flex-1 min-w-0">
+                  <span className="font-semibold block text-gray-900 text-sm sm:text-base mb-2">
                     Other:
                   </span>
                   {Array.isArray(value) && value.includes("Other") && (
@@ -537,13 +537,13 @@ export default function LearningStyleQuiz() {
                       placeholder="Please specify"
                       value={hardFactorOther}
                       onChange={(e) => setHardFactorOther(e.target.value)}
-                      className="w-full"
+                      className="w-full text-sm sm:text-base"
                       autoFocus
                     />
                   )}
                 </div>
               </label>
-              <p className="text-sm text-gray-500 mt-3">
+              <p className="text-xs sm:text-sm text-gray-500 mt-2 sm:mt-3">
                 Selected: {Array.isArray(value) ? value.length : 0}/
                 {question.maxSelections}
               </p>
@@ -556,12 +556,12 @@ export default function LearningStyleQuiz() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="container mx-auto max-w-4xl py-8 px-6">
+      <div className="container mx-auto max-w-4xl py-4 sm:py-6 md:py-8 px-4 sm:px-6">
         {/* Progress Bar */}
-        <div className="mb-8">
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
+        <div className="mb-6 sm:mb-8">
+          <div className="w-full bg-gray-200 rounded-full h-2 sm:h-2.5">
             <div
-              className="bg-gray-600 h-2.5 rounded-full transition-all duration-300"
+              className="bg-gray-600 h-2 sm:h-2.5 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -571,16 +571,20 @@ export default function LearningStyleQuiz() {
         {renderQuestion()}
 
         {/* Navigation Buttons */}
-        <div className="flex justify-end items-center mt-8 pt-6">
+        <div className="flex flex-col-reverse sm:flex-row justify-end items-stretch sm:items-center gap-3 sm:gap-0 mt-6 sm:mt-8 pt-4 sm:pt-6">
           <Button
             variant="outline"
             onClick={handlePrevious}
             disabled={currentQuestionIndex === 0}
-            className="mr-3"
+            className="sm:mr-3 text-sm sm:text-base"
           >
             Previous
           </Button>
-          <Button onClick={handleNext} disabled={isSubmitting}>
+          <Button 
+            onClick={handleNext} 
+            disabled={isSubmitting}
+            className="text-sm sm:text-base"
+          >
             {currentQuestionIndex === totalQuestions - 1
               ? isSubmitting
                 ? "Submitting..."

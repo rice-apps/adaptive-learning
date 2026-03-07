@@ -4,8 +4,9 @@ import { redirect } from "next/navigation";
 
 export default async function StudentDashboard() {
   const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
   // 1. Get Student Data
@@ -15,11 +16,9 @@ export default async function StudentDashboard() {
     .eq("id", user.id)
     .single();
 
-  // 2. Check if Diagnostic is done
-  // logic: if diagnostic_results is not null, they are done.
   const hasCompletedDiagnostic = !!student?.diagnostic_results;
 
-  // 3. Get Completed Quizzes (for Recent Activity)
+  // 2. Get Completed Quizzes (for Recent Activity)
   const { data: completedQuizzes } = await supabase
     .from("Quizzes")
     .select("*")
@@ -28,15 +27,15 @@ export default async function StudentDashboard() {
     .order("end_time", { ascending: false })
     .limit(5);
 
-  // 4. Get Assigned Quizzes (Pending)
+  // 3. Get Assigned Quizzes (Pending)
   const { data: assignedQuizzesRaw } = await supabase
     .from("Quizzes")
     .select("*")
     .eq("student_id", user.id)
-    .is("submitted", null) // Only fetch unsubmitted ones
+    .is("submitted", null)
     .order("created_at", { ascending: false });
 
-  // 5. Fetch due dates from Deadlines table
+  // 4. Fetch due dates from Deadlines table
   const quizIds = (assignedQuizzesRaw || []).map((q) => q.id);
   const dueByQuizId: Record<string, string | null> = {};
   if (quizIds.length > 0) {
@@ -49,7 +48,7 @@ export default async function StudentDashboard() {
     }
   }
 
-  // 6. Enrich Assigned Quizzes with Subject and due_date
+  // 5. Enrich Assigned Quizzes with Subject and due_date
   const assignedQuizzes = await Promise.all(
     (assignedQuizzesRaw || []).map(async (quiz) => {
       let subject = "General";
@@ -65,6 +64,14 @@ export default async function StudentDashboard() {
     })
   );
 
+  // 6. Placeholder subject scores (replace with real diagnostic_results logic later)
+  const subjectScores = [
+    { subject: "Math", score: 142, maxScore: 200 },
+    { subject: "Reading", score: 112, maxScore: 200 },
+    { subject: "Writing", score: 130, maxScore: 200 },
+    { subject: "Science", score: 123, maxScore: 200 },
+  ];
+
   return (
     <StudentDashboardClient
       studentName={student?.first_name || "Student"}
@@ -72,6 +79,7 @@ export default async function StudentDashboard() {
       hasCompletedDiagnostic={hasCompletedDiagnostic}
       completedQuizzes={completedQuizzes || []}
       assignedQuizzes={assignedQuizzes || []}
+      subjectScores={subjectScores}
     />
   );
 }

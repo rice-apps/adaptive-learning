@@ -301,11 +301,11 @@ export default function QuizzesPage() {
     if (!passage) return null;
 
     return (
-      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <p className="text-sm font-semibold text-blue-900 mb-2">
+      <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <p className="text-xs sm:text-sm font-semibold text-blue-900 mb-1 sm:mb-2">
           Reading Passage:
         </p>
-        <p className="text-sm text-blue-800 whitespace-pre-wrap">{passage}</p>
+        <p className="text-xs sm:text-sm text-blue-800 whitespace-pre-wrap">{passage}</p>
       </div>
     );
   };
@@ -318,7 +318,7 @@ export default function QuizzesPage() {
     const details = currentQuestion.question_details;
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Reading Passage */}
         {renderPassage(
           (details as FreeResponseDetails | MCQDetails | DragDropDetails)
@@ -326,27 +326,27 @@ export default function QuizzesPage() {
         )}
 
         {/* Question Box */}
-        <div className="bg-gray-100 rounded-lg p-6 min-h-[200px] flex items-center">
+        <div className="bg-gray-100 rounded-lg p-4 sm:p-6 min-h-[150px] sm:min-h-[200px] flex items-center">
           <div className="w-full">
-            <p className="text-gray-400 text-sm mb-2">
+            <p className="text-gray-400 text-xs sm:text-sm mb-1 sm:mb-2">
               {currentQuestion.subject} - {currentQuestion.topic}
             </p>
             {currentQuestion.question_type === "free_response" && (
               <>
-                <p className="text-xl font-semibold">
+                <p className="text-base sm:text-xl font-semibold">
                   {(details as FreeResponseDetails).question}
                 </p>
               </>
             )}
             {currentQuestion.question_type === "mcq" && (
               <>
-                <p className="text-xl font-semibold">
+                <p className="text-base sm:text-xl font-semibold">
                   {(details as MCQDetails).question}
                 </p>
               </>
             )}
             {currentQuestion.question_type === "drag_drop" && (
-              <p className="text-xl font-semibold">
+              <p className="text-base sm:text-xl font-semibold">
                 Match each item with the correct answer from the dropdowns.
               </p>
             )}
@@ -354,23 +354,23 @@ export default function QuizzesPage() {
         </div>
 
         {/* Answer Options */}
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3">
           {currentQuestion.question_type === "free_response" && (
             <Textarea
               placeholder="Enter your answer"
               value={(answer as string) || ""}
               onChange={(e) => setCurrentAnswer(e.target.value)}
-              className="w-full min-h-[120px]"
+              className="w-full min-h-[100px] sm:min-h-[120px] text-sm sm:text-base"
               autoFocus
             />
           )}
 
           {currentQuestion.question_type === "mcq" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
               {(details as MCQDetails).options.map((option, index) => (
                 <label
                   key={index}
-                  className="flex items-start gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                  className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
                 >
                   <input
                     type="radio"
@@ -378,10 +378,10 @@ export default function QuizzesPage() {
                     value={option}
                     checked={answer === option}
                     onChange={(e) => setCurrentAnswer(e.target.value)}
-                    className="mt-1 w-4 h-4"
+                    className="mt-0.5 sm:mt-1 w-4 h-4 shrink-0"
                   />
-                  <div className="flex-1">
-                    <span className="font-semibold block text-gray-900">
+                  <div className="flex-1 min-w-0">
+                    <span className="font-semibold block text-gray-900 text-sm sm:text-base">
                       {option}
                     </span>
                   </div>
@@ -392,7 +392,50 @@ export default function QuizzesPage() {
 
           {currentQuestion.question_type === "drag_drop" && (
             <div className="border border-gray-300 rounded-lg overflow-hidden">
-              <div className="grid grid-cols-2">
+              {/* Mobile: Stacked layout */}
+              <div className="block md:hidden">
+                {(details as DragDropDetails).qa_pairs.map((pair, index) => (
+                  <div
+                    key={index}
+                    className="p-3 border-b border-gray-300 last:border-b-0"
+                  >
+                    <div className="flex items-start gap-2 mb-2">
+                      <span className="text-sm font-semibold text-gray-700">
+                        {index + 1}.
+                      </span>
+                      <p className="text-sm text-gray-900 flex-1">
+                        {pair.question}
+                      </p>
+                    </div>
+                    <Select
+                      value={Array.isArray(answer) ? answer[index] || "" : ""}
+                      onValueChange={(value) => {
+                        const currentAnswers = Array.isArray(answer)
+                          ? [...answer]
+                          : [];
+                        currentAnswers[index] = value;
+                        setCurrentAnswer(currentAnswers);
+                      }}
+                    >
+                      <SelectTrigger className="w-full text-sm">
+                        <SelectValue placeholder="Select an answer" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(details as DragDropDetails).options.map(
+                          (option, optIndex) => (
+                            <SelectItem key={optIndex} value={option}>
+                              {String.fromCharCode(65 + optIndex)}. {option}
+                            </SelectItem>
+                          )
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop: Two-column layout */}
+              <div className="hidden md:grid md:grid-cols-2">
                 {/* Left Column - Premises */}
                 <div className="border-r border-gray-300">
                   {(details as DragDropDetails).qa_pairs.map((pair, index) => (
@@ -455,32 +498,32 @@ export default function QuizzesPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <p className="text-gray-600">Loading questions...</p>
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
+        <p className="text-gray-600 text-sm sm:text-base">Loading questions...</p>
       </div>
     );
   }
 
   if (questions.length === 0) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <p className="text-gray-600">No questions available</p>
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
+        <p className="text-gray-600 text-sm sm:text-base">No questions available</p>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="container mx-auto max-w-4xl py-8 px-6">
+      <div className="container mx-auto max-w-4xl py-4 sm:py-6 md:py-8 px-4 sm:px-6">
         {/* Progress Bar */}
-        <div className="mb-8">
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
+        <div className="mb-6 sm:mb-8">
+          <div className="w-full bg-gray-200 rounded-full h-2 sm:h-2.5">
             <div
-              className="bg-gray-600 h-2.5 rounded-full transition-all duration-300"
+              className="bg-gray-600 h-2 sm:h-2.5 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
-          <p className="text-sm text-gray-600 mt-2">
+          <p className="text-xs sm:text-sm text-gray-600 mt-1 sm:mt-2">
             Question {currentQuestionIndex + 1} of {totalQuestions}
           </p>
         </div>
@@ -489,16 +532,20 @@ export default function QuizzesPage() {
         {renderQuestion()}
 
         {/* Navigation Buttons */}
-        <div className="flex justify-end items-center mt-8 pt-6">
+        <div className="flex flex-col-reverse sm:flex-row justify-end items-stretch sm:items-center gap-3 sm:gap-0 mt-6 sm:mt-8 pt-4 sm:pt-6">
           <Button
             variant="outline"
             onClick={handlePrevious}
             disabled={currentQuestionIndex === 0}
-            className="mr-3"
+            className="sm:mr-3 text-sm sm:text-base"
           >
             Previous
           </Button>
-          <Button onClick={handleNext} disabled={isSubmitting}>
+          <Button 
+            onClick={handleNext} 
+            disabled={isSubmitting}
+            className="text-sm sm:text-base"
+          >
             {currentQuestionIndex === totalQuestions - 1
               ? isSubmitting
                 ? "Submitting..."
