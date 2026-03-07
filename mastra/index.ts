@@ -9,6 +9,7 @@ import { distributionWorkflow } from './workflows/distribution-workflow';
 import { distributionAgent } from './agents/distribution-agent';
 import { singleQuestionFeedbackWorkflow } from './workflows/single-question-feedback-workflow';
 import { createQuizFromFeedbackAgent } from './agents/quiz-from-feedback-agent';
+import { questionImportParserAgent } from './agents/question-import-parser-agent';
 
 export const mastra = new Mastra({
   workflows: {
@@ -22,6 +23,7 @@ export const mastra = new Mastra({
     learningFeedbackAgent,
     distributionAgent,
     createQuizFromFeedbackAgent,
+    questionImportParserAgent,
   },
   storage: new LibSQLStore({
     url: ":memory:",

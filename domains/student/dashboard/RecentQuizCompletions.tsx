@@ -22,7 +22,9 @@ export default function RecentQuizCompletions({ completedQuizzes = [] }: RecentQ
               <div key={quiz.id} className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
                 <CheckCircle2 className="w-5 h-5 text-lime-500 mt-0.5" />
                 <div>
-                  <p className="font-bold text-sm text-gray-900">Quiz Completed</p>
+                  <p className="font-bold text-sm text-gray-900">
+                    {quiz.name?.trim() ? `${quiz.name} — Completed` : 'Quiz Completed'}
+                  </p>
                   <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
                     <Clock size={12} />
                     <span>

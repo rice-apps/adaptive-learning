@@ -22,8 +22,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 
 interface Quiz {
   id: string;
+  name?: string;
   created_at: string;
   questions: string[];
+  question_count?: number;
+  subjects?: string[];
 }
 
 interface AssignQuizDialogProps {
@@ -50,6 +53,7 @@ export default function AssignQuizDialog({
   const [fetchingQuizzes, setFetchingQuizzes] = useState(false);
 
   // AI generation states
+  const [aiQuizName, setAiQuizName] = useState('');
   const [aiTotalQuestions, setAiTotalQuestions] = useState(10);
   const [aiFocusAreas, setAiFocusAreas] = useState<string[]>([]);
   const [aiGenerating, setAiGenerating] = useState(false);
@@ -67,22 +71,25 @@ export default function AssignQuizDialog({
     setError('');
     
     try {
-      const response = await fetch(`/api/quiz?educatorId=${educatorId}&includeTemplates=true`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch quizzes');
+      // First, try the named quiz templates endpoint
+      const templatesRes = await fetch('/api/educator/quiz-templates');
+      if (templatesRes.ok) {
+        const templatesData = await templatesRes.json();
+        if (Array.isArray(templatesData.templates) && templatesData.templates.length > 0) {
+          setQuizzes(templatesData.templates);
+          return;
+        }
       }
-      
-      const data = await response.json();
 
-      
+      // Fallback: fetch all quizzes by this educator and dedupe
+      const response = await fetch(`/api/quiz?educatorId=${educatorId}&includeTemplates=true`);
+      if (!response.ok) throw new Error('Failed to fetch quizzes');
+      const data = await response.json();
       if (Array.isArray(data)) {
-        // Dedupe by questions signature so "template-like" quizzes appear once
         const bySig = new Map<string, Quiz>();
         for (const q of data as Quiz[]) {
           const sig = Array.isArray(q.questions) ? q.questions.join(",") : "";
           const prev = bySig.get(sig);
-          // keep most recent as representative
           if (!prev || new Date(q.created_at).getTime() > new Date(prev.created_at).getTime()) {
             bySig.set(sig, q);
           }
@@ -135,6 +142,10 @@ export default function AssignQuizDialog({
   };
 
   const handleGenerateAI = async () => {
+    if (!aiQuizName?.trim()) {
+      setError('Please give the quiz a name');
+      return;
+    }
     if (aiTotalQuestions === 0) {
       setError('Please specify number of questions');
       return;
@@ -150,6 +161,7 @@ export default function AssignQuizDialog({
         body: JSON.stringify({
           studentId,
           educatorId,
+          name: aiQuizName.trim(),
           totalQuestions: aiTotalQuestions,
           focusAreas: aiFocusAreas.length > 0 ? aiFocusAreas : undefined,
         }),
@@ -200,6 +212,7 @@ export default function AssignQuizDialog({
   const resetForm = () => {
     setSelectedQuizId('');
     setDueDate('');
+    setAiQuizName('');
     setAiTotalQuestions(10);
     setAiFocusAreas([]);
     setError('');
@@ -230,6 +243,16 @@ export default function AssignQuizDialog({
             {/* AI-Generated Quiz Tab */}
             <TabsContent value="ai" className="space-y-4 mt-4">
               
+              <div className="space-y-2">
+                <Label>Quiz Name</Label>
+                <Input
+                  type="text"
+                  placeholder="e.g. Week 3 Math Practice"
+                  value={aiQuizName}
+                  onChange={(e) => setAiQuizName(e.target.value)}
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label>Number of Questions</Label>
                 <Input
@@ -276,7 +299,7 @@ export default function AssignQuizDialog({
 
               <Button
                 onClick={handleGenerateAI}
-                disabled={aiGenerating || aiTotalQuestions === 0}
+                disabled={aiGenerating || !aiQuizName?.trim() || aiTotalQuestions === 0}
                 className="w-full"
               >
                 {aiGenerating ? 'AI Generating...' : `Generate Smart Quiz (${aiTotalQuestions} questions)`}
@@ -307,7 +330,9 @@ export default function AssignQuizDialog({
                     ) : (
                       quizzes.map((quiz) => (
                         <SelectItem key={quiz.id} value={quiz.id}>
-                          Quiz from {new Date(quiz.created_at).toLocaleDateString()} ({quiz.questions?.length || 0} questions)
+                          {quiz.name
+                            ? `${quiz.name} (${quiz.question_count ?? quiz.questions?.length ?? 0} questions)`
+                            : `Quiz from ${new Date(quiz.created_at).toLocaleDateString()} (${quiz.questions?.length ?? 0} questions)`}
                         </SelectItem>
                       ))
                     )}

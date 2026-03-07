@@ -9,6 +9,7 @@ import { Clock, Calendar, BookOpen, CheckCircle } from 'lucide-react';
 
 interface AssignedQuiz {
   id: string;
+  name?: string | null;
   questions: string[];
   created_at: string;
   due_date: string | null;
@@ -16,6 +17,7 @@ interface AssignedQuiz {
 
 interface CompletedQuiz {
   id: string;
+  name?: string | null;
   start_time: string | null;
   end_time: string | null;
   time_spent: string | null;
@@ -138,7 +140,7 @@ export default function StudentDashboardClient({
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex-1">
                           <h3 className="font-semibold text-lg mb-2">
-                            Quiz - {quiz.questions?.length || 0} Questions
+                            {quiz.name?.trim() || 'Quiz'} - {quiz.questions?.length || 0} Questions
                           </h3>
                           <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                             <div className="flex items-center gap-1">
@@ -198,7 +200,7 @@ export default function StudentDashboardClient({
                       <div>
                         <p className="font-medium flex items-center gap-2">
                           <CheckCircle className="h-4 w-4 text-green-600" />
-                          Completed Quiz
+                          {quiz.name?.trim() ? `${quiz.name} — Completed` : 'Completed Quiz'}
                         </p>
                         <p className="text-sm text-gray-600 mt-1">
                           {new Date(quiz.submitted).toLocaleDateString()} at{' '}

@@ -12,6 +12,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { timeAgo } from "@/lib/utils/timeAgo";
+import StudentQuizResultModal from "./StudentQuizResultModal";
 
 interface Student {
   id: string;
@@ -45,11 +48,13 @@ interface StudentDetails {
 
 interface StudentQuiz {
   id: string;
+  name: string | null;
   created_at: string;
   student_id: string | null;
   quiz_feedback: string | null;
   submitted: boolean | null;
   end_time: string | null;
+  score_percent?: number | null;
 }
 
 interface Props {
@@ -69,6 +74,10 @@ export default function StudentDetailsDialog({
 }: Props) {
   const [quizzes, setQuizzes] = useState<StudentQuiz[]>([]);
   const [quizzesLoading, setQuizzesLoading] = useState(false);
+  const [resultModalQuiz, setResultModalQuiz] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   useEffect(() => {
     if (open && student?.id) {
@@ -261,42 +270,93 @@ export default function StudentDetailsDialog({
                       <Table className="table-fixed w-full">
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="w-20">Quiz ID</TableHead>
+                            <TableHead className="min-w-[140px]">Quiz Name</TableHead>
+                            <TableHead className="w-28">Assigned</TableHead>
                             <TableHead className="w-28">Completed</TableHead>
+                            <TableHead className="w-20">Score</TableHead>
                             <TableHead className="w-24">Status</TableHead>
                             <TableHead className="min-w-0">Feedback Summary</TableHead>
+                            <TableHead className="w-24 text-right">Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {quizzes.length === 0 ? (
                             <TableRow>
                               <TableCell
-                                colSpan={4}
+                                colSpan={7}
                                 className="text-center text-gray-400 py-8"
                               >
-                                No quizzes yet
+                                No quizzes assigned yet
                               </TableCell>
                             </TableRow>
                           ) : (
                             quizzes.map((quiz) => (
                               <TableRow key={quiz.id}>
-                                <TableCell className="font-medium text-sm text-gray-600">
-                                  {quiz.id.slice(0, 8)}…
+                                <TableCell className="font-medium text-sm text-gray-800">
+                                  {quiz.name || (
+                                    <span className="text-gray-400 italic">Unnamed quiz</span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-sm text-gray-500">
+                                  <span>
+                                    {new Date(quiz.created_at).toLocaleDateString()}
+                                    {!quiz.submitted && (
+                                      <span className="ml-1 text-gray-400">
+                                        ({timeAgo(quiz.created_at)})
+                                      </span>
+                                    )}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="text-sm text-gray-500">
+                                  {quiz.submitted && quiz.end_time
+                                    ? new Date(quiz.end_time).toLocaleDateString()
+                                    : "—"}
                                 </TableCell>
                                 <TableCell className="text-sm">
-                                  {quiz.end_time 
-                                    ? new Date(quiz.end_time).toLocaleDateString()
-                                    : new Date(quiz.created_at).toLocaleDateString()}
+                                  {quiz.submitted && quiz.score_percent != null ? (
+                                    <span
+                                      className={
+                                        quiz.score_percent >= 80
+                                          ? "text-green-600 font-medium"
+                                          : quiz.score_percent >= 50
+                                            ? "text-amber-600"
+                                            : "text-red-600 font-medium"
+                                      }
+                                    >
+                                      {quiz.score_percent}%
+                                    </span>
+                                  ) : (
+                                    "—"
+                                  )}
                                 </TableCell>
                                 <TableCell className="text-sm">
                                   {quiz.submitted ? (
                                     <span className="text-green-600 font-medium">Submitted</span>
                                   ) : (
-                                    <span className="text-orange-600 font-medium">In Progress</span>
+                                    <span className="text-orange-500 font-medium">In Progress</span>
                                   )}
                                 </TableCell>
                                 <TableCell className="text-sm text-gray-600 whitespace-normal break-words align-top">
                                   {quiz.quiz_feedback || "—"}
+                                </TableCell>
+                                <TableCell className="text-sm text-right">
+                                  {quiz.submitted ? (
+                                    <Button
+                                      variant="link"
+                                      size="sm"
+                                      className="h-auto p-0 text-[#4D6A12] hover:text-[#3d5510]"
+                                      onClick={() =>
+                                        setResultModalQuiz({
+                                          id: quiz.id,
+                                          name: quiz.name || "Unnamed quiz",
+                                        })
+                                      }
+                                    >
+                                      View Results
+                                    </Button>
+                                  ) : (
+                                    "—"
+                                  )}
                                 </TableCell>
                               </TableRow>
                             ))
@@ -311,6 +371,15 @@ export default function StudentDetailsDialog({
           ) : null}
         </div>
       </DialogContent>
+
+      {resultModalQuiz && (
+        <StudentQuizResultModal
+          isOpen={!!resultModalQuiz}
+          onClose={() => setResultModalQuiz(null)}
+          quizId={resultModalQuiz.id}
+          quizName={resultModalQuiz.name}
+        />
+      )}
     </Dialog>
   );
 }

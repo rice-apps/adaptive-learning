@@ -9,6 +9,7 @@ import WritingFeedback from "./WritingFeedback";
 
 interface Props {
   studentName: string;
+  courseProgress: number;
   completedQuizzes: any[];
   assignedQuizzes: any[];
   hasCompletedDiagnostic: boolean;
@@ -16,6 +17,7 @@ interface Props {
 
 export default function StudentDashboardClient({
   studentName,
+  courseProgress,
   completedQuizzes,
   assignedQuizzes,
   hasCompletedDiagnostic,
@@ -26,7 +28,7 @@ export default function StudentDashboardClient({
 
       <main className="max-w-6xl mx-auto p-8 space-y-10">
         
-        <GreetingCard student={studentName} />
+        <GreetingCard student={studentName} courseProgress={courseProgress} />
 
         {/* LOGIC: Only show this card if diagnostic is NOT complete */}
         {!hasCompletedDiagnostic && <PromptDiagnosticCard />}
