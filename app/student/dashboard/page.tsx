@@ -11,7 +11,7 @@ export default async function StudentDashboard() {
   // 1. Get Student Data
   const { data: student } = await supabase
     .from("Students")
-    .select("first_name, diagnostic_results")
+    .select("first_name, diagnostic_results, progress")
     .eq("id", user.id)
     .single();
 
@@ -36,7 +36,20 @@ export default async function StudentDashboard() {
     .is("submitted", null) // Only fetch unsubmitted ones
     .order("created_at", { ascending: false });
 
-  // 5. Enrich Assigned Quizzes with Subject
+  // 5. Fetch due dates from Deadlines table
+  const quizIds = (assignedQuizzesRaw || []).map((q) => q.id);
+  const dueByQuizId: Record<string, string | null> = {};
+  if (quizIds.length > 0) {
+    const { data: deadlines } = await supabase
+      .from("Deadlines")
+      .select("quiz, deadline")
+      .in("quiz", quizIds);
+    for (const d of deadlines || []) {
+      if (d.quiz && d.deadline) dueByQuizId[d.quiz] = d.deadline;
+    }
+  }
+
+  // 6. Enrich Assigned Quizzes with Subject and due_date
   const assignedQuizzes = await Promise.all(
     (assignedQuizzesRaw || []).map(async (quiz) => {
       let subject = "General";
@@ -48,13 +61,14 @@ export default async function StudentDashboard() {
           .single();
         if (qData) subject = qData.subject;
       }
-      return { ...quiz, subject };
+      return { ...quiz, subject, due_date: dueByQuizId[quiz.id] ?? null };
     })
   );
 
   return (
     <StudentDashboardClient
       studentName={student?.first_name || "Student"}
+      courseProgress={student?.progress ?? 0}
       hasCompletedDiagnostic={hasCompletedDiagnostic}
       completedQuizzes={completedQuizzes || []}
       assignedQuizzes={assignedQuizzes || []}

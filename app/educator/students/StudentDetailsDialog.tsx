@@ -12,6 +12,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { timeAgo } from "@/lib/utils/timeAgo";
+import StudentQuizResultModal from "./StudentQuizResultModal";
 
 interface Student {
   id: string;
@@ -48,11 +51,13 @@ interface StudentDetails {
 
 interface StudentQuiz {
   id: string;
+  name: string | null;
   created_at: string;
   student_id: string | null;
   quiz_feedback: string | null;
   submitted: boolean | null;
   end_time: string | null;
+  score_percent?: number | null;
 }
 
 interface Props {
@@ -72,6 +77,10 @@ export default function StudentDetailsDialog({
 }: Props) {
   const [quizzes, setQuizzes] = useState<StudentQuiz[]>([]);
   const [quizzesLoading, setQuizzesLoading] = useState(false);
+  const [resultModalQuiz, setResultModalQuiz] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   useEffect(() => {
     if (open && student?.id) {
@@ -98,7 +107,7 @@ export default function StudentDetailsDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="w-[95vw] max-w-4xl h-[90vh] sm:h-[80vh] p-0 rounded-xl flex flex-col overflow-hidden"
+        className="h-[80vh] w-[95vw] sm:max-w-[95vw] p-0 rounded-xl flex flex-col overflow-hidden"
         showCloseButton={false}
       >
         <VisuallyHidden>
@@ -293,114 +302,100 @@ export default function StudentDetailsDialog({
                     Lesson Tracker
                   </h3>
 
-                  {/* Filters */}
-                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-3 sm:mb-4">
-                    <Select>
-                      <SelectTrigger className="w-full sm:w-[140px] rounded-md text-sm">
-                        <SelectValue placeholder="Sort by Date" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="date">Sort by Date</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <Select>
-                      <SelectTrigger className="w-full sm:w-[160px] rounded-md text-sm">
-                        <SelectValue placeholder="Sort by Subject" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="subject">Sort by Subject</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Mobile: Card-based layout */}
-                  <div className="block sm:hidden space-y-3 max-h-[200px] overflow-y-auto">
-                    {details.lessonHistory.length === 0 ? (
-                      <p className="text-center text-gray-400 py-6 text-sm">
-                        No lessons yet
-                      </p>
+                  <div className="max-h-[260px] overflow-y-auto overflow-x-hidden">
+                    {quizzesLoading ? (
+                      <div className="text-center py-8 text-gray-500">Loading quizzes…</div>
                     ) : (
-                      details.lessonHistory.map((lesson, index) => (
-                        <div
-                          key={index}
-                          className="p-3 bg-gray-50 rounded-lg border border-gray-200"
-                        >
-                          <div className="flex justify-between items-start mb-1">
-                            <span className="font-medium text-sm">
-                              {lesson.assignment}
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              {lesson.lastAttempt}
-                            </span>
-                          </div>
-                          <p className="text-xs text-gray-600">
-                            {lesson.feedback}
-                          </p>
-                        </div>
-                      ))
-                    )}
-                  </div>
-
-                  {/* Desktop: Table layout */}
-                  <div className="hidden sm:block max-h-[260px] overflow-y-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-xs sm:text-sm">
-                            Assignment
-                          </TableHead>
-                          <TableHead className="text-xs sm:text-sm">
-                            Last Attempt
-                          </TableHead>
-                          <TableHead className="text-xs sm:text-sm">
-                            Feedback
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {details.lessonHistory.length === 0 ? (
+                      <Table className="table-fixed w-full">
+                        <TableHeader>
                           <TableRow>
-                            <TableCell
-                              colSpan={3}
-                              className="text-center text-gray-400 py-8 text-sm"
-                            >
-                              No lessons yet
-                            </TableCell>
+                            <TableHead className="min-w-[140px]">Quiz Name</TableHead>
+                            <TableHead className="w-28">Assigned</TableHead>
+                            <TableHead className="w-28">Completed</TableHead>
+                            <TableHead className="w-20">Score</TableHead>
+                            <TableHead className="w-24">Status</TableHead>
+                            <TableHead className="min-w-0">Feedback Summary</TableHead>
+                            <TableHead className="w-24 text-right">Actions</TableHead>
                           </TableRow>
-                        ) : (
-                          details.lessonHistory.map((lesson, index) => (
-                            <TableRow key={index}>
-                              <TableCell className="text-xs sm:text-sm">
-                                {lesson.assignment}
-                              </TableCell>
-                              <TableCell className="text-xs sm:text-sm whitespace-nowrap">
-                                {lesson.lastAttempt}
-                              </TableCell>
-                              <TableCell className="text-xs sm:text-sm">
-                                {lesson.feedback}
+                        </TableHeader>
+                        <TableBody>
+                          {quizzes.length === 0 ? (
+                            <TableRow>
+                              <TableCell
+                                colSpan={7}
+                                className="text-center text-gray-400 py-8"
+                              >
+                                No quizzes assigned yet
                               </TableCell>
                             </TableRow>
                           ) : (
                             quizzes.map((quiz) => (
                               <TableRow key={quiz.id}>
-                                <TableCell className="font-medium text-sm text-gray-600">
-                                  {quiz.id.slice(0, 8)}…
+                                <TableCell className="font-medium text-sm text-gray-800">
+                                  {quiz.name || (
+                                    <span className="text-gray-400 italic">Unnamed quiz</span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-sm text-gray-500">
+                                  <span>
+                                    {new Date(quiz.created_at).toLocaleDateString()}
+                                    {!quiz.submitted && (
+                                      <span className="ml-1 text-gray-400">
+                                        ({timeAgo(quiz.created_at)})
+                                      </span>
+                                    )}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="text-sm text-gray-500">
+                                  {quiz.submitted && quiz.end_time
+                                    ? new Date(quiz.end_time).toLocaleDateString()
+                                    : "—"}
                                 </TableCell>
                                 <TableCell className="text-sm">
-                                  {quiz.end_time 
-                                    ? new Date(quiz.end_time).toLocaleDateString()
-                                    : new Date(quiz.created_at).toLocaleDateString()}
+                                  {quiz.submitted && quiz.score_percent != null ? (
+                                    <span
+                                      className={
+                                        quiz.score_percent >= 80
+                                          ? "text-green-600 font-medium"
+                                          : quiz.score_percent >= 50
+                                            ? "text-amber-600"
+                                            : "text-red-600 font-medium"
+                                      }
+                                    >
+                                      {quiz.score_percent}%
+                                    </span>
+                                  ) : (
+                                    "—"
+                                  )}
                                 </TableCell>
                                 <TableCell className="text-sm">
                                   {quiz.submitted ? (
                                     <span className="text-green-600 font-medium">Submitted</span>
                                   ) : (
-                                    <span className="text-orange-600 font-medium">In Progress</span>
+                                    <span className="text-orange-500 font-medium">In Progress</span>
                                   )}
                                 </TableCell>
-                                <TableCell className="text-sm text-gray-600 max-w-[200px]">
+                                <TableCell className="text-sm text-gray-600 whitespace-normal break-words align-top">
                                   {quiz.quiz_feedback || "—"}
+                                </TableCell>
+                                <TableCell className="text-sm text-right">
+                                  {quiz.submitted ? (
+                                    <Button
+                                      variant="link"
+                                      size="sm"
+                                      className="h-auto p-0 text-[#4D6A12] hover:text-[#3d5510]"
+                                      onClick={() =>
+                                        setResultModalQuiz({
+                                          id: quiz.id,
+                                          name: quiz.name || "Unnamed quiz",
+                                        })
+                                      }
+                                    >
+                                      View Results
+                                    </Button>
+                                  ) : (
+                                    "—"
+                                  )}
                                 </TableCell>
                               </TableRow>
                             ))
@@ -415,6 +410,15 @@ export default function StudentDetailsDialog({
           ) : null}
         </div>
       </DialogContent>
+
+      {resultModalQuiz && (
+        <StudentQuizResultModal
+          isOpen={!!resultModalQuiz}
+          onClose={() => setResultModalQuiz(null)}
+          quizId={resultModalQuiz.id}
+          quizName={resultModalQuiz.name}
+        />
+      )}
     </Dialog>
   );
 }

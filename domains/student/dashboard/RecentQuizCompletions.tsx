@@ -21,11 +21,23 @@ export default function RecentQuizCompletions({
         {completedQuizzes.length > 0 ? (
           <div className="space-y-3 sm:space-y-4">
             {completedQuizzes.map((quiz) => (
-              <QuizCompletionCard key={quiz.id} quiz={quiz} />
+              <div key={quiz.id} className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                <CheckCircle2 className="w-5 h-5 text-lime-500 mt-0.5" />
+                <div>
+                  <p className="font-bold text-sm text-gray-900">
+                    {quiz.name?.trim() ? `${quiz.name} — Completed` : 'Quiz Completed'}
+                  </p>
+                  <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                    <Clock size={12} />
+                    <span>
+                      {quiz.end_time 
+                        ? new Date(quiz.end_time).toLocaleDateString() 
+                        : "Unknown Date"}
+                    </span>
+                  </div>
+                </div>
+              </div>
             ))}
-            <Button className="mt-3 sm:mt-4 w-full text-sm sm:text-base">
-              View All
-            </Button>
           </div>
         ) : (
           <p className="text-xs sm:text-sm text-gray-500 text-center py-4 sm:py-6">

@@ -17,7 +17,7 @@ export const distributionAgent = new Agent({
     
     Always provide clear, pedagogically sound reasoning for your distributions.
   `,
-  model: 'google/gemini-3-flash-preview',
+  model: 'google/gemini-2.5-flash',
   tools: { distributionTool },
 
   memory: new Memory({

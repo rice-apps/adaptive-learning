@@ -14,13 +14,77 @@ import { usePathname } from 'next/navigation';
 import EducatorSearchResults from '@/components/educator-search-results';
 import StudentProficiencyChart from '@/components/StudentProficiencyChart';
 
+interface Weakness {
+  id: number;
+  topic: string;
+  subject: string;
+  studentCount: number;
+}
+
+interface RecentAssessment {
+  studentName: string;
+  quizName: string;
+  score: number;
+  timeAgo: string;
+}
+
+interface Student {
+  id: string;
+  email: string;
+  progress: number;
+  status: string;
+  first_name: string;
+  avatar: string;
+}
+
+interface DashboardData {
+  students: Student[];
+  total: number;
+  weaknesses: Weakness[];
+  recentAssessments: RecentAssessment[];
+}
+
 export default function InstructorDashboard() {
   const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState('');
-  const greetingName = 'Instructor'; // Replace with dynamic logic if needed
+  const greetingName = 'Instructor';
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  
+  // Dashboard data state
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [showAllWeaknesses, setShowAllWeaknesses] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch dashboard data
+  useEffect(() => {
+    async function fetchDashboard() {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await fetch('/api/educator/dashboard');
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch dashboard data');
+        }
+        
+        const data = await response.json();
+        console.log('Dashboard data:', data);
+        setDashboardData(data);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+        setError(errorMessage);
+        console.error('Error fetching dashboard:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchDashboard();
+  }, []);
 
   // Fetch search results when query changes
   useEffect(() => {
@@ -43,7 +107,6 @@ export default function InstructorDashboard() {
       }
     };
 
-    // Debounce - wait 300ms after user stops typing
     const timer = setTimeout(fetchResults, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
@@ -59,6 +122,10 @@ export default function InstructorDashboard() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const displayedWeaknesses = showAllWeaknesses 
+    ? dashboardData?.weaknesses || []
+    : (dashboardData?.weaknesses || []).slice(0, 2);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -121,9 +188,7 @@ export default function InstructorDashboard() {
               <AvatarImage src="https://github.com/shadcn.png" />
               <AvatarFallback>IN</AvatarFallback>
             </Avatar>
-            <h1 className="text-lg sm:text-xl font-semibold">
-              Hello Mr. Burns!
-            </h1>
+            <h1 className="text-xl font-semibold">Hello {greetingName}!</h1>
           </CardContent>
         </Card>
 
@@ -150,9 +215,17 @@ export default function InstructorDashboard() {
               Students
             </Button>
           </Link>
+
+          <Link href="/educator/quizzes">
+            <Button
+              className="rounded-md"
+              variant={pathname === '/educator/quizzes' ? 'default' : 'outline'}
+            >
+              Quizzes
+            </Button>
+          </Link>
         </div>
 
-        {/* Recent Assessments */}
         <Card>
           <CardHeader className="px-4 sm:px-6">
             <div className="flex items-center gap-2">
@@ -162,31 +235,30 @@ export default function InstructorDashboard() {
               </CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6">
-            <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
-              <div>
-                <p className="font-medium text-sm sm:text-base">
-                  Sarah Johnson
-                </p>
-                <p className="text-xs sm:text-sm text-gray-500">Math Quiz 3</p>
+          <CardContent>
+            {loading ? (
+              <div className="text-center text-gray-500 py-4">Loading...</div>
+            ) : error ? (
+              <div className="text-center text-red-500 py-4">{error}</div>
+            ) : dashboardData?.recentAssessments && dashboardData.recentAssessments.length > 0 ? (
+              <div className="max-h-[220px] overflow-y-auto space-y-4 pr-1">
+                {dashboardData.recentAssessments.map((assessment, index) => (
+                  <div key={index} className="flex justify-between">
+                    <div>
+                      <p className="font-medium">{assessment.studentName}</p>
+                      <p className="text-sm text-gray-500">{assessment.quizName}</p>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {assessment.score}% · {assessment.timeAgo}
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="text-xs sm:text-sm text-gray-600">
-                95% · 10 min ago
+            ) : (
+              <div className="text-center text-gray-500 py-4">
+                No recent assessments
               </div>
-            </div>
-            <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
-              <div>
-                <p className="font-medium text-sm sm:text-base">
-                  Emily Rodriguez
-                </p>
-                <p className="text-xs sm:text-sm text-gray-500">
-                  Reading Quiz 2
-                </p>
-              </div>
-              <div className="text-xs sm:text-sm text-gray-600">
-                95% · 10 min ago
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
@@ -204,33 +276,46 @@ export default function InstructorDashboard() {
             </CardContent>
           </Card>
 
-          {/* Weaknesses */}
           <Card>
             <CardHeader className="px-4 sm:px-6">
               <CardTitle className="text-base sm:text-lg">
                 Cohort Weaknesses
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6">
-              <div className="border rounded-lg p-2 sm:p-3">
-                <p className="font-medium text-sm sm:text-base">
-                  Quadratic Equations
-                </p>
-                <p className="text-xs sm:text-sm text-gray-500">
-                  Math · 8 students affected
-                </p>
-              </div>
-              <div className="border rounded-lg p-2 sm:p-3">
-                <p className="font-medium text-sm sm:text-base">
-                  Verb Conjugation
-                </p>
-                <p className="text-xs sm:text-sm text-gray-500">
-                  English · 6 students affected
-                </p>
-              </div>
-              <Button className="w-full rounded-full text-sm sm:text-base">
-                View All
-              </Button>
+            <CardContent className="space-y-4">
+              {loading ? (
+                <div className="text-center text-gray-500 py-8">
+                  Loading...
+                </div>
+              ) : error ? (
+                <div className="text-center text-red-500 py-8">
+                  {error}
+                </div>
+              ) : displayedWeaknesses.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">
+                  No weaknesses found
+                  <p className="text-xs mt-2">Students are doing great! 🎉</p>
+                </div>
+              ) : (
+                <>
+                  {displayedWeaknesses.map((weakness) => (
+                    <div key={weakness.id} className="border rounded-lg p-3">
+                      <p className="font-medium">{weakness.topic}</p>
+                      <p className="text-sm text-gray-500">
+                        {weakness.subject} · {weakness.studentCount} student{weakness.studentCount !== 1 ? 's' : ''} affected
+                      </p>
+                    </div>
+                  ))}
+                  {dashboardData && dashboardData.weaknesses.length > 2 && (
+                    <Button 
+                      className="w-full rounded-full"
+                      onClick={() => setShowAllWeaknesses(!showAllWeaknesses)}
+                    >
+                      {showAllWeaknesses ? "Show Less" : "View All"}
+                    </Button>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
