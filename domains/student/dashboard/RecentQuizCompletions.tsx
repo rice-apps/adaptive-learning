@@ -1,25 +1,23 @@
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import QuizCompletionCard from "@/components/QuizCompletion";
+import { CheckCircle2, Clock } from "lucide-react";
 
 interface RecentQuizCompletionsProps {
   // defaulting to empty array to prevent crash
   completedQuizzes?: any[]; 
 }
 
-export default function RecentQuizCompletions({
-  completedQuizzes,
-}: RecentQuizCompletionsProps) {
+export default function RecentQuizCompletions({ completedQuizzes = [] }: RecentQuizCompletionsProps) {
   return (
-    <Card>
-      <CardHeader className="px-4 sm:px-6">
-        <CardTitle className="text-lg sm:text-xl">
-          Recent Quiz Completions
-        </CardTitle>
+    <Card className="h-full border-gray-100 shadow-sm bg-white rounded-2xl">
+      <CardHeader>
+        <CardTitle className="text-lg font-bold text-gray-900">Recent Activity</CardTitle>
       </CardHeader>
-      <CardContent className="px-4 sm:px-6">
-        {completedQuizzes.length > 0 ? (
-          <div className="space-y-3 sm:space-y-4">
+      <CardContent>
+        {/* Safety check: ensure completedQuizzes exists and has length */}
+        {!completedQuizzes || completedQuizzes.length === 0 ? (
+          <p className="text-gray-400 text-sm italic">No recent activity found.</p>
+        ) : (
+          <div className="space-y-4">
             {completedQuizzes.map((quiz) => (
               <div key={quiz.id} className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
                 <CheckCircle2 className="w-5 h-5 text-lime-500 mt-0.5" />
@@ -39,10 +37,6 @@ export default function RecentQuizCompletions({
               </div>
             ))}
           </div>
-        ) : (
-          <p className="text-xs sm:text-sm text-gray-500 text-center py-4 sm:py-6">
-            No completed quizzes yet
-          </p>
         )}
       </CardContent>
     </Card>
