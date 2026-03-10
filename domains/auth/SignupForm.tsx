@@ -69,7 +69,7 @@ export default function SignupForm() {
           data: {
             role: role,
           },
-          emailRedirectTo: `${window.location.origin}/api/auth/confirm`,
+          emailRedirectTo: "/api/auth/confirm",
         },
       });
 
