@@ -54,3 +54,6 @@ SUPABASE_SERVICE_ROLE_KEY
 
 
 GOOGLE_GENERATIVE_AI_API_KEY
+
+
+NEXT_PUBLIC_APP_URL=https://adaptive-learning.riceapps.org
