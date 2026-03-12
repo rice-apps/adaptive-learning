@@ -69,7 +69,7 @@ export default function SignupForm() {
           data: {
             role: role,
           },
-          emailRedirectTo: "/api/auth/confirm",
+          emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/api/auth/confirm`,
         },
       });
 
