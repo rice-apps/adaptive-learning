@@ -96,75 +96,75 @@ export default function StudentProfileClient() {
 
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-6">
-      <h2 className="text-xl font-bold">Your Profile</h2>
+      <h2 className="text-2xl font-bold">Your Profile</h2>
 
-      <form onSubmit={handleSubmit}>
-        <div className="space-y-6">
-          {/* Profile photo */}
-          <div className="flex flex-col items-center gap-3">
-            <Label className="text-base font-semibold">
-              Profile Photo <span className="text-gray-400">(optional)</span>
-            </Label>
-
-            <div className="relative">
-              <Avatar className="h-32 w-32 bg-gray-200 text-3xl">
-                <AvatarFallback className="bg-gray-300 text-gray-700 font-semibold">
-                  {formData.firstname?.[0]?.toUpperCase() || ""}{formData.lastname?.[0]?.toUpperCase() || ""}
-                </AvatarFallback>
-              </Avatar>
-
-              <button
-                type="button"
-                onClick={() => document.getElementById("photo-upload")?.click()}
-                className="absolute bottom-1 right-1 h-10 w-10 rounded-full bg-lime-300 flex items-center justify-center shadow hover:bg-lime-400 transition"
-              >
-                <Image src="/camera.png" alt="upload" width={18} height={18} className="object-contain" />
-              </button>
-
-              <input
-                id="photo-upload"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) console.log(file);
-                }}
-              />
-            </div>
-
-            <p className="text-sm text-gray-400">Help instructors recognize you.</p>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Profile photo + name side by side */}
+        <div className="flex items-start gap-6">
+          <div className="relative shrink-0">
+            <Avatar className="h-28 w-28 bg-gray-200">
+              <AvatarFallback className="bg-gray-300 text-gray-700 font-semibold text-2xl">
+                {formData.firstname?.[0]?.toUpperCase() || ""}
+                {formData.lastname?.[0]?.toUpperCase() || ""}
+              </AvatarFallback>
+            </Avatar>
+            <button
+              type="button"
+              onClick={() => document.getElementById("photo-upload")?.click()}
+              className="absolute bottom-1 right-1 h-8 w-8 rounded-full bg-lime-400 flex items-center justify-center shadow"
+            >
+              <Image src="/camera.png" alt="upload" width={16} height={16} />
+            </button>
+            <input
+              id="photo-upload"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) console.log(file);
+              }}
+            />
           </div>
 
-          <Input
-            placeholder="First name"
-            value={formData.firstname}
-            onChange={(e) => setFormData({ ...formData, firstname: e.target.value })}
-            required
-          />
-
-          <Input
-            placeholder="Last name"
-            value={formData.lastname}
-            onChange={(e) => setFormData({ ...formData, lastname: e.target.value })}
-            required
-          />
+          <div className="flex flex-col gap-3 flex-1">
+            <div>
+              <Label className="font-semibold mb-1 block">First Name</Label>
+              <Input
+                placeholder="Type Name"
+                value={formData.firstname}
+                onChange={(e) => setFormData({ ...formData, firstname: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <Label className="font-semibold mb-1 block">Last Name</Label>
+              <Input
+                placeholder="Type Name"
+                value={formData.lastname}
+                onChange={(e) => setFormData({ ...formData, lastname: e.target.value })}
+                required
+              />
+            </div>
+          </div>
         </div>
 
-        {/* <div className="space-y-6">
-          <h3 className="text-xl font-bold">What are your career interests?</h3>
+        {/* Career Interests */}
+        <div className="space-y-3">
+          <h3 className="text-base font-bold">Career Interests</h3>
           <Textarea
-            placeholder="Tell us more about your interests..."
-            className="min-h-[150px]"
+            placeholder="Tell us about your career goals..."
+            className="min-h-[120px]"
             value={formData.career_interests}
             onChange={(e) => setFormData({ ...formData, career_interests: e.target.value })}
           />
-        </div> */}
+        </div>
 
-        <div className="space-y-6">
-          <h3 className="text-xl font-bold">What are your goals?</h3>
+        {/* Goals */}
+        <div className="space-y-3">
+          <h3 className="text-base font-bold">Goals for being in 8MS</h3>
           <Textarea
-            placeholder="e.g. I want to earn my GED, improve my writing..."
+            placeholder="Tell us what you hope to achieve..."
             className="min-h-[180px]"
             value={formData.goals}
             onChange={(e) => setFormData({ ...formData, goals: e.target.value })}
@@ -172,9 +172,18 @@ export default function StudentProfileClient() {
           />
         </div>
 
-        <Button type="submit" disabled={loading}>
-          {loading ? "Saving..." : "Save Profile"}
-        </Button>
+        {error && <p className="text-red-500 text-sm">{error}</p>}
+
+        {/* Submit */}
+        <div className="flex justify-center">
+          <Button
+            type="submit"
+            disabled={loading}
+            className="bg-lime-400 hover:bg-lime-500 text-black font-medium rounded-full px-12"
+          >
+            {loading ? "Saving..." : "Done"}
+          </Button>
+        </div>
       </form>
     </div>
   );
