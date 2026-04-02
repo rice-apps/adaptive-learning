@@ -1,15 +1,22 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { Clock, Calendar, BookOpen, CheckCircle } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Clock, Calendar, BookOpen, ChevronRight } from 'lucide-react';
+
+/* ───────────────────── types ───────────────────── */
+
+interface SubjectScore {
+  subject: string;
+  score: number;
+  maxScore: number;
+}
 
 interface AssignedQuiz {
   id: string;
   name?: string | null;
+  subject: string;
   questions: string[];
   created_at: string;
   due_date: string | null;
@@ -25,235 +32,280 @@ interface CompletedQuiz {
 }
 
 interface StudentDashboardClientProps {
-  student: string | null;
-  completedQuizzes: CompletedQuiz[];
+  studentName: string;
+  courseProgress: number;
   hasCompletedDiagnostic: boolean;
+  completedQuizzes: CompletedQuiz[];
+  assignedQuizzes: AssignedQuiz[];
+  subjectScores?: SubjectScore[];
 }
 
+/* ──────────── circular progress dial ──────────── */
+
+function ReadinessDial({
+  subject,
+  score,
+  maxScore,
+  index,
+}: {
+  subject: string;
+  score: number;
+  maxScore: number;
+  index: number;
+}) {
+  const pct = maxScore > 0 ? score / maxScore : 0;
+  const radius = 54;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference * (1 - pct);
+
+  // Proficiency label
+  const proficiency =
+    pct >= 0.8
+      ? 'Advanced'
+      : pct >= 0.6
+        ? 'Proficient'
+        : pct >= 0.4
+          ? 'Developing'
+          : 'Beginning';
+
+  const proficiencyColor =
+    pct >= 0.8
+      ? 'text-emerald-600 bg-emerald-50'
+      : pct >= 0.6
+        ? 'text-lime-700 bg-lime-50'
+        : pct >= 0.4
+          ? 'text-amber-700 bg-amber-50'
+          : 'text-red-600 bg-red-50';
+
+  // Stroke color matches proficiency
+  const strokeColor =
+    pct >= 0.8
+      ? '#059669'
+      : pct >= 0.6
+        ? '#65a30d'
+        : pct >= 0.4
+          ? '#d97706'
+          : '#dc2626';
+
+  return (
+    <Card
+      className="rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200"
+      style={{ animationDelay: `${index * 80}ms` }}
+    >
+      <CardContent className="flex flex-col items-center py-6 px-4 gap-3">
+        {/* Subject label – only show on first card or if different */}
+        <p className="text-base font-semibold text-gray-800 tracking-tight">
+          {subject}
+        </p>
+
+        {/* SVG dial */}
+        <div className="relative w-28 h-28">
+          <svg
+            viewBox="0 0 120 120"
+            className="w-full h-full -rotate-90"
+          >
+            {/* background track */}
+            <circle
+              cx="60"
+              cy="60"
+              r={radius}
+              fill="none"
+              stroke="#e5e7eb"
+              strokeWidth="10"
+              strokeLinecap="round"
+            />
+            {/* progress arc */}
+            <circle
+              cx="60"
+              cy="60"
+              r={radius}
+              fill="none"
+              stroke={strokeColor}
+              strokeWidth="10"
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={offset}
+              className="transition-all duration-700 ease-out"
+            />
+          </svg>
+          {/* score in the center */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-2xl font-bold text-gray-900 leading-none">
+              {score}
+            </span>
+            <span className="text-xs text-gray-400">/{maxScore}</span>
+          </div>
+        </div>
+
+        {/* proficiency badge */}
+        <span
+          className={`text-xs font-medium px-3 py-1 rounded-full ${proficiencyColor}`}
+        >
+          {proficiency}
+        </span>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ──────────────── main dashboard ──────────────── */
+
 export default function StudentDashboardClient({
-  student,
-  completedQuizzes,
+  studentName,
   hasCompletedDiagnostic,
+  completedQuizzes,
+  assignedQuizzes,
+  subjectScores = [],
 }: StudentDashboardClientProps) {
-  const [assignedQuizzes, setAssignedQuizzes] = useState<AssignedQuiz[]>([]);
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
-
-  useEffect(() => {
-    fetchAssignedQuizzes();
-  }, []);
-
-  const fetchAssignedQuizzes = async () => {
-    const supabase = createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-
-    const { data: studentData } = await supabase
-      .from('Students')
-      .select('id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (!studentData) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/quiz/assign?studentId=${studentData.id}`);
-      const data = await response.json();
-
-      setAssignedQuizzes(data || []);
-    } catch (error) {
-      console.error('Error fetching assigned quizzes:', error);
-      setAssignedQuizzes([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const startQuiz = (quizId: string) => {
-    router.push(`/student/quiz/${quizId}`);
-  };
 
   const isOverdue = (dueDate: string | null) => {
     if (!dueDate) return false;
     return new Date(dueDate) < new Date();
   };
 
+  const startQuiz = (quizId: string) => {
+    router.push(`/student/quiz/${quizId}`);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Greeting Card */}
-        <Card className="rounded-xl">
-          <CardContent className="py-6">
-            <h1 className="text-3xl font-bold">
-              Welcome back, {student || 'Student'}! 👋
+    <div className="min-h-screen bg-gray-50 p-6 md:p-10">
+      <div className="max-w-5xl mx-auto space-y-8">
+
+        {/* ─── Greeting ─── */}
+        <div className="flex items-center gap-4">
+          {/* avatar placeholder – swap for real image if available */}
+          <div className="h-14 w-14 rounded-full bg-gray-300 flex items-center justify-center text-xl font-bold text-white select-none shrink-0">
+            {studentName.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+              Hello {studentName}!
             </h1>
-            <p className="text-gray-600 mt-2">
-              {hasCompletedDiagnostic
-                ? "Keep up the great work! Here's what you need to do next."
-                : "Let's get started with your learning journey."}
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Assigned Quizzes Section */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-blue-600" />
-              <CardTitle>Assigned Quizzes</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              </div>
-            ) : assignedQuizzes.length === 0 ? (
-              <div className="text-center py-8">
-                <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-600">No quizzes assigned yet.</p>
-                <p className="text-sm text-gray-500 mt-1">
-                  Check back later for new assignments from your educator.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {assignedQuizzes.map((quiz) => {
-                  const overdueStatus = isOverdue(quiz.due_date);
-                  
-                  return (
-                    <div
-                      key={quiz.id}
-                      className={`border rounded-lg p-5 hover:bg-gray-50 transition ${
-                        overdueStatus ? 'border-red-300 bg-red-50' : ''
-                      }`}
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-lg mb-2">
-                            {quiz.name?.trim() || 'Quiz'} - {quiz.questions?.length || 0} Questions
-                          </h3>
-                          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                            <div className="flex items-center gap-1">
-                              <Calendar className="w-4 h-4" />
-                              <span>
-                                Assigned: {new Date(quiz.created_at).toLocaleDateString()}
-                              </span>
-                            </div>
-                            {quiz.due_date && (
-                              <div className={`flex items-center gap-1 ${overdueStatus ? 'text-red-600 font-semibold' : ''}`}>
-                                <Clock className="w-4 h-4" />
-                                <span>
-                                  Due: {new Date(quiz.due_date).toLocaleDateString()}
-                                  {overdueStatus && ' (Overdue!)'}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700 whitespace-nowrap">
-                          Not Started
-                        </span>
-                      </div>
-
-                      <Button 
-                        onClick={() => startQuiz(quiz.id)} 
-                        className="mt-2"
-                        variant={overdueStatus ? "destructive" : "default"}
-                      >
-                        {overdueStatus ? 'Start Now (Overdue)' : 'Start Quiz'}
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
+            {!hasCompletedDiagnostic && (
+              <p className="text-sm text-gray-500 mt-0.5">
+                Complete your diagnostic to unlock personalized recommendations.
+              </p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* Completed Quizzes Section */}
-        {completedQuizzes.length > 0 && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-                <CardTitle>Recently Completed</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {completedQuizzes.map((quiz) => (
-                  <div 
-                    key={quiz.id} 
-                    className="border rounded-lg p-4 bg-green-50 border-green-200"
+        {/* ─── Readiness Dials ─── */}
+        {subjectScores.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {subjectScores.map((s, i) => (
+              <ReadinessDial
+                key={s.subject}
+                subject={s.subject}
+                score={s.score}
+                maxScore={s.maxScore}
+                index={i}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* ─── Assigned Quizzes ─── */}
+        {assignedQuizzes.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-blue-600" />
+              Assigned Quizzes
+            </h2>
+
+            <div className="space-y-3">
+              {assignedQuizzes.map((quiz) => {
+                const overdue = isOverdue(quiz.due_date);
+                return (
+                  <Card
+                    key={quiz.id}
+                    className={`rounded-xl ${overdue ? 'border-red-300 bg-red-50/60' : ''}`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-600" />
-                          {quiz.name?.trim() ? `${quiz.name} — Completed` : 'Completed Quiz'}
+                    <CardContent className="flex items-center justify-between py-4 px-5 gap-4">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-gray-900 truncate">
+                          {quiz.name?.trim() || quiz.subject || 'Quiz'}{' '}
+                          <span className="text-gray-400 font-normal">
+                            · {quiz.questions?.length || 0} Qs
+                          </span>
                         </p>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {new Date(quiz.submitted).toLocaleDateString()} at{' '}
-                          {new Date(quiz.submitted).toLocaleTimeString()}
-                        </p>
+                        <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5" />
+                            {new Date(quiz.created_at).toLocaleDateString()}
+                          </span>
+                          {quiz.due_date && (
+                            <span
+                              className={`flex items-center gap-1 ${overdue ? 'text-red-600 font-semibold' : ''}`}
+                            >
+                              <Clock className="w-3.5 h-3.5" />
+                              Due {new Date(quiz.due_date).toLocaleDateString()}
+                              {overdue && ' — Overdue'}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm text-gray-600">
-                          Time spent: {quiz.time_spent || 'N/A'}
-                        </p>
-                      </div>
+
+                      <Button
+                        size="sm"
+                        variant={overdue ? 'destructive' : 'default'}
+                        onClick={() => startQuiz(quiz.id)}
+                        className="shrink-0"
+                      >
+                        Start
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* ─── Recently Completed ─── */}
+        {completedQuizzes.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold text-gray-800">
+              Recently Completed
+            </h2>
+            <div className="space-y-2">
+              {completedQuizzes.map((quiz) => (
+                <Card
+                  key={quiz.id}
+                  className="rounded-xl bg-green-50/60 border-green-200"
+                >
+                  <CardContent className="flex items-center justify-between py-3 px-5">
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        {quiz.name?.trim() || 'Quiz'}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {new Date(quiz.submitted).toLocaleDateString()}
+                      </p>
                     </div>
-                  </div>
-                ))}
-              </div>
+                    <span className="text-xs text-gray-500">
+                      {quiz.time_spent || '—'}
+                    </span>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ─── Empty state ─── */}
+        {assignedQuizzes.length === 0 && subjectScores.length === 0 && (
+          <Card className="rounded-xl">
+            <CardContent className="py-12 text-center">
+              <BookOpen className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-600">Nothing here yet.</p>
+              <p className="text-sm text-gray-400 mt-1">
+                Check back later for assignments from your educator.
+              </p>
             </CardContent>
           </Card>
         )}
-
-        {/* Quick Actions / Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <BookOpen className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold">{assignedQuizzes.length}</p>
-                <p className="text-sm text-gray-600">Pending Quizzes</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold">{completedQuizzes.length}</p>
-                <p className="text-sm text-gray-600">Completed Quizzes</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <Clock className="h-8 w-8 text-orange-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold">
-                  {assignedQuizzes.filter(q => isOverdue(q.due_date)).length}
-                </p>
-                <p className="text-sm text-gray-600">Overdue</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </div>
   );
