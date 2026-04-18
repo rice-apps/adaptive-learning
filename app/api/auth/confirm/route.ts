@@ -1,4 +1,5 @@
 import {UserRole} from "@/domains/auth/types";
+import {publicRedirectUrl} from "@/lib/public-url";
 import {createClient} from "@/lib/supabase/server";
 import {NextResponse} from "next/server";
 
@@ -29,16 +30,16 @@ export async function GET(request: Request) {
         if (existingRole) {
           // User already onboarded, redirect to their dashboard
           const dashboardPath = existingRole.role === "student" ? "/student/dashboard" : "/educator/dashboard";
-          return NextResponse.redirect(new URL(dashboardPath, request.url));
+          return NextResponse.redirect(publicRedirectUrl(request, dashboardPath));
         }
 
         // User has NOT completed onboarding, check their role from metadata
         const role: UserRole = user.user_metadata?.role;
 
         if (role === "student") {
-          return NextResponse.redirect(new URL("/student/onboarding", request.url));
+          return NextResponse.redirect(publicRedirectUrl(request, "/student/onboarding"));
         } else if (role === "instructor") {
-          return NextResponse.redirect(new URL("/educator/onboarding", request.url));
+          return NextResponse.redirect(publicRedirectUrl(request, "/educator/onboarding"));
         }
       }
 
@@ -46,10 +47,10 @@ export async function GET(request: Request) {
       // Sanitize next to prevent open redirect - only allow internal paths
       const safeNext =
         next.startsWith("/") && !next.startsWith("//") ? next : "/";
-      return NextResponse.redirect(new URL(safeNext, request.url));
+      return NextResponse.redirect(publicRedirectUrl(request, safeNext));
     }
   }
 
   // If error or no token, redirect to error page
-  return NextResponse.redirect(new URL("/auth/auth-error", request.url));
+  return NextResponse.redirect(publicRedirectUrl(request, "/auth/auth-error"));
 }

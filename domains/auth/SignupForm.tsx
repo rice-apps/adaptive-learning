@@ -61,6 +61,11 @@ export default function SignupForm() {
     setLoading(true);
 
     try {
+      // Supabase builds confirmation links from this URL; it must be absolute.
+      // Relative paths use the "Site URL" in Supabase dashboard (often localhost in dev).
+      const siteUrl =
+        process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
+        window.location.origin;
       const supabase = await createClient();
       const { data, error } = await supabase.auth.signUp({
         email: email,
@@ -69,7 +74,7 @@ export default function SignupForm() {
           data: {
             role: role,
           },
-          emailRedirectTo: "/api/auth/confirm",
+          emailRedirectTo: `${siteUrl}/api/auth/confirm`,
         },
       });
 
