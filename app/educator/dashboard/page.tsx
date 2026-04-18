@@ -5,14 +5,22 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import Image from 'next/image';
 import logo from '../../assets/logo.png';
-import { Search, BellIcon } from 'lucide-react';
+import { Search, BellIcon, LogOutIcon } from 'lucide-react';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import EducatorSearchResults from '@/components/educator-search-results';
 import StudentProficiencyChart from '@/components/StudentProficiencyChart';
+import { createClient } from '@/lib/supabase/client';
+import { toast } from 'sonner';
 
 interface Weakness {
   id: number;
@@ -46,6 +54,7 @@ interface DashboardData {
 
 export default function InstructorDashboard() {
   const pathname = usePathname();
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const greetingName = 'Instructor';
   const [searchResults, setSearchResults] = useState([]);
@@ -57,6 +66,19 @@ export default function InstructorDashboard() {
   const [showAllWeaknesses, setShowAllWeaknesses] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Logout handler
+  const handleLogout = async () => {
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      router.push('/login');
+      toast.success('Logout successful!');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('An unexpected error occurred');
+    }
+  };
 
   // Fetch dashboard data
   useEffect(() => {
@@ -154,9 +176,25 @@ export default function InstructorDashboard() {
           <div className="flex items-start gap-4 z-10 justify-end">
             <div className="flex items-center space-x-4">
               <NotificationBell />
-              <Avatar className="h-14 w-14">
-                <AvatarImage src="https://github.com/shadcn.png" alt="Instructor" />
-              </Avatar>
+              
+              {/* Profile Dropdown with Logout Only */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Avatar className="h-14 w-14 cursor-pointer">
+                    <AvatarImage src="https://github.com/shadcn.png" alt="Instructor" />
+                    <AvatarFallback>IN</AvatarFallback>
+                  </Avatar>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuItem 
+                    onClick={handleLogout}
+                    className="cursor-pointer text-red-600 focus:text-red-600"
+                  >
+                    <LogOutIcon className="mr-2 h-4 w-4" />
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </header>
