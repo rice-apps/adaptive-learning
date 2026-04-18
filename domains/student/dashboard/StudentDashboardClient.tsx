@@ -5,7 +5,7 @@ import PromptDiagnosticCard from "./PromptDiagnosticCard";
 import RecentQuizCompletions from "./RecentQuizCompletions";
 import RecommendedQuizzes from "./RecommendedQuizzes";
 import StudentDashboardHeader from "./StudentDashboardHeader";
-import WritingFeedback from "./WritingFeedback";
+//import WritingFeedback from "./WritingFeedback";
 
 interface Props {
   studentName: string;
@@ -37,16 +37,18 @@ export default function StudentDashboardClient({
           assignedQuizzes={assignedQuizzes} 
           hasCompletedDiagnostic={hasCompletedDiagnostic} 
         />
-
+        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2">
+          {/* <div className="md:col-span-2">
             <WritingFeedback />
-          </div>
+          </div> */}
           <div className="md:col-span-1 h-full">
              <RecentQuizCompletions completedQuizzes={completedQuizzes} />
           </div>
         </div>
       </main>
     </div>
+  
+
   );
 }
