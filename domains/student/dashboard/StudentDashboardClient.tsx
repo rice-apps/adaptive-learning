@@ -38,17 +38,14 @@ export default function StudentDashboardClient({
           hasCompletedDiagnostic={hasCompletedDiagnostic} 
         />
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* <div className="md:col-span-2">
-            <WritingFeedback />
-          </div> */}
-          <div className="md:col-span-1 h-full">
-             <RecentQuizCompletions completedQuizzes={completedQuizzes} />
-          </div>
-        </div>
+        {/* If you want to use WritingFeedback later, you can place it here:
+          <WritingFeedback />
+        */}
+
+        {/* Removed the restrictive 1/3 grid wrapper so this can take full width */}
+        <RecentQuizCompletions completedQuizzes={completedQuizzes} />
+        
       </main>
     </div>
-  
-
   );
 }
