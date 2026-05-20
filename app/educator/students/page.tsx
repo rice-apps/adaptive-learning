@@ -22,14 +22,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BellIcon, Search } from "lucide-react";
+import { Search, LogOutIcon } from "lucide-react";
 import StudentDetailsDialog from "./StudentDetailsDialog";
 import AssignQuizDialog from "../dashboard/assignQuiz";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
 import logo from "../../assets/logo.png";
+import NotificationBell from "@/components/notifications/NotificationBell";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +72,19 @@ interface StudentDetails {
 
 export default function StudentRoster() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      router.push('/login');
+      toast.success('Logout successful!');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('An unexpected error occurred');
+    }
+  };
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -200,18 +221,25 @@ export default function StudentRoster() {
             />
           </div>
 
-          <div className="flex items-start gap-4 z-10 justify-end">
-            <div className="flex flex-col items-center justify-end"></div>
-
-            <div className="flex items-center space-x-4">
-              <BellIcon className="text-white h-10 w-10" />
-              <Avatar className="h-14 w-14">
-                <AvatarImage
-                  src="https://github.com/shadcn.png"
-                  alt="Instructor"
-                />
-              </Avatar>
-            </div>
+          <div className="flex items-center space-x-4 z-10">
+            <NotificationBell />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Avatar className="h-14 w-14 cursor-pointer">
+                  <AvatarImage src="https://github.com/shadcn.png" alt="Instructor" />
+                  <AvatarFallback>IN</AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="cursor-pointer text-red-600 focus:text-red-600"
+                >
+                  <LogOutIcon className="mr-2 h-4 w-4" />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
       </div>
