@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import FeedbackMarkdown from "@/components/ui/FeedbackMarkdown";
 import { Loader2 } from "lucide-react";
 
 type StimulusDocument = {
@@ -496,9 +497,7 @@ export default function TakeQuizPage() {
           <Card>
             <CardContent className="p-8">
               <h3 className="text-xl font-bold mb-4 text-gray-900">Personalized Feedback</h3>
-              <div className="prose prose-lg max-w-none text-gray-700 whitespace-pre-wrap leading-relaxed">
-                {currentFeedback}
-              </div>
+              <FeedbackMarkdown text={currentFeedback} />
             </CardContent>
           </Card>
 

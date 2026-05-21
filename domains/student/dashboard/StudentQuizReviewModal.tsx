@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { FileText, CheckCircle2, XCircle, MessageSquare } from "lucide-react";
+import FeedbackMarkdown from "@/components/ui/FeedbackMarkdown";
 
 interface QuestionInfo {
   id: string;
@@ -177,9 +178,9 @@ export default function StudentQuizReviewModal({
                         <MessageSquare className="h-3.5 w-3.5" />
                         AI Feedback
                       </p>
-                      <p className="text-sm text-gray-700 bg-blue-50/80 rounded-lg p-3 border border-blue-100">
-                        {r.feedback}
-                      </p>
+                      <div className="bg-blue-50/80 rounded-lg p-3 border border-blue-100">
+                        <FeedbackMarkdown text={r.feedback} className="text-sm" />
+                      </div>
                     </div>
                   )}
                 </div>
