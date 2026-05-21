@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Plus, Pencil, Trash2, Send, BookOpen, FileQuestion, MoreHorizontal, Eye, Copy, FileUp, Sparkles, BarChart3 } from 'lucide-react';
+import { Search, Plus, Pencil, Trash2, Send, BookOpen, FileQuestion, MoreHorizontal, Eye, Copy, FileUp, Sparkles, BarChart3, LogOutIcon } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,6 +37,8 @@ import {
 import logo from '../../assets/logo.png';
 import { createClient } from '@/lib/supabase/client';
 import NotificationBell from '@/components/notifications/NotificationBell';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import AddQuestionModal, { type QuestionForEdit } from './AddQuestionModal';
 import QuizBuilderModal from './QuizBuilderModal';
 import AssignTemplateModal from './AssignTemplateModal';
@@ -101,7 +103,20 @@ function timeAgo(dateStr: string) {
 
 export default function QuizzesPage() {
   const pathname = usePathname();
+  const router = useRouter();
   const [educatorId, setEducatorId] = useState('');
+
+  const handleLogout = async () => {
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      router.push('/login');
+      toast.success('Logout successful!');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('An unexpected error occurred');
+    }
+  };
 
   // Quiz Templates state
   const [templates, setTemplates] = useState<QuizTemplate[]>([]);
@@ -274,10 +289,23 @@ export default function QuizzesPage() {
           </h1>
           <div className="flex items-center space-x-4 z-10">
             <NotificationBell />
-            <Avatar className="h-14 w-14">
-              <AvatarImage src="https://github.com/shadcn.png" alt="Instructor" />
-              <AvatarFallback>IN</AvatarFallback>
-            </Avatar>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Avatar className="h-14 w-14 cursor-pointer">
+                  <AvatarImage src="https://github.com/shadcn.png" alt="Instructor" />
+                  <AvatarFallback>IN</AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="cursor-pointer text-red-600 focus:text-red-600"
+                >
+                  <LogOutIcon className="mr-2 h-4 w-4" />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
       </div>

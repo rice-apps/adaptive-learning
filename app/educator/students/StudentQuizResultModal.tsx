@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { FileText, CheckCircle2, XCircle, MinusCircle } from "lucide-react";
+import FeedbackMarkdown from "@/components/ui/FeedbackMarkdown";
 
 interface QuestionInfo {
   id: string;
@@ -175,9 +176,9 @@ export default function StudentQuizResultModal({
                         )}
                       </td>
                       <td className="py-2 px-3 text-gray-500 text-xs max-w-[16rem]">
-                        <span className="line-clamp-3">
-                          {r.feedback || "—"}
-                        </span>
+                        {r.feedback
+                          ? <FeedbackMarkdown text={r.feedback} className="text-xs line-clamp-3" />
+                          : "—"}
                       </td>
                     </tr>
                   ))}

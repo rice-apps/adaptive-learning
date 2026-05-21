@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import FeedbackMarkdown from "@/components/ui/FeedbackMarkdown";
+import { normalizeAnswer, getInequalityHint } from "@/lib/normalizeAnswer";
 import { Loader2 } from "lucide-react";
 
 type StimulusDocument = {
@@ -121,7 +123,7 @@ export default function TakeQuizPage() {
     }
 
     // mcq / free_response (and other scalar types)
-    return String(answer) === String(details.answer);
+    return normalizeAnswer(String(answer)) === normalizeAnswer(String(details.answer));
   };
 
   const ensureStimulusLoaded = async (stimulusDocumentId: string) => {
@@ -496,9 +498,7 @@ export default function TakeQuizPage() {
           <Card>
             <CardContent className="p-8">
               <h3 className="text-xl font-bold mb-4 text-gray-900">Personalized Feedback</h3>
-              <div className="prose prose-lg max-w-none text-gray-700 whitespace-pre-wrap leading-relaxed">
-                {currentFeedback}
-              </div>
+              <FeedbackMarkdown text={currentFeedback} />
             </CardContent>
           </Card>
 
@@ -704,6 +704,11 @@ export default function TakeQuizPage() {
              <h2 className="text-2xl font-bold text-zinc-900 leading-tight">
                {currentQ.question_type === "drag_drop" ? "Match the following correctly:" : details.question}
              </h2>
+             {currentQ.question_type === "free_response" && getInequalityHint(String(details.answer || "")) && (
+               <p className="mt-4 text-sm text-amber-700 bg-amber-50 rounded-xl px-4 py-2 border border-amber-200">
+                 {getInequalityHint(String(details.answer || ""))}
+               </p>
+             )}
           </div>
 
           <div className="space-y-4">

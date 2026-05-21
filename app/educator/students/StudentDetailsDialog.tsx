@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { timeAgo } from "@/lib/utils/timeAgo";
 import StudentQuizResultModal from "./StudentQuizResultModal";
+import FeedbackMarkdown from "@/components/ui/FeedbackMarkdown";
 
 interface Student {
   id: string;
@@ -336,8 +337,10 @@ export default function StudentDetailsDialog({
                                     <span className="text-orange-500 font-medium">In Progress</span>
                                   )}
                                 </TableCell>
-                                <TableCell className="text-sm text-gray-600 whitespace-normal break-words align-top">
-                                  {quiz.quiz_feedback || "—"}
+                                <TableCell className="text-sm text-gray-600 align-top">
+                                  {quiz.quiz_feedback
+                                    ? <FeedbackMarkdown text={quiz.quiz_feedback} className="text-sm" />
+                                    : "—"}
                                 </TableCell>
                                 <TableCell className="text-sm text-right">
                                   {quiz.submitted ? (
