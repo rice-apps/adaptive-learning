@@ -1,3 +1,5 @@
+import { normalizeAnswer } from "./normalizeAnswer";
+
 /**
  * Compute whether a result is correct given the question type and details.
  * Returns null for ged_extended_response (not auto-scored) or when correctness cannot be determined.
@@ -33,7 +35,7 @@ export function computeCorrectness(
   const correct =
     (details?.answer as string) ?? (details?.correct_answer as string);
   if (correct == null || correct === "") return null;
-  return String(result.student_answer) === String(correct);
+  return normalizeAnswer(String(result.student_answer)) === normalizeAnswer(String(correct));
 }
 
 /** Compute score percent (0-100) for a set of results, excluding ged_extended_response. */

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { normalizeAnswer } from '@/lib/normalizeAnswer';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest) {
       console.log('🔍 MCQ - Student answer:', studentAnswerStr);
       console.log('🔍 MCQ - Correct answer:', correctAnswerStr);
 
-      score = studentAnswerStr === correctAnswerStr ? 10 : 0;
+      score = normalizeAnswer(studentAnswerStr) === normalizeAnswer(correctAnswerStr) ? 10 : 0;
       console.log('✅ MCQ Score:', score);
     }
 
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
       console.log('🔍 Free Response - Correct answer:', `"${correctAnswerStr}"`);
       console.log('🔍 Free Response - Match?', studentAnswerStr === correctAnswerStr);
 
-      score = studentAnswerStr === correctAnswerStr ? 10 : 0;
+      score = normalizeAnswer(studentAnswerStr) === normalizeAnswer(correctAnswerStr) ? 10 : 0;
       console.log('✅ Free Response Score:', score);
     }
 

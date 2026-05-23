@@ -1,6 +1,7 @@
 import { createStep, createWorkflow } from '@mastra/core/workflows';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
+import { normalizeAnswer } from '../../lib/normalizeAnswer';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -122,7 +123,7 @@ export const generateSingleQuestionFeedback = createStep({
           if (!arr || arr.length !== correctAnswers.length) return false;
           return arr.every((v, i) => v === correctAnswers[i]);
         }
-        return String(result.student_answer) === String(questionDetails?.answer);
+        return normalizeAnswer(String(result.student_answer)) === normalizeAnswer(String(questionDetails?.answer));
       };
 
       const isCorrect = computeCorrectness();
