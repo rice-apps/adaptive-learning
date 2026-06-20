@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { publicRedirectUrl } from '@/lib/public-url'
-import { NextResponse } from 'next/server'
+import { redirect } from 'next/navigation'
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
@@ -25,20 +24,20 @@ export async function GET(request: Request) {
         const redirectPath = existingRole.role === 'student' 
           ? '/student/dashboard' 
           : '/educator/dashboard'
-        return NextResponse.redirect(publicRedirectUrl(request, redirectPath))
+        redirect(redirectPath)
       }
       
       // Check role from metadata and route to onboarding
       const role = user.user_metadata?.role
       
       if (role === 'student') {
-        return NextResponse.redirect(publicRedirectUrl(request, '/student/onboarding'))
+        redirect('/student/onboarding')
       } else if (role === 'educator') {
-        return NextResponse.redirect(publicRedirectUrl(request, '/educator/onboarding'))
+        redirect('/educator/onboarding')
       }
     }
   }
 
   // If no code or error, redirect to home
-  return NextResponse.redirect(publicRedirectUrl(request, '/'))
+  redirect('/')
 }
